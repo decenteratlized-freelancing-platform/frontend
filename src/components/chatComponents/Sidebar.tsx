@@ -1,4 +1,5 @@
 import React from "react";
+import { signOut } from "next-auth/react";
 
 const menuItems = [
   { label: "Dashboard", icon: "🏠" },
@@ -47,7 +48,13 @@ export default function Sidebar() {
           <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" className="w-10 h-10 rounded-full border-2 border-blue-200" />
           <div>
             <div className="font-semibold text-gray-700">Ravi Shah</div>
-            <button className="text-xs text-red-500 hover:underline">Log out</button>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="text-xs text-red-500 hover:underline"
+            >
+            Log out
+            </button>
+
           </div>
         </div>
       </div>

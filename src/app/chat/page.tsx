@@ -1,8 +1,8 @@
 'use client';
 import React, { useState } from "react";
-import Sidebar from "@/components/chat/Sidebar";
-import ChatList from "@/components/chat/ChatList";
-import ChatWindow from "@/components/chat/ChatWindow";
+import Sidebar from "@/components/chatComponents/Sidebar";
+import ChatList from "@/components/chatComponents/ChatList";
+import ChatWindow from "@/components/chatComponents/ChatWindow";
 
 const DUMMY_USERS = [
   { id: "1", name: "Wade Warren", avatar: "https://randomuser.me/api/portraits/men/1.jpg" },
