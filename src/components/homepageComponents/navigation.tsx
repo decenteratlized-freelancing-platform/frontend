@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation";
 import { Menu, X, Home, Users, Shield, Zap, Wallet } from "lucide-react"
 
 const navItems = [
   { name: "Home", href: "#home", icon: Home },
   { name: "Features", href: "#features", icon: Zap },
   { name: "How It Works", href: "#how-it-works", icon: Users },
-  // { name: "Security", href: "#security", icon: Shield },
+  { name: "Security", href: "#security", icon: Shield },
 ]
 
 export default function Navigation() {
@@ -18,17 +17,11 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
 
-const router=useRouter();
-const handleLogin=()=>{
-  console.log("handleLogin called");
-  router.push("/login");
-}
-
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50)
 
-      // Updating active section based on scroll position
+      // Update active section based on scroll position
       const sections = ["home", "features", "how-it-works", "security"]
       const scrollPosition = window.scrollY + 200
 
@@ -53,7 +46,7 @@ const handleLogin=()=>{
     const element = document.getElementById(targetId)
 
     if (element) {
-      const offsetTop = element.offsetTop - 120 // fixed nav height
+      const offsetTop = element.offsetTop - 120 // Account for fixed nav height
       window.scrollTo({
         top: offsetTop,
         behavior: "smooth",
@@ -129,7 +122,7 @@ const handleLogin=()=>{
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4 ml-8">
-              <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white border-none" onClick={handleLogin}>
+              <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white border-none">
                 Sign In
               </Button>
 
@@ -202,7 +195,7 @@ const handleLogin=()=>{
                 })}
 
                 <div className="pt-4 border-t border-white/10 space-y-3">
-                  <Button variant="ghost" className="w-full text-white hover:bg-white/10 justify-start" onClick={handleLogin}>
+                  <Button variant="ghost" className="w-full text-white hover:bg-white/10 justify-start">
                     Sign In
                   </Button>
 

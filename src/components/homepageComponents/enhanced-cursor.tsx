@@ -9,7 +9,11 @@ interface ClickEffect {
   y: number
 }
 
-export default function EnhancedCursor() {
+interface EnhancedCursorProps {
+  isActive?: boolean
+}
+
+export default function EnhancedCursor({ isActive = false }: EnhancedCursorProps) {
   const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 }) // Start off-screen
   const [isClicking, setIsClicking] = useState(false)
   const [clickEffects, setClickEffects] = useState<ClickEffect[]>([])
@@ -75,7 +79,7 @@ export default function EnhancedCursor() {
     }
   }, [])
 
-  if (!isVisible) return null
+  if (!isActive || !isVisible) return null
 
   return (
     <>

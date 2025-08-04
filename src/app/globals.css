@@ -125,15 +125,13 @@
   }
 }
 
-/* Enhanced cursor styles */
-body {
+/* Only hide cursor on homepage */
+.homepage-only {
   cursor: none;
 }
 
-/* Completely remove any default cursor styles */
-body::after,
-body::before {
-  display: none !important;
+.homepage-only * {
+  cursor: none !important;
 }
 
 /* Smooth scrolling */

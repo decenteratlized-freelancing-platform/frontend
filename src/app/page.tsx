@@ -1,3 +1,5 @@
+'use client';
+
 import EnhancedCursor from "../components/homepageComponents/enhanced-cursor";
 import MouseTrail from "../components/homepageComponents/mouse-trail"
 import Navigation from "../components/homepageComponents/navigation"

@@ -9,7 +9,11 @@ interface TrailPoint {
   timestamp: number
 }
 
-export default function MouseTrail() {
+interface MouseTrailProps {
+  isActive?: boolean
+}
+
+export default function MouseTrail({ isActive = false }: MouseTrailProps) {
   const [trail, setTrail] = useState<TrailPoint[]>([])
   const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 }) // Start off-screen
   const [isVisible, setIsVisible] = useState(false)
@@ -36,7 +40,7 @@ export default function MouseTrail() {
     }
 
     const updateTrail = () => {
-      if (!isVisible) return
+      if (!isActive || !isVisible) return
 
       const now = Date.now()
       setTrail((prevTrail) => {
@@ -59,9 +63,9 @@ export default function MouseTrail() {
       document.removeEventListener("mouseenter", handleMouseEnter)
       clearInterval(interval)
     }
-  }, [isVisible])
+  }, [isActive, isVisible])
 
-  if (!isVisible) return null
+  if (!isActive || !isVisible) return null
 
   return (
     <>
