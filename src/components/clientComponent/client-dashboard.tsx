@@ -105,7 +105,6 @@ const recentActivity = [
 export default function ClientDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -164,10 +163,7 @@ export default function ClientDashboard() {
           </motion.div>
         ))}
       </div>
-
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Projects */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -241,8 +237,6 @@ export default function ClientDashboard() {
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}

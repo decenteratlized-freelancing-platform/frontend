@@ -1,58 +1,125 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Eye, EyeOff, Github } from 'lucide-react';
-import { signIn } from "next-auth/react";
-
-
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 const LoginPage = () => {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+  const [authState, setAuthState] = useState<{ loading: boolean; successUser: any; error: string | null }>({
+    loading: false,
+    successUser: null,
+    error: null,
+  });
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'freelancer'
+
   });
 
-  const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-  console.log(isLogin ? "Login" : "Sign Up", formData);
-  
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setAuthState({ loading: true, successUser: null, error: null });
+
+  if (!formData.email || !formData.password || (!isLogin && !formData.fullName)) {
+    setAuthState({ loading: false, successUser: null, error: 'Please fill all required fields' });
+    return;
+  }
+
+  const apiUrl = 'http://localhost:5000/api/auth';
+
+  try {
+    if (isLogin) {
+      const res = await fetch(`${apiUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Clear stale OAuth session
+        await signOut({ redirect: false });
+        const user = data.user;
+        localStorage.setItem("loginType", "manual");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("fullName", user?.fullName || "");
+        localStorage.setItem("email", user?.email || "");
+        localStorage.setItem("role", user?.role || "");
+        localStorage.setItem("currentUser", JSON.stringify(user));
+        router.push(user?.role === "client" ? "/client/dashboard" : "/freelancer/dashboard");
+      } else {
+        setStatusMessage({ type: 'error', text: data.message || 'Login failed' });
+      }
+    } else {
+      if (formData.password !== formData.confirmPassword) {
+        setStatusMessage({ type: 'error', text: 'Passwords do not match' });
+        return;
+      }
+
+      const res = await fetch(`${apiUrl}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role || 'freelancer', 
+          settings: {
+            phone: '',
+            bio: '',
+            skills: '',
+            notifications: { email: true, push: false, sms: true, marketing: false },
+            privacy: { profileVisible: true, showEmail: false, showPhone: false, allowMessages: true },
+            preferences: { language: 'en', timezone: 'utc', currency: 'usd', theme: 'dark' }
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ type: 'success', text: 'Registration successful! Please login.' });
+        setIsLogin(true);
+      } else {
+        setStatusMessage({ type: 'error', text: data.message || 'Registration failed' });
+      }
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    setStatusMessage({ type: 'error', text: 'Something went wrong!' });
+  }
 };
 
-const handleGoogleAuth = () => {
-  console.log("Google Auth");
-  signIn("google", { callbackUrl: "/chat" }); 
+
+  const handleGoogleAuth = () => {
+  signIn('google', { callbackUrl: '/choose-role' });
 };
 
 const handleGithubAuth = () => {
-  console.log("GitHub Auth");
-  signIn("github", { callbackUrl: "/chat" });
-};
+  signIn('github', { callbackUrl: '/choose-role' });
+};  
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>
-        <div className="absolute top-3/4 left-1/6 w-32 h-32 bg-white/5 rounded-full animate-bounce"></div>
-        <div className="absolute top-1/6 right-1/4 w-16 h-16 bg-white/10 rounded-full animate-ping"></div>
-        <div className="absolute bottom-1/4 right-1/6 w-24 h-24 bg-white/5 rounded-full animate-pulse"></div>
-      </div>
-
       <div className="relative z-10 flex min-h-screen">
-        {/* Left Side - Login Form */}
         <div className="flex-1 flex items-center justify-center px-8 py-12">
           <div className="w-full max-w-md">
             <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-              {/* Logo */}
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
                   SmartHire
@@ -60,14 +127,11 @@ const handleGithubAuth = () => {
                 <p className="text-gray-600 text-sm">Blockchain-Backed Freelance Platform</p>
               </div>
 
-              {/* Tab Buttons */}
               <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
                 <button
                   onClick={() => setIsLogin(true)}
                   className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-                    isLogin
-                      ? 'bg-white text-blue-600 shadow-md'
-                      : 'text-gray-500 hover:text-gray-700'
+                    isLogin ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Sign In
@@ -75,17 +139,13 @@ const handleGithubAuth = () => {
                 <button
                   onClick={() => setIsLogin(false)}
                   className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-                    !isLogin
-                      ? 'bg-white text-blue-600 shadow-md'
-                      : 'text-gray-500 hover:text-gray-700'
+                    !isLogin ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Sign Up
                 </button>
               </div>
-
-              {/* Social Login */}
-              <div className="space-y-4 mb-6">
+                  <div className="space-y-4 mb-6">
                 <button
                   onClick={handleGoogleAuth}
                   className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 font-medium text-gray-700 hover:text-blue-600"
@@ -107,63 +167,70 @@ const handleGithubAuth = () => {
                   Continue with GitHub
                 </button>
               </div>
-
-              {/* Divider */}
-              <div className="relative flex items-center justify-center mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
+              {/* Status Message */}
+              {statusMessage.text && (
+                <div
+                  className={`text-sm font-medium text-center mb-4 ${
+                    statusMessage.type === 'error' ? 'text-red-600' : 'text-green-600'
+                  }`}
+                >
+                  {statusMessage.text}
                 </div>
-                <div className="relative bg-white px-4 text-sm text-gray-500">or</div>
-              </div>
+              )}
 
-              {/* Form */}
               <div className="space-y-6">
                 {!isLogin && (
-                  <div className="space-y-2">
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200"
-                      placeholder="Enter your full name"
-                      required={!isLogin}
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name</label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="role" className="text-sm font-medium text-gray-700">Select Role</label>
+                      <select
+                        name="role"
+                        value={formData.role}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                      >
+                        <option value="freelancer">Freelancer</option>
+                        <option value="client">Client</option>
+                      </select>
+                    </div>
+                  </>
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email Address
-                  </label>
+                  <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
                   <input
                     type="email"
-                    id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
                     placeholder="Enter your email"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
+                  <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                      className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500"
                       placeholder="Enter your password"
                       required
                     />
@@ -179,19 +246,16 @@ const handleGithubAuth = () => {
 
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                      Confirm Password
-                    </label>
+                    <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</label>
                     <div className="relative">
                       <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500"
                         placeholder="Confirm your password"
-                        required={!isLogin}
+                        required
                       />
                       <button
                         type="button"
@@ -205,11 +269,12 @@ const handleGithubAuth = () => {
                 )}
 
                 <button
-                  type="button"
+                  type="submit"
                   onClick={handleSubmit}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  disabled={authState.loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:scale-105 transition-all"
                 >
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  {authState.loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
                 </button>
               </div>
 
@@ -224,7 +289,7 @@ const handleGithubAuth = () => {
           </div>
         </div>
 
-        {/* Right Side - Brand Info */}
+        {/* Right branding block remains the same */}
         <div className="flex-1 flex items-center justify-center px-8 py-12 text-white">
           <div className="max-w-lg text-center">
             <h1 className="text-6xl font-bold mb-6 animate-pulse">SmartHire</h1>
@@ -236,28 +301,7 @@ const handleGithubAuth = () => {
               Build trust, automate payments, and work with confidence in a decentralized ecosystem 
               that puts you in control.
             </p>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-3xl mb-3">🔐</div>
-                <h3 className="font-semibold mb-2">Smart Contract Security</h3>
-                <p className="text-sm opacity-80">Automated and secure transactions</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-3xl mb-3">💰</div>
-                <h3 className="font-semibold mb-2">Automated Payments</h3>
-                <p className="text-sm opacity-80">Milestone-based compensation</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-3xl mb-3">🌐</div>
-                <h3 className="font-semibold mb-2">Decentralized Platform</h3>
-                <p className="text-sm opacity-80">Built on Polygon blockchain</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-3xl mb-3">⚡</div>
-                <h3 className="font-semibold mb-2">Trustless Collaboration</h3>
-                <p className="text-sm opacity-80">No third-party intermediaries</p>
-              </div>
+              <div>
             </div>
           </div>
         </div>

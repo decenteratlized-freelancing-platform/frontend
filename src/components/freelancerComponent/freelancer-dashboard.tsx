@@ -1,10 +1,12 @@
 "use client"
-
+import { useSession,} from "next-auth/react";
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {useCurrentUser} from "@/hooks/useCurrentUser";
+import { useEffect, useState } from "react"
 import {
   DollarSign,
   Clock,
@@ -19,6 +21,10 @@ import {
   AlertCircle,
   Play,
 } from "lucide-react"
+import {  Select, SelectContent, SelectItem,  SelectTrigger,  SelectValue } from "@radix-ui/react-select";
+import { Input } from "@/components/ui/input";
+// removed server model import
+
 
 const proposals = [
   {
@@ -121,9 +127,68 @@ const getStatusText = (status: string) => {
 }
 
 export default function FreelancerDashboard() {
+  const user = useCurrentUser();
+  const { data: session, status } = useSession();
+  const [displayName, setDisplayName] = useState("Guest");
+  const [profileData, setProfileData] = useState({fullname: "", email: "", role: ""});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  useEffect(() => {
+    const loginType = localStorage.getItem("loginType");
+
+    if (loginType === "manual") {
+      const name = localStorage.getItem("fullName");
+      const email = localStorage.getItem("email");
+      const role = localStorage.getItem("role");
+      setDisplayName(name || email || "Guest");
+      setProfileData({ fullname: name || "", email: email || "", role: role || ""});
+    } else if (session?.user) {
+      setDisplayName(session.user.name || session.user.email || "Guest");
+      setProfileData({
+        fullname: session.user.name || "",
+        email: session.user.email || "",
+        role: session.user.role || "",
+      });
+    }
+  }, [session, user]);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveMessage("");
+
+    try {
+      const res = await fetch("/api/user/update-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(profileData),
+      });
+      const data = await res.json();
+      if(res.ok) {
+        setSaveMessage("Profile updated successfully!");
+        localStorage.setItem("fullName", profileData.fullname);
+        localStorage.setItem("email", profileData.email);
+        localStorage.setItem("role", profileData.role);
+        setDisplayName(profileData.fullname || profileData.email || "Guest");  
+      }else {
+        setSaveMessage("Failed to update profile");
+      }
+    } catch (error) {
+      setSaveMessage("Error updating profile");
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (status === "loading") {
+    return <p className="text-white">Loading...</p>;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
-      {/* Header */}
+      
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -134,14 +199,14 @@ export default function FreelancerDashboard() {
           <Briefcase className="w-4 h-4 text-green-400" />
           <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Welcome back,{" "}
-          <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Jane!</span>
-        </h1>
+       <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
+      </h1>
+
         <p className="text-xl text-gray-300">Here's your freelance activity overview</p>
       </motion.div>
 
-      {/* Stats Cards */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
           {
@@ -199,10 +264,8 @@ export default function FreelancerDashboard() {
           </motion.div>
         ))}
       </div>
-
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Proposals */}
+        
         <div className="lg:col-span-2">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
