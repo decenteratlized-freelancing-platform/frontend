@@ -30,87 +30,144 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setAuthState({ loading: true, successUser: null, error: null });
+    e.preventDefault();
+    setAuthState({ loading: true, successUser: null, error: null });
+    setStatusMessage({ type: "", text: "" });
 
-  if (!formData.email || !formData.password || (!isLogin && !formData.fullName)) {
-    setAuthState({ loading: false, successUser: null, error: 'Please fill all required fields' });
-    return;
-  }
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://192.168.29.100:5000'}/api/auth`;
 
-  const apiUrl = 'http://localhost:5000/api/auth';
-
-  try {
-    if (isLogin) {
-      const res = await fetch(`${apiUrl}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, password: formData.password })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Clear stale OAuth session
-        await signOut({ redirect: false });
-        const user = data.user;
-        localStorage.setItem("loginType", "manual");
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("fullName", user?.fullName || "");
-        localStorage.setItem("email", user?.email || "");
-        localStorage.setItem("role", user?.role || "");
-        localStorage.setItem("currentUser", JSON.stringify(user));
-        router.push(user?.role === "client" ? "/client/dashboard" : "/freelancer/dashboard");
-      } else {
-        setStatusMessage({ type: 'error', text: data.message || 'Login failed' });
-      }
-    } else {
-      if (formData.password !== formData.confirmPassword) {
-        setStatusMessage({ type: 'error', text: 'Passwords do not match' });
+    try {
+      // Basic validation
+      if (!formData.email || !formData.password || (!isLogin && !formData.fullName)) {
+        setAuthState({ loading: false, successUser: null, error: "Please fill all required fields" });
+        setStatusMessage({ type: "error", text: "Please fill all required fields" });
         return;
       }
 
-      const res = await fetch(`${apiUrl}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role || 'freelancer', 
-          settings: {
-            phone: '',
-            bio: '',
-            skills: '',
-            notifications: { email: true, push: false, sms: true, marketing: false },
-            privacy: { profileVisible: true, showEmail: false, showPhone: false, allowMessages: true },
-            preferences: { language: 'en', timezone: 'utc', currency: 'usd', theme: 'dark' }
-          }
-        })
-      });
+      if (isLogin) {
+        // LOGIN
+        const res = await fetch(`${apiUrl}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        setStatusMessage({ type: 'success', text: 'Registration successful! Please login.' });
-        setIsLogin(true);
+        const data = await res.json();
+
+        if (res.ok) {
+          const user = data.user;
+          // persist token / user returned by backend
+          localStorage.setItem("loginType", "manual");
+          if (data.token) localStorage.setItem("token", data.token);
+          localStorage.setItem("fullName", user?.fullName || "");
+          localStorage.setItem("email", user?.email || "");
+          localStorage.setItem("role", user?.role || "");
+          localStorage.setItem("currentUser", JSON.stringify(user));
+
+          setAuthState({ loading: false, successUser: user, error: null });
+          setStatusMessage({ type: "success", text: "Login successful" });
+
+          // navigate to role page
+          router.push(user?.role === "client" ? "/client/dashboard" : "/freelancer/dashboard");
+        } else {
+          setAuthState({ loading: false, successUser: null, error: data.message || "Login failed" });
+          setStatusMessage({ type: "error", text: data.message || "Login failed" });
+          
+          // If email not verified, show resend option
+          if (data.emailNotVerified) {
+            setStatusMessage({ 
+              type: "error", 
+              text: data.message + " Click 'Resend Verification' below to send a new email." 
+            });
+          }
+        }
       } else {
-        setStatusMessage({ type: 'error', text: data.message || 'Registration failed' });
+        // SIGNUP / REGISTER
+        console.log("Sending registration request to:", `${apiUrl}/register`);
+        const requestBody = JSON.stringify({
+            fullName: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role || "freelancer",
+            settings: {
+              phone: "",
+              bio: "",
+              skills: "",
+              notifications: { email: true, push: false, sms: true, marketing: false },
+              privacy: { profileVisible: true, showEmail: false, showPhone: false, allowMessages: true },
+              preferences: { language: "en", timezone: "utc", currency: "usd", theme: "dark" },
+            },
+          });
+        
+        console.log("Request body:", requestBody);
+        
+        const res = await fetch(`${apiUrl}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        });
+
+        console.log("Response status:", res.status);
+        console.log("Response headers:", res.headers);
+        
+        const data = await res.json();
+        console.log("Response data:", data);
+
+        if (res.ok) {
+          setAuthState({ loading: false, successUser: null, error: null });
+          setStatusMessage({ type: "success", text: data.message || "Registration successful! Please check your email to verify your account." });
+          // switch to login view and clear form password fields
+          setIsLogin(true);
+          setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
+        } else {
+          setAuthState({ loading: false, successUser: null, error: data.message || "Registration failed" });
+          setStatusMessage({ type: "error", text: data.message || "Registration failed" });
+        }
       }
+    } catch (err: any) {
+      console.error("Error:", err);
+      setAuthState({ loading: false, successUser: null, error: err.message || "Something went wrong" });
+      setStatusMessage({ type: "error", text: err.message || "Something went wrong" });
     }
-  } catch (err) {
-    console.error('Error:', err);
-    setStatusMessage({ type: 'error', text: 'Something went wrong!' });
-  }
-};
+  };
 
 
   const handleGoogleAuth = () => {
   signIn('google', { callbackUrl: '/choose-role' });
 };
 
-const handleGithubAuth = () => {
+  const handleGithubAuth = () => {
   signIn('github', { callbackUrl: '/choose-role' });
-};  
+};
+
+const handleResendVerification = async () => {
+  if (!formData.email) {
+    setStatusMessage({ type: "error", text: "Please enter your email address first" });
+    return;
+  }
+
+  setAuthState({ loading: true, successUser: null, error: null });
+  
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://192.168.29.100:5000'}/api/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setStatusMessage({ type: "success", text: data.message || "Verification email sent successfully!" });
+    } else {
+      setStatusMessage({ type: "error", text: data.message || "Failed to send verification email" });
+    }
+  } catch (err: any) {
+    setStatusMessage({ type: "error", text: "Network error. Please try again." });
+  }
+  
+  setAuthState({ loading: false, successUser: null, error: null });
+};
 
 
 
@@ -279,10 +336,17 @@ const handleGithubAuth = () => {
               </div>
 
               {isLogin && (
-                <div className="mt-6 text-center">
-                  <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                <div className="mt-6 text-center space-y-3">
+                  <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium block">
                     Forgot your password?
                   </a>
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={authState.loading}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium block w-full"
+                  >
+                    {authState.loading ? 'Sending...' : 'Resend Verification Email'}
+                  </button>
                 </div>
               )}
             </div>

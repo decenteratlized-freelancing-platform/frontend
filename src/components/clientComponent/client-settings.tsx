@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,8 +10,22 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ClientSettings() {
+  const [profile, setProfile] = useState({
+    fullName: "",
+    phone: "",
+    professionalBio: "",
+    skills: [] as string[],
+    portfolioWebsite: "",
+    location: "",
+    image: "",
+    email: "",
+  })
+
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -26,15 +40,150 @@ export default function ClientSettings() {
     allowMessages: true,
   })
 
+  const [preferences, setPreferences] = useState({
+    language: "en",
+    timezone: "utc",
+    currency: "usd",
+    hourlyRate: "",
+    theme: "dark",
+  })
+
+  const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" })
+  const [loading, setLoading] = useState(false)
+
+  const { data: session } = useSession()
+  const { toast } = useToast()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const stored = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("currentUser") || "null")
+      } catch {
+        return null
+      }
+    })()
+
+    const initialEmail = stored?.email || session?.user?.email || localStorage.getItem("email") || ""
+    const initialFullName = stored?.fullName || (session?.user?.name as string) || localStorage.getItem("fullName") || ""
+
+    setProfile(prev => ({
+      ...prev,
+      email: initialEmail,
+      fullName: initialFullName,
+      phone: stored?.phone || prev.phone,
+      professionalBio: stored?.professionalBio || prev.professionalBio,
+      portfolioWebsite: stored?.portfolioWebsite || prev.portfolioWebsite,
+      location: stored?.location || prev.location,
+      image: stored?.image || prev.image,
+      skills: Array.isArray(stored?.skills) ? stored!.skills : prev.skills,
+    }))
+  }, [session])
+
+  const handleSaveProfile = async () => {
+    const email = profile.email || session?.user?.email || localStorage.getItem("email")
+    if (!email) {
+      toast({ title: "Error", description: "Email not found. Please log in again.", variant: "destructive" })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const body = {
+        email,
+        fullName: profile.fullName,
+        phone: profile.phone,
+        bio: profile.professionalBio,
+        skills: Array.isArray(profile.skills) ? profile.skills.join(",") : profile.skills,
+        notifications,
+        privacy,
+        preferences,
+        portfolioWebsite: profile.portfolioWebsite,
+        location: profile.location,
+        image: profile.image,
+      }
+
+      const response = await fetch("http://localhost:5000/api/auth/update-profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(typeof window !== "undefined" && localStorage.getItem("token")
+            ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            : {}),
+        },
+        body: JSON.stringify(body),
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Failed to update profile")
+
+      const newName = data.user?.fullName || profile.fullName
+      if (typeof window !== "undefined") {
+        localStorage.setItem("fullName", newName || "")
+        localStorage.setItem("email", email)
+        localStorage.setItem("currentUser", JSON.stringify(data.user || { email, fullName: newName }))
+      }
+
+      toast({ title: "Success", description: "Profile updated", variant: "default" })
+      router.refresh()
+    } catch (err: any) {
+      console.error("Profile save error:", err)
+      toast({ title: "Error", description: err.message || "Failed to update profile", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordUpdate = async () => {
+    if (passwords.new !== passwords.confirm) {
+      toast({ title: "Error", description: "New passwords don't match", variant: "destructive" })
+      return
+    }
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    if (!token) {
+      toast({ title: "Auth required", description: "Please log in before changing password.", variant: "destructive" })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwords.current,
+          newPassword: passwords.new,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Failed to update password")
+
+      toast({ title: "Success", description: "Password updated. Please login with the new password.", variant: "default" })
+      
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token")
+      }
+      setPasswords({ current: "", new: "", confirm: "" })
+      router.refresh()
+    } catch (err: any) {
+      console.error("Password update error:", err)
+      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-8 py-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="mb-8">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
           <Settings className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-medium text-white">Account Settings</span>
@@ -46,33 +195,14 @@ export default function ClientSettings() {
       </motion.div>
 
       {/* Settings Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 bg-white/5 backdrop-blur-sm border border-white/10">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 text-white">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10 text-white">
-              <Bell className="w-4 h-4 mr-2" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-white/10 text-white">
-              <Shield className="w-4 h-4 mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="billing" className="data-[state=active]:bg-white/10 text-white">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Billing
-            </TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/10 text-white">
-              <Globe className="w-4 h-4 mr-2" />
-              Preferences
-            </TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 text-white"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10 text-white"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white/10 text-white"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-white/10 text-white"><CreditCard className="w-4 h-4 mr-2" />Billing</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/10 text-white"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -82,19 +212,15 @@ export default function ClientSettings() {
                 <CardTitle className="text-2xl font-bold text-white">Profile Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative">
                     <Avatar className="w-24 h-24 border-2 border-white/20">
-                      <AvatarImage src="/placeholder.svg?height=96&width=96&text=Client" />
+                      <AvatarImage src={profile.image || "/placeholder.svg?height=96&width=96&text=Client"} />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl">
-                        C
+                        {profile.fullName?.[0] || "C"}
                       </AvatarFallback>
                     </Avatar>
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600"
-                    >
+                    <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
                       <Camera className="w-4 h-4" />
                     </Button>
                   </div>
@@ -104,50 +230,33 @@ export default function ClientSettings() {
                   </div>
                 </div>
 
-                {/* Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">First Name</label>
-                    <Input
-                      defaultValue="John"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                    />
+                    <Input value={profile.fullName?.split(" ")[0] || ""} onChange={e => setProfile(prev => ({ ...prev, fullName: `${e.target.value} ${prev.fullName?.split(" ").slice(1).join(" ") || ""}` }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Last Name</label>
-                    <Input
-                      defaultValue="Client"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                    />
+                    <Input value={profile.fullName?.split(" ").slice(1).join(" ") || ""} onChange={e => setProfile(prev => ({ ...prev, fullName: `${prev.fullName?.split(" ")[0] || ""} ${e.target.value}` }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Email</label>
-                    <Input
-                      defaultValue="john@example.com"
-                      type="email"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                    />
+                    <Input value={profile.email || (session?.user?.email ?? "")} onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))} type="email" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Phone</label>
-                    <Input
-                      defaultValue="+1 (555) 123-4567"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                    />
+                    <Input value={profile.phone} onChange={e => setProfile(prev => ({ ...prev, phone: e.target.value }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-300 mb-2 block">Bio</label>
-                  <Textarea
-                    defaultValue="Experienced client looking for top-tier freelancers to help build innovative projects."
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                  />
+                  <Textarea value={profile.professionalBio} onChange={e => setProfile(prev => ({ ...prev, professionalBio: e.target.value }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                 </div>
 
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button onClick={handleSaveProfile} disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   <Save className="w-4 h-4 mr-2" />
-                  Save Changes
+                  {loading ? "Saving..." : "Save Changes"}
                 </Button>
               </CardContent>
             </Card>
@@ -166,44 +275,32 @@ export default function ClientSettings() {
                       <h3 className="text-lg font-medium text-white">Email Notifications</h3>
                       <p className="text-sm text-gray-400">Receive updates via email</p>
                     </div>
-                    <Switch
-                      checked={notifications.email}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                    />
+                    <Switch checked={notifications.email} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, email: v }))} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-white">Push Notifications</h3>
                       <p className="text-sm text-gray-400">Receive push notifications on your device</p>
                     </div>
-                    <Switch
-                      checked={notifications.push}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
-                    />
+                    <Switch checked={notifications.push} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, push: v }))} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-white">SMS Notifications</h3>
                       <p className="text-sm text-gray-400">Receive important updates via SMS</p>
                     </div>
-                    <Switch
-                      checked={notifications.sms}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, sms: checked })}
-                    />
+                    <Switch checked={notifications.sms} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, sms: v }))} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-white">Marketing Communications</h3>
                       <p className="text-sm text-gray-400">Receive promotional emails and updates</p>
                     </div>
-                    <Switch
-                      checked={notifications.marketing}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, marketing: checked })}
-                    />
+                    <Switch checked={notifications.marketing} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, marketing: v }))} />
                   </div>
                 </div>
 
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button onClick={() => { /* optionally persist notifications locally */ }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   <Save className="w-4 h-4 mr-2" />
                   Save Preferences
                 </Button>
@@ -222,29 +319,20 @@ export default function ClientSettings() {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-300 mb-2 block">Current Password</label>
-                      <Input
-                        type="password"
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                      />
+                      <Input value={passwords.current} onChange={e => setPasswords(p => ({ ...p, current: e.target.value }))} type="password" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-300 mb-2 block">New Password</label>
-                      <Input
-                        type="password"
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                      />
+                      <Input value={passwords.new} onChange={e => setPasswords(p => ({ ...p, new: e.target.value }))} type="password" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-300 mb-2 block">Confirm New Password</label>
-                      <Input
-                        type="password"
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                      />
+                      <Input value={passwords.confirm} onChange={e => setPasswords(p => ({ ...p, confirm: e.target.value }))} type="password" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                     </div>
                   </div>
 
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    Update Password
+                  <Button onClick={handlePasswordUpdate} disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    {loading ? "Updating..." : "Update Password"}
                   </Button>
                 </CardContent>
               </Card>
@@ -259,30 +347,21 @@ export default function ClientSettings() {
                       <h3 className="text-lg font-medium text-white">Profile Visibility</h3>
                       <p className="text-sm text-gray-400">Make your profile visible to freelancers</p>
                     </div>
-                    <Switch
-                      checked={privacy.profileVisible}
-                      onCheckedChange={(checked) => setPrivacy({ ...privacy, profileVisible: checked })}
-                    />
+                    <Switch checked={privacy.profileVisible} onCheckedChange={(v: boolean) => setPrivacy(prev => ({ ...prev, profileVisible: v }))} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-white">Show Email</h3>
                       <p className="text-sm text-gray-400">Display email on your profile</p>
                     </div>
-                    <Switch
-                      checked={privacy.showEmail}
-                      onCheckedChange={(checked) => setPrivacy({ ...privacy, showEmail: checked })}
-                    />
+                    <Switch checked={privacy.showEmail} onCheckedChange={(v: boolean) => setPrivacy(prev => ({ ...prev, showEmail: v }))} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-white">Allow Messages</h3>
                       <p className="text-sm text-gray-400">Allow freelancers to message you directly</p>
                     </div>
-                    <Switch
-                      checked={privacy.allowMessages}
-                      onCheckedChange={(checked) => setPrivacy({ ...privacy, allowMessages: checked })}
-                    />
+                    <Switch checked={privacy.allowMessages} onCheckedChange={(v: boolean) => setPrivacy(prev => ({ ...prev, allowMessages: v }))} />
                   </div>
                 </CardContent>
               </Card>
@@ -330,13 +409,13 @@ export default function ClientSettings() {
           <TabsContent value="preferences">
             <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">General Preferences</CardTitle>
+                <CardTitle className="text-2xl font-bold text-white">Preferences</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Language</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white">
+                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.language} onChange={e => setPreferences(prev => ({ ...prev, language: e.target.value }))}>
                       <option value="en">English</option>
                       <option value="es">Spanish</option>
                       <option value="fr">French</option>
@@ -344,7 +423,7 @@ export default function ClientSettings() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Timezone</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white">
+                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.timezone} onChange={e => setPreferences(prev => ({ ...prev, timezone: e.target.value }))}>
                       <option value="utc">UTC</option>
                       <option value="est">Eastern Time</option>
                       <option value="pst">Pacific Time</option>
@@ -352,7 +431,7 @@ export default function ClientSettings() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white">
+                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.currency} onChange={e => setPreferences(prev => ({ ...prev, currency: e.target.value }))}>
                       <option value="usd">USD ($)</option>
                       <option value="eur">EUR (€)</option>
                       <option value="gbp">GBP (£)</option>
@@ -360,7 +439,7 @@ export default function ClientSettings() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Theme</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white">
+                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.theme} onChange={e => setPreferences(prev => ({ ...prev, theme: e.target.value }))}>
                       <option value="dark">Dark</option>
                       <option value="light">Light</option>
                       <option value="auto">Auto</option>
@@ -380,3 +459,4 @@ export default function ClientSettings() {
     </div>
   )
 }
+

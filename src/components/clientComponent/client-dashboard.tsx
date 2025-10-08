@@ -1,8 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 import {
   Plus,
   Sparkles,
@@ -103,6 +106,20 @@ const recentActivity = [
 ]
 
 export default function ClientDashboard() {
+  const { data: session } = useSession()
+  const user = useCurrentUser()
+
+  const [displayName, setDisplayName] = useState("Client")
+
+  useEffect(() => {
+    const nameFromSession = session?.user?.name
+    const nameFromHook = user?.name
+    const nameFromLocal =
+      typeof window !== "undefined" ? localStorage.getItem("fullName") : null
+
+    setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client")
+  }, [session, user])
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
       <motion.div
@@ -118,7 +135,9 @@ export default function ClientDashboard() {
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
             Welcome Back,{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Client</span>
+            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              {displayName}
+            </span>
           </h1>
           <p className="text-xl text-gray-300">Manage your projects and find talented freelancers</p>
         </div>

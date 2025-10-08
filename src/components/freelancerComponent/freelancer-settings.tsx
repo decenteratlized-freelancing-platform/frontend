@@ -32,6 +32,7 @@ import {
   Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface UserSettings {
   fullName: string;
@@ -62,6 +63,7 @@ interface UserSettings {
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
   const [showPasswords, setShowPasswords] = useState({
@@ -169,40 +171,45 @@ export default function SettingsPage() {
 
     setLoading(true);
     try {
-      console.log("Attempting to save profile with email:", email); // Debug log
-
-      const response = await fetch("/api/settings", {
-        method: "POST",
+      // Send update to backend server (same DB as register/login)
+      const response = await fetch("http://localhost:5000/api/auth/update-profile", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           fullName: settings.fullName,
           phone: settings.phone,
-          location: settings.location,
+          bio: settings.professionalBio,
+          skills: settings.skills?.join(", ") || "",
+          notifications: settings.notifications,
+          privacy: settings.security,
+          preferences: {
+            language: settings.language,
+            timezone: settings.timezone,
+            currency: settings.currency,
+            hourlyRate: settings.hourlyRate,
+          },
           portfolioWebsite: settings.portfolioWebsite,
-          professionalBio: settings.professionalBio,
-          skills: settings.skills,
-          hourlyRate: settings.hourlyRate,
-          availableForJobs: settings.availabilityStatus === "Available for Work",
+          location: settings.location,
         }),
       });
 
       const data = await response.json();
-      console.log("API response:", data);
+      console.log("Update profile response:", data);
 
       if (response.ok) {
         toast({
           title: "Success",
           description: "Profile settings updated successfully",
         });
-        
-        // Update localStorage
-        localStorage.setItem("fullName", settings.fullName);
-        
-        // Update session if available
-        if (session?.user) {
-          // You might need to implement session update logic here
-        }
+
+        // Keep local app in sync
+        const newName = data.user?.fullName || settings.fullName;
+        localStorage.setItem("fullName", newName);
+        localStorage.setItem("email", email);
+        // Refresh UI (revalidate server components / session)
+        router.refresh();
+
       } else {
         throw new Error(data.message || "Failed to update settings");
       }
@@ -229,7 +236,8 @@ export default function SettingsPage() {
     }
 
     const email = localStorage.getItem("email") || session?.user?.email;
-    
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
     if (!email) {
       toast({
         title: "Error",
@@ -239,31 +247,52 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!token) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in before changing password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch("/api/settings/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      // Call backend change-password route that validates JWT and updates DB
+      const response = await fetch("http://localhost:5000/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          email,
           currentPassword: passwords.current,
           newPassword: passwords.new,
         }),
       });
 
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Password updated successfully",
-        });
-        setPasswords({ current: "", new: "", confirm: "" });
-      } else {
-        throw new Error("Failed to update password");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update password");
       }
-    } catch (error) {
+
+      toast({
+        title: "Success",
+        description: "Password updated successfully. Please login with the new password.",
+      });
+
+      // Clear local credentials and force user to re-login for security
+      localStorage.removeItem("token");
+      // optional: keep email for convenience but remove session info
+      // localStorage.removeItem("currentUser");
+      setPasswords({ current: "", new: "", confirm: "" });
+
+      // force UI refresh / sign out client session if using next-auth
+      router.refresh();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update password",
+        description: error?.message || "Failed to update password",
         variant: "destructive",
       });
     } finally {
@@ -813,21 +842,21 @@ export default function SettingsPage() {
                   <div>
                     <p className="text-gray-100 font-medium">SMS Notifications</p>
                     <p className="text-gray-400 text-sm">Receive notifications via SMS</p>
-                  </div>
-                  <Switch
+                    <Switch
                     checked={!!settings.notifications?.sms}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={(checked: boolean) =>
                       setSettings(prev => ({
-                        ...prev,
-                        notifications: {
-                          ...prev.notifications,
-                          sms: checked ?? false,
-                          email: prev.notifications?.email ?? false,
-                          push: prev.notifications?.push ?? false,
-                        }
+                      ...prev,
+                      notifications: {
+                        ...prev.notifications,
+                        sms: checked ?? false,
+                        email: prev.notifications?.email ?? false,
+                        push: prev.notifications?.push ?? false,
+                      },
                       }))
                     }
-                  />
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -848,4 +877,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-} 
+}
