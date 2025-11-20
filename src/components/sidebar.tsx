@@ -76,8 +76,8 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
   const menuItems = userType === "client" ? clientMenuItems : freelancerMenuItems;
   const { data: session } = useSession();
   const router = useRouter();
-  const { address, connectWallet, isConnecting } = useWalletConnection();
-  
+  const { address, connectWallet, disconnectWallet, isConnecting } = useWalletConnection();
+
 
   useEffect(() => {
     if (session?.user) {
@@ -100,6 +100,7 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
   const handleLogout = () => {
     if (session) {
       // OAuth logout
+      localStorage.clear();
       signOut({ callbackUrl: "/login" });
     } else {
       // Manual logout
@@ -124,9 +125,8 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
       initial={{ x: -300, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
-        isCollapsed ? "w-16" : "w-64"
-      }`}
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"
+        }`}
     >
       <div className="relative h-full">
         {/* Sidebar background */}
@@ -146,9 +146,8 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
                   className="flex items-center gap-2"
                 >
                   <div
-                    className={`w-8 h-8 bg-gradient-to-br ${
-                      userType === "client" ? "from-blue-500 to-purple-600" : "from-green-500 to-blue-600"
-                    } rounded-lg flex items-center justify-center shadow-md`}
+                    className={`w-8 h-8 bg-gradient-to-br ${userType === "client" ? "from-blue-500 to-purple-600" : "from-green-500 to-blue-600"
+                      } rounded-lg flex items-center justify-center shadow-md`}
                   >
                     <Zap className="w-4 h-4 text-white" />
                   </div>
@@ -180,11 +179,10 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
                 >
                   <Link href={item.href}>
                     <div
-                      className={`group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 ${
-                        isActive
-                          ? "bg-white/15 text-white shadow-sm"
-                          : "text-white/70 hover:text-white hover:bg-white/8"
-                      } ${isCollapsed ? "justify-center" : ""}`}
+                      className={`group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 ${isActive
+                        ? "bg-white/15 text-white shadow-sm"
+                        : "text-white/70 hover:text-white hover:bg-white/8"
+                        } ${isCollapsed ? "justify-center" : ""}`}
                     >
                       <div
                         className={`relative w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center`}
@@ -207,29 +205,52 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
             className="mx-3 space-y-3"
           >
             {/* Wallet connect button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
-              onClick={handleWalletClick}
-              disabled={isConnecting}
-            >
-              <span className="flex items-center gap-2">
-                {isConnecting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Wallet className="w-4 h-4" />
-                )}
-                <span className="text-xs font-medium">{walletLabel}</span>
-              </span>
-            </Button>
+            {address ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Wallet className="w-4 h-4" />
+                      <span className="text-xs font-medium">{walletLabel}</span>
+                    </span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl">
+                  <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500/10 cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Disconnect Wallet</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
+                onClick={handleWalletClick}
+                disabled={isConnecting}
+              >
+                <span className="flex items-center gap-2">
+                  {isConnecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wallet className="w-4 h-4" />
+                  )}
+                  <span className="text-xs font-medium">{walletLabel}</span>
+                </span>
+              </Button>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div
-                  className={`flex items-center gap-3 p-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer ${
-                    isCollapsed ? "justify-center" : ""
-                  }`}
+                  className={`flex items-center gap-3 p-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer ${isCollapsed ? "justify-center" : ""
+                    }`}
                 >
                   <Avatar className="w-8 h-8 border border-white/20">
                     <AvatarImage src={user.image || "/placeholder.svg"} />

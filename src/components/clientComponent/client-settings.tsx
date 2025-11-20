@@ -17,6 +17,7 @@ import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ClientSettings() {
+  const [currentEmail, setCurrentEmail] = useState(""); // Track current logged-in email
   const [profile, setProfile] = useState({
     fullName: "",
     phone: "",
@@ -86,21 +87,25 @@ export default function ClientSettings() {
       }
     })()
 
-    const initialEmail = stored?.email || session?.user?.email || localStorage.getItem("email") || ""
-    const initialFullName = stored?.fullName || (session?.user?.name as string) || localStorage.getItem("fullName") || ""
+    const initialEmail = session?.user?.email || stored?.email || localStorage.getItem("email") || ""
+    const initialFullName = (session?.user?.name as string) || stored?.fullName || localStorage.getItem("fullName") || ""
 
-    setProfile(prev => ({
-      ...prev,
-      email: initialEmail,
-      fullName: initialFullName,
-      phone: stored?.phone || prev.phone,
-      professionalBio: stored?.professionalBio || prev.professionalBio,
-      portfolioWebsite: stored?.portfolioWebsite || prev.portfolioWebsite,
-      location: stored?.location || prev.location,
-      image: stored?.image || prev.image,
-      skills: Array.isArray(stored?.skills) ? stored!.skills : (stored?.skills ? stored.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
-    }))
-  }, [session])
+    // Only update if the email has changed (different account logged in)
+    if (initialEmail && initialEmail !== currentEmail) {
+      setCurrentEmail(initialEmail); // Update the current email tracker
+      setProfile(prev => ({
+        ...prev,
+        email: initialEmail,
+        fullName: initialFullName,
+        phone: stored?.phone || "",
+        professionalBio: stored?.professionalBio || "",
+        portfolioWebsite: stored?.portfolioWebsite || "",
+        location: stored?.location || "",
+        image: stored?.image || "",
+        skills: Array.isArray(stored?.skills) ? stored!.skills : (stored?.skills ? stored.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
+      }))
+    }
+  }, [session, currentEmail])
 
   useEffect(() => {
     if (profile.skills && profile.skills.length > 0) {

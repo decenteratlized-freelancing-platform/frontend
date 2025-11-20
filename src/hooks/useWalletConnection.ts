@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<any>;
   isMetaMask?: boolean;
+  providers?: EthereumProvider[];
 };
 
 export function useWalletConnection() {
@@ -15,11 +16,13 @@ export function useWalletConnection() {
   const [error, setError] = useState<string | null>(null);
   const [localAddress, setLocalAddress] = useState<string | null>(null);
   const [linkedAt, setLinkedAt] = useState<string | null>(null);
+  const [isDisconnected, setIsDisconnected] = useState(false);
 
   const address = useMemo(() => {
+    if (isDisconnected) return null;
     if (localAddress) return localAddress;
     if (session?.user) return (session.user as any)?.walletAddress ?? null;
-    // Check localStorage for manual login
+
     if (typeof window !== "undefined") {
       try {
         const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
@@ -29,16 +32,16 @@ export function useWalletConnection() {
       }
     }
     return null;
-  }, [localAddress, session?.user]);
+  }, [localAddress, session?.user, isDisconnected]);
 
   const walletLinkedAt = useMemo(() => {
+    if (isDisconnected) return null;
     return linkedAt ?? ((session?.user as any)?.walletLinkedAt ?? null);
-  }, [linkedAt, session?.user]);
+  }, [linkedAt, session?.user, isDisconnected]);
 
   const connectWallet = useCallback(async () => {
-    // Support both NextAuth session and manual login
     const userEmail = session?.user?.email || (typeof window !== "undefined" ? localStorage.getItem("email") : null);
-    
+
     if (!userEmail) {
       toast({
         title: "Please sign in",
@@ -50,24 +53,26 @@ export function useWalletConnection() {
 
     setIsConnecting(true);
     setError(null);
+    setIsDisconnected(false);
 
     try {
-      // Check if MetaMask is available
       if (typeof window === "undefined") {
         throw new Error("This feature is only available in the browser.");
       }
 
-      const provider = (window as any).ethereum as EthereumProvider | undefined;
+      let provider = (window as any).ethereum;
 
-      if (!provider) {
-        throw new Error(
-          "MetaMask extension not found. Please install MetaMask from https://metamask.io/"
-        );
+      // Strict MetaMask detection
+      if (provider?.providers) {
+        // If multiple providers are injected (EIP-6963), find MetaMask specifically
+        provider = provider.providers.find((p: any) => p.isMetaMask);
       }
 
-      if (!provider.isMetaMask) {
+      // If the provider itself is not MetaMask (and we didn't find it in providers array),
+      // or if it doesn't exist at all.
+      if (!provider || !provider.isMetaMask) {
         throw new Error(
-          "MetaMask extension not detected. Please make sure MetaMask is installed and enabled."
+          "MetaMask is not detected. Please install MetaMask from https://metamask.io/ to continue."
         );
       }
 
@@ -117,7 +122,7 @@ export function useWalletConnection() {
         throw new Error(`Failed to sign message: ${err.message || "Unknown error"}`);
       }
 
-      // Send to backend (include email for manual login)
+      // Send to backend
       const response = await fetch("/api/user/wallet", {
         method: "POST",
         headers: {
@@ -127,7 +132,7 @@ export function useWalletConnection() {
           address: account,
           message,
           signature,
-          email: userEmail, // Include email for manual login support
+          email: userEmail,
         }),
       });
 
@@ -143,7 +148,6 @@ export function useWalletConnection() {
       setLocalAddress(savedAddress ?? account);
       setLinkedAt(savedLinkedAt ?? null);
 
-      // Update session (only if NextAuth session exists)
       if (session?.user && update) {
         await update({
           user: {
@@ -153,7 +157,6 @@ export function useWalletConnection() {
           },
         });
       } else {
-        // For manual login, store in localStorage
         if (typeof window !== "undefined") {
           const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
           localStorage.setItem("currentUser", JSON.stringify({
@@ -181,10 +184,34 @@ export function useWalletConnection() {
     }
   }, [session, update, toast]);
 
-  const disconnectWallet = useCallback(() => {
+  const disconnectWallet = useCallback(async () => {
     setLocalAddress(null);
     setLinkedAt(null);
-  }, []);
+    setIsDisconnected(true);
+
+    if (typeof window !== "undefined") {
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      if (currentUser.walletAddress) {
+        const { walletAddress, walletLinkedAt, ...rest } = currentUser;
+        localStorage.setItem("currentUser", JSON.stringify(rest));
+      }
+    }
+
+    if (session?.user && update) {
+      await update({
+        user: {
+          ...(session.user as any),
+          walletAddress: null,
+          walletLinkedAt: null,
+        },
+      });
+    }
+
+    toast({
+      title: "Wallet disconnected",
+      description: "Your wallet has been disconnected.",
+    });
+  }, [session, update, toast]);
 
   return {
     address,
@@ -195,4 +222,3 @@ export function useWalletConnection() {
     disconnectWallet,
   };
 }
-

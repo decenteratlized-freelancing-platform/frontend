@@ -18,7 +18,7 @@ export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
   const router = useRouter()
-  const { address, connectWallet, isConnecting } = useWalletConnection()
+  const { address, connectWallet, disconnectWallet, isConnecting } = useWalletConnection()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -127,9 +127,8 @@ export default function Navigation() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 * index }}
                     whileHover={{ y: -2 }}
-                    className={`flex items-center gap-2 transition-all duration-300 px-4 py-2 rounded-full group ${
-                      isActive ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/10"
-                    }`}
+                    className={`flex items-center gap-2 transition-all duration-300 px-4 py-2 rounded-full group ${isActive ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/10"
+                      }`}
                   >
                     <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                     <span className="font-medium">{item.name}</span>
@@ -148,18 +147,38 @@ export default function Navigation() {
                 Sign In
               </Button>
 
-              <Button
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300 group"
-                onClick={handleWalletClick}
-                disabled={isConnecting}
-              >
-                {isConnecting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Wallet className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                )}
-                {walletLabel}
-              </Button>
+              {address ? (
+                <div className="relative group">
+                  <Button
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    {walletLabel}
+                  </Button>
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
+                    <button
+                      onClick={disconnectWallet}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-white/10 transition-colors rounded-xl"
+                    >
+                      <span className="w-4 h-4">🚪</span>
+                      Disconnect Wallet
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300 group"
+                  onClick={handleWalletClick}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Wallet className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                  )}
+                  {walletLabel}
+                </Button>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -214,9 +233,8 @@ export default function Navigation() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.1 * index }}
-                      className={`flex items-center gap-3 transition-all duration-300 p-3 rounded-2xl group w-full text-left ${
-                        isActive ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/10"
-                      }`}
+                      className={`flex items-center gap-3 transition-all duration-300 p-3 rounded-2xl group w-full text-left ${isActive ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/10"
+                        }`}
                     >
                       <item.icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                       <span className="font-medium">{item.name}</span>

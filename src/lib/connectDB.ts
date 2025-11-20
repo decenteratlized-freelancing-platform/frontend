@@ -11,7 +11,7 @@ export async function connectDB() {
       throw new Error('Missing MONGO_URI (or MONGODB_URI) env variable');
     }
     await mongoose.connect(uri, {
-      dbName: 'smarthire',
+      dbName: 'smarthire_db',
     });
     isConnected = true;
     console.log('MongoDB connected');
