@@ -1,11 +1,11 @@
 "use client"
-import { useSession,} from "next-auth/react";
+import { useSession, } from "next-auth/react";
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {useCurrentUser} from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEffect, useState } from "react"
 import {
   DollarSign,
@@ -21,75 +21,20 @@ import {
   AlertCircle,
   Play,
 } from "lucide-react"
-import {  Select, SelectContent, SelectItem,  SelectTrigger,  SelectValue } from "@radix-ui/react-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
 import { Input } from "@/components/ui/input";
 // removed server model import
 
 
-const proposals = [
-  {
-    id: 1,
-    jobTitle: "E-commerce Website Development",
-    client: "TechCorp Solutions",
-    clientAvatar: "/placeholder.svg?height=40&width=40&text=TC",
-    budget: "$5,000",
-    proposedRate: "$4,500",
-    deliveryTime: "3 weeks",
-    status: "under_review",
-    submittedDate: "2024-01-15",
-    coverLetter:
-      "I have extensive experience in e-commerce development with React and Node.js. I can deliver a modern, responsive website with all the features you need...",
-  },
-  {
-    id: 2,
-    jobTitle: "Mobile App UI/UX Design",
-    client: "StartupXYZ",
-    clientAvatar: "/placeholder.svg?height=40&width=40&text=SX",
-    budget: "$3,000",
-    proposedRate: "$2,800",
-    deliveryTime: "2 weeks",
-    status: "shortlisted",
-    submittedDate: "2024-01-12",
-    coverLetter:
-      "I specialize in mobile app design with a focus on user experience. My portfolio includes 50+ successful mobile app designs...",
-  },
-  {
-    id: 3,
-    jobTitle: "Content Writing for Blog",
-    client: "Digital Marketing Pro",
-    clientAvatar: "/placeholder.svg?height=40&width=40&text=DM",
-    budget: "$800",
-    proposedRate: "$750",
-    deliveryTime: "1 week",
-    status: "accepted",
-    submittedDate: "2024-01-10",
-    coverLetter:
-      "I'm a professional content writer with 5+ years of experience in digital marketing content. I can create engaging, SEO-optimized blog posts...",
-  },
-  {
-    id: 4,
-    jobTitle: "Logo Design Project",
-    client: "Creative Agency",
-    clientAvatar: "/placeholder.svg?height=40&width=40&text=CA",
-    budget: "$500",
-    proposedRate: "$450",
-    deliveryTime: "5 days",
-    status: "declined",
-    submittedDate: "2024-01-08",
-    coverLetter:
-      "I'm a graphic designer with expertise in logo design and brand identity. I can create a unique, memorable logo that represents your brand...",
-  },
-]
-
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "under_review":
+    case "pending":
       return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
     case "shortlisted":
       return "bg-blue-500/20 text-blue-400 border-blue-500/30"
     case "accepted":
       return "bg-green-500/20 text-green-400 border-green-500/30"
-    case "declined":
+    case "rejected":
       return "bg-red-500/20 text-red-400 border-red-500/30"
     default:
       return "bg-gray-500/20 text-gray-400 border-gray-500/30"
@@ -98,13 +43,13 @@ const getStatusColor = (status: string) => {
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case "under_review":
+    case "pending":
       return <AlertCircle className="w-4 h-4" />
     case "shortlisted":
       return <Eye className="w-4 h-4" />
     case "accepted":
       return <CheckCircle className="w-4 h-4" />
-    case "declined":
+    case "rejected":
       return <XCircle className="w-4 h-4" />
     default:
       return <Clock className="w-4 h-4" />
@@ -113,14 +58,14 @@ const getStatusIcon = (status: string) => {
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case "under_review":
-      return "Under Review"
+    case "pending":
+      return "Pending"
     case "shortlisted":
       return "Shortlisted"
     case "accepted":
       return "Accepted"
-    case "declined":
-      return "Declined"
+    case "rejected":
+      return "Rejected"
     default:
       return "Unknown"
   }
@@ -130,9 +75,12 @@ export default function FreelancerDashboard() {
   const user = useCurrentUser();
   const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("Guest");
-  const [profileData, setProfileData] = useState({fullname: "", email: "", role: ""});
+  const [profileData, setProfileData] = useState({ fullname: "", email: "", role: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [loadingProposals, setLoadingProposals] = useState(true);
+
   useEffect(() => {
     const loginType = localStorage.getItem("loginType");
 
@@ -141,7 +89,7 @@ export default function FreelancerDashboard() {
       const email = localStorage.getItem("email");
       const role = localStorage.getItem("role");
       setDisplayName(name || email || "Guest");
-      setProfileData({ fullname: name || "", email: email || "", role: role || ""});
+      setProfileData({ fullname: name || "", email: email || "", role: role || "" });
     } else if (session?.user) {
       setDisplayName(session.user.name || session.user.email || "Guest");
       setProfileData({
@@ -151,6 +99,27 @@ export default function FreelancerDashboard() {
       });
     }
   }, [session, user]);
+
+  useEffect(() => {
+    const fetchProposals = async () => {
+      const email = session?.user?.email || localStorage.getItem("email");
+      if (email) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/proposals/my-proposals?email=${email}`);
+          if (res.ok) {
+            const data = await res.json();
+            setProposals(data);
+          }
+        } catch (error) {
+          console.error("Error fetching proposals:", error);
+        } finally {
+          setLoadingProposals(false);
+        }
+      }
+    };
+
+    fetchProposals();
+  }, [session]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -165,13 +134,13 @@ export default function FreelancerDashboard() {
         body: JSON.stringify(profileData),
       });
       const data = await res.json();
-      if(res.ok) {
+      if (res.ok) {
         setSaveMessage("Profile updated successfully!");
         localStorage.setItem("fullName", profileData.fullname);
         localStorage.setItem("email", profileData.email);
         localStorage.setItem("role", profileData.role);
-        setDisplayName(profileData.fullname || profileData.email || "Guest");  
-      }else {
+        setDisplayName(profileData.fullname || profileData.email || "Guest");
+      } else {
         setSaveMessage("Failed to update profile");
       }
     } catch (error) {
@@ -186,9 +155,11 @@ export default function FreelancerDashboard() {
     return <p className="text-white">Loading...</p>;
   }
 
+  const activeProjectsCount = proposals.filter(p => p.status === 'accepted').length;
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
-      
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -199,40 +170,40 @@ export default function FreelancerDashboard() {
           <Briefcase className="w-4 h-4 text-green-400" />
           <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
         </div>
-       <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-        Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
-      </h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
+        </h1>
 
         <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
       </motion.div>
 
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
           {
             title: "Total Earnings",
-            value: "$12,450",
+            value: "$12,450", // Placeholder
             change: "+18%",
             icon: DollarSign,
             color: "from-green-500 to-emerald-500",
           },
           {
             title: "Active Projects",
-            value: "8",
-            change: "+2",
+            value: activeProjectsCount.toString(),
+            change: "Updated just now",
             icon: Briefcase,
             color: "from-blue-500 to-cyan-500",
           },
           {
             title: "Completed Jobs",
-            value: "24",
+            value: "24", // Placeholder
             change: "+4",
             icon: Award,
             color: "from-purple-500 to-pink-500",
           },
           {
             title: "Client Rating",
-            value: "4.9",
+            value: "4.9", // Placeholder
             change: "+0.1",
             icon: Star,
             color: "from-orange-500 to-red-500",
@@ -265,7 +236,7 @@ export default function FreelancerDashboard() {
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         <div className="lg:col-span-2">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -280,81 +251,86 @@ export default function FreelancerDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {proposals.map((proposal, index) => (
-                  <motion.div
-                    key={proposal.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 border border-white/20">
-                          <AvatarImage src={proposal.clientAvatar || "/placeholder.svg"} />
-                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white font-bold text-xs">
-                            {proposal.client
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
+                {loadingProposals ? (
+                  <p className="text-gray-400">Loading proposals...</p>
+                ) : proposals.length === 0 ? (
+                  <p className="text-gray-400">No proposals submitted yet.</p>
+                ) : (
+                  proposals.map((proposal, index) => (
+                    <motion.div
+                      key={proposal._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10 border border-white/20">
+                            <AvatarImage src={"/placeholder.svg"} />
+                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white font-bold text-xs">
+                              {proposal.job?.client?.fullName
+                                ? proposal.job.client.fullName.split(" ").map((n: string) => n[0]).join("")
+                                : "C"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-semibold text-white text-sm">{proposal.job?.title || "Unknown Job"}</h4>
+                            <p className="text-xs text-gray-400">{proposal.job?.client?.fullName || "Unknown Client"}</p>
+                          </div>
+                        </div>
+                        <Badge className={`${getStatusColor(proposal.status)} flex items-center gap-1`}>
+                          {getStatusIcon(proposal.status)}
+                          {getStatusText(proposal.status)}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                         <div>
-                          <h4 className="font-semibold text-white text-sm">{proposal.jobTitle}</h4>
-                          <p className="text-xs text-gray-400">{proposal.client}</p>
+                          <p className="text-xs text-gray-400">Client Budget</p>
+                          <p className="text-sm font-medium text-white">${proposal.job?.budget?.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Your Rate</p>
+                          <p className="text-sm font-medium text-green-400">${proposal.proposedRate?.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Delivery</p>
+                          <p className="text-sm font-medium text-white">{proposal.deliveryTime}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Submitted</p>
+                          <p className="text-sm font-medium text-white">{new Date(proposal.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <Badge className={`${getStatusColor(proposal.status)} flex items-center gap-1`}>
-                        {getStatusIcon(proposal.status)}
-                        {getStatusText(proposal.status)}
-                      </Badge>
-                    </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                      <div>
-                        <p className="text-xs text-gray-400">Client Budget</p>
-                        <p className="text-sm font-medium text-white">{proposal.budget}</p>
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-400 mb-1">Cover Letter</p>
+                        <p className="text-sm text-gray-300 line-clamp-2">{proposal.coverLetter}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Your Rate</p>
-                        <p className="text-sm font-medium text-green-400">{proposal.proposedRate}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Delivery</p>
-                        <p className="text-sm font-medium text-white">{proposal.deliveryTime}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Submitted</p>
-                        <p className="text-sm font-medium text-white">{proposal.submittedDate}</p>
-                      </div>
-                    </div>
 
-                    <div className="mb-3">
-                      <p className="text-xs text-gray-400 mb-1">Cover Letter</p>
-                      <p className="text-sm text-gray-300 line-clamp-2">{proposal.coverLetter}</p>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
-                      {proposal.status === "accepted" && (
+                      <div className="flex items-center justify-between">
                         <Button
+                          variant="ghost"
                           size="sm"
-                          className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                          className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
                         >
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Project
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
                         </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                        {proposal.status === "accepted" && (
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Start Project
+                          </Button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </CardContent>
             </Card>
           </motion.div>

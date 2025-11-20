@@ -20,66 +20,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import AnimatedCounter from "@/components/homepageComponents/animated-counter"
-
-const stats = [
-  {
-    title: "Active Jobs",
-    value: 12,
-    change: "+2 this week",
-    icon: Eye,
-    color: "from-blue-500 to-cyan-500",
-  },
-  {
-    title: "Total Spent",
-    value: 24500,
-    change: "+$1,200 this month",
-    icon: DollarSign,
-    color: "from-green-500 to-emerald-500",
-    prefix: "$",
-  },
-  {
-    title: "Freelancers Hired",
-    value: 48,
-    change: "+5 this month",
-    icon: Users,
-    color: "from-purple-500 to-pink-500",
-  },
-  {
-    title: "Response Time",
-    value: 2.4,
-    change: "-0.3h improved",
-    icon: Clock,
-    color: "from-orange-500 to-red-500",
-    suffix: "h",
-  },
-]
-
-const recentProjects = [
-  {
-    title: "E-commerce Platform Development",
-    freelancer: "John Doe",
-    status: "In Progress",
-    progress: 75,
-    deadline: "2024-02-15",
-    budget: "$3,500",
-  },
-  {
-    title: "Mobile App UI/UX Design",
-    freelancer: "Sarah Wilson",
-    status: "Review",
-    progress: 90,
-    deadline: "2024-01-30",
-    budget: "$2,200",
-  },
-  {
-    title: "Content Writing for Blog",
-    freelancer: "Mike Johnson",
-    status: "Completed",
-    progress: 100,
-    deadline: "2024-01-20",
-    budget: "$800",
-  },
-]
+import { ProposalReviewModal } from "./proposal-review-modal"
+import ChatWindow from "../chat/ChatWindow"
+import { AnimatePresence } from "framer-motion"
 
 const recentActivity = [
   {
@@ -108,8 +51,12 @@ const recentActivity = [
 export default function ClientDashboard() {
   const { data: session } = useSession()
   const user = useCurrentUser()
-
   const [displayName, setDisplayName] = useState("Client")
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [activeChat, setActiveChat] = useState<{ id: string, name: string, image?: string } | null>(null)
 
   useEffect(() => {
     const nameFromSession = session?.user?.name
@@ -120,8 +67,86 @@ export default function ClientDashboard() {
     setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client")
   }, [session, user])
 
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (session?.user?.email) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/jobs/my-jobs?email=${session.user.email}`)
+          if (res.ok) {
+            const data = await res.json()
+            setJobs(data)
+          }
+        } catch (error) {
+          console.error("Error fetching jobs:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
+    if (session?.user?.email) {
+      fetchJobs()
+    }
+  }, [session])
+
+  const activeJobsCount = jobs.filter(job => job.status === 'open' || job.status === 'in_progress').length
+
+  const stats = [
+    {
+      title: "Active Jobs",
+      value: activeJobsCount,
+      change: "Updated just now",
+      icon: Eye,
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      title: "Total Spent",
+      value: 24500, // Placeholder for now
+      change: "+$1,200 this month",
+      icon: DollarSign,
+      color: "from-green-500 to-emerald-500",
+      prefix: "$",
+    },
+    {
+      title: "Freelancers Hired",
+      value: 48, // Placeholder
+      change: "+5 this month",
+      icon: Users,
+      color: "from-purple-500 to-pink-500",
+    },
+    {
+      title: "Response Time",
+      value: 2.4,
+      change: "-0.3h improved",
+      icon: Clock,
+      color: "from-orange-500 to-red-500",
+      suffix: "h",
+    },
+  ]
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
+      <ProposalReviewModal
+        jobId={selectedJobId}
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onMessage={(freelancerId: string, freelancerName: string, freelancerImage?: string) => {
+          setActiveChat({ id: freelancerId, name: freelancerName, image: freelancerImage })
+          setIsReviewModalOpen(false) // Optional: close modal when chat starts
+        }}
+      />
+
+      <AnimatePresence>
+        {activeChat && (
+          <ChatWindow
+            receiverId={activeChat.id}
+            receiverName={activeChat.name}
+            receiverImage={activeChat.image}
+            onClose={() => setActiveChat(null)}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -195,63 +220,77 @@ export default function ClientDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentProjects.map((project, index) => (
-                  <motion.div
-                    key={project.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                    className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-white mb-1">{project.title}</h3>
-                        <p className="text-sm text-gray-400">by {project.freelancer}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold text-white">{project.budget}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Calendar className="w-3 h-3 text-gray-400" />
-                          <span className="text-xs text-gray-400">{project.deadline}</span>
+                {loading ? (
+                  <p className="text-gray-400">Loading projects...</p>
+                ) : jobs.length === 0 ? (
+                  <p className="text-gray-400">No projects found. Post a job to get started!</p>
+                ) : (
+                  jobs.map((job, index) => (
+                    <motion.div
+                      key={job._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-white mb-1">{job.title}</h3>
+                          <p className="text-sm text-gray-400">
+                            {job.proposalsCount} Proposals
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold text-white">${job.budget?.toLocaleString()}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-3 h-3 text-gray-400" />
+                            <span className="text-xs text-gray-400">
+                              {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Progress</span>
-                        <span className="text-white font-semibold">{project.progress}%</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Status</span>
+                          <span className="text-white font-semibold capitalize">{job.status.replace('_', ' ')}</span>
+                        </div>
+                        {/* Progress bar placeholder - could be real if we had progress tracking */}
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: job.status === 'completed' ? '100%' : job.status === 'in_progress' ? '50%' : '10%' }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    <div className="flex items-center justify-between mt-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          project.status === "Completed"
+                      <div className="flex items-center justify-between mt-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === "completed"
                             ? "bg-green-500/20 text-green-300"
-                            : project.status === "In Progress"
+                            : job.status === "in_progress"
                               ? "bg-blue-500/20 text-blue-300"
                               : "bg-yellow-500/20 text-yellow-300"
-                        }`}
-                      >
-                        {project.status}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-white/20 text-white hover:bg-white/10 bg-transparent"
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
+                            }`}
+                        >
+                          {job.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-white/20 text-white hover:bg-white/10 bg-transparent"
+                          onClick={() => {
+                            setSelectedJobId(job._id)
+                            setIsReviewModalOpen(true)
+                          }}
+                        >
+                          View Proposals ({job.proposalsCount})
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -276,13 +315,12 @@ export default function ClientDashboard() {
                     className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors duration-200"
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        activity.type === "completion"
-                          ? "bg-gradient-to-br from-green-500 to-emerald-500"
-                          : activity.type === "message"
-                            ? "bg-gradient-to-br from-blue-500 to-cyan-500"
-                            : "bg-gradient-to-br from-orange-500 to-yellow-500"
-                      }`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.type === "completion"
+                        ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                        : activity.type === "message"
+                          ? "bg-gradient-to-br from-blue-500 to-cyan-500"
+                          : "bg-gradient-to-br from-orange-500 to-yellow-500"
+                        }`}
                     >
                       {activity.type === "completion" ? (
                         <CheckCircle className="w-4 h-4 text-white" />

@@ -65,6 +65,7 @@ export const authOptions: NextAuthOptions = {
         token.email = dbUser?.email || user.email || "";
         token.role = dbUser?.role ?? "pending";
         token.image = dbUser?.image || user.image || "";
+        (token as any).id = dbUser?._id?.toString(); // For chat system
         (token as any).walletAddress = dbUser?.walletAddress ?? null;
         (token as any).walletLinkedAt = dbUser?.walletLinkedAt?.toISOString?.() ?? null;
         return token;
@@ -77,6 +78,7 @@ export const authOptions: NextAuthOptions = {
           token.name = dbUser.fullName || (token as any).name || "";
           token.role = dbUser.role ?? (token as any).role ?? "pending";
           token.image = dbUser.image || (token as any).image || "";
+          (token as any).id = dbUser._id?.toString(); // For chat system
           (token as any).walletAddress = dbUser.walletAddress ?? (token as any).walletAddress ?? null;
           (token as any).walletLinkedAt =
             dbUser.walletLinkedAt?.toISOString?.() ?? (token as any).walletLinkedAt ?? null;
@@ -90,6 +92,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token) {
         session.user.name = (token as any).name as string;
         session.user.email = (token as any).email as string;
+        (session.user as any).id = (token as any).id; // For chat system
+        (session.user as any)._id = (token as any).id; // For chat system (compatibility)
         (session.user as any).role = (token as any).role;
         session.user.image = (token as any).image as string;
         (session.user as any).walletAddress = (token as any).walletAddress ?? null;

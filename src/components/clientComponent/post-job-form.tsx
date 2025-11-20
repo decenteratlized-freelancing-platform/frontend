@@ -9,10 +9,26 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Sparkles, Briefcase } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { toast } from "@/hooks/use-toast"
 
 export default function PostJobForm() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [skills, setSkills] = useState<string[]>([])
   const [newSkill, setNewSkill] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "",
+    description: "",
+    budgetType: "",
+    budgetAmount: "",
+    duration: "",
+    experienceLevel: "",
+  })
 
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -23,6 +39,50 @@ export default function PostJobForm() {
 
   const removeSkill = (skillToRemove: string) => {
     setSkills(skills.filter((skill) => skill !== skillToRemove))
+  }
+
+  const handleSubmit = async () => {
+    if (!session?.user?.email) {
+      toast({ title: "Error", description: "You must be logged in to post a job", variant: "destructive" })
+      return
+    }
+
+    if (!formData.title || !formData.description || !formData.budgetAmount) {
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" })
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          budget: parseFloat(formData.budgetAmount),
+          skills: skills,
+          email: session.user.email,
+          category: formData.category,
+          experienceLevel: formData.experienceLevel,
+          budgetType: formData.budgetType,
+          duration: formData.duration,
+        }),
+      })
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Job posted successfully!" })
+        router.push("/client/dashboard")
+      } else {
+        const error = await res.json()
+        toast({ title: "Error", description: error.error || "Failed to post job", variant: "destructive" })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({ title: "Error", description: "Something went wrong", variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -48,6 +108,8 @@ export default function PostJobForm() {
               <Input
                 placeholder="e.g. React Developer for E-commerce Website"
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </motion.div>
             <motion.div
@@ -57,7 +119,7 @@ export default function PostJobForm() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <label className="text-sm font-medium text-gray-300">Category</label>
-              <Select>
+              <Select onValueChange={(val) => setFormData({ ...formData, category: val })}>
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -83,6 +145,8 @@ export default function PostJobForm() {
             <Textarea
               placeholder="Describe your project requirements, goals, and expectations..."
               className="min-h-32 bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </motion.div>
 
@@ -94,7 +158,7 @@ export default function PostJobForm() {
               transition={{ duration: 0.5, delay: 0.4 }}
             >
               <label className="text-sm font-medium text-gray-300">Budget Type</label>
-              <Select>
+              <Select onValueChange={(val) => setFormData({ ...formData, budgetType: val })}>
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select budget type" />
                 </SelectTrigger>
@@ -112,8 +176,11 @@ export default function PostJobForm() {
             >
               <label className="text-sm font-medium text-gray-300">Budget Amount</label>
               <Input
-                placeholder="e.g. $2,500"
+                placeholder="e.g. 2500"
+                type="number"
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
+                value={formData.budgetAmount}
+                onChange={(e) => setFormData({ ...formData, budgetAmount: e.target.value })}
               />
             </motion.div>
           </div>
@@ -173,7 +240,7 @@ export default function PostJobForm() {
               transition={{ duration: 0.5, delay: 0.7 }}
             >
               <label className="text-sm font-medium text-gray-300">Project Duration</label>
-              <Select>
+              <Select onValueChange={(val) => setFormData({ ...formData, duration: val })}>
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -192,7 +259,7 @@ export default function PostJobForm() {
               transition={{ duration: 0.5, delay: 0.8 }}
             >
               <label className="text-sm font-medium text-gray-300">Experience Level</label>
-              <Select>
+              <Select onValueChange={(val) => setFormData({ ...formData, experienceLevel: val })}>
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select experience level" />
                 </SelectTrigger>
@@ -211,9 +278,13 @@ export default function PostJobForm() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.9 }}
           >
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group"
+            >
               <Sparkles className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-              Post Job
+              {isSubmitting ? "Posting..." : "Post Job"}
             </Button>
             <Button
               variant="outline"
