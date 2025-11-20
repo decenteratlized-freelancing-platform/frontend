@@ -203,7 +203,7 @@ export default function FreelancerDashboard() {
         Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
       </h1>
 
-        <p className="text-xl text-gray-300">Here's your freelance activity overview</p>
+        <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
       </motion.div>
 
       

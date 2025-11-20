@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -370,11 +371,14 @@ export default function FreelancerPortfolio() {
             >
               <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 overflow-hidden group">
                 {/* Project Image */}
-                <div className="relative overflow-hidden">
-                  <img
+                <div className="relative h-48 overflow-hidden">
+                  <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.title}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    unoptimized
                   />
                   {item.featured && (
                     <Badge className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">

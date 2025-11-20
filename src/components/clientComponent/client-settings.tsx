@@ -9,7 +9,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save } from "lucide-react"
+import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
@@ -50,6 +52,24 @@ export default function ClientSettings() {
 
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" })
   const [loading, setLoading] = useState(false)
+  const [phoneError, setPhoneError] = useState("")
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([])
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+
+  // Common skills list
+  const availableSkills = [
+    "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
+    "PHP", "Ruby", "Go", "Swift", "Kotlin", "Dart", "Rust", "HTML/CSS",
+    "Vue.js", "Angular", "Next.js", "Express.js", "Django", "Flask", "Laravel",
+    "MongoDB", "PostgreSQL", "MySQL", "Redis", "GraphQL", "REST API",
+    "AWS", "Docker", "Kubernetes", "Git", "CI/CD", "DevOps",
+    "UI/UX Design", "Figma", "Adobe XD", "Photoshop", "Illustrator",
+    "Machine Learning", "Data Science", "Blockchain", "Web3", "Solidity",
+    "Mobile Development", "iOS", "Android", "React Native", "Flutter",
+    "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
+  ]
 
   const { data: session } = useSession()
   const { toast } = useToast()
@@ -78,14 +98,154 @@ export default function ClientSettings() {
       portfolioWebsite: stored?.portfolioWebsite || prev.portfolioWebsite,
       location: stored?.location || prev.location,
       image: stored?.image || prev.image,
-      skills: Array.isArray(stored?.skills) ? stored!.skills : prev.skills,
+      skills: Array.isArray(stored?.skills) ? stored!.skills : (stored?.skills ? stored.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
     }))
   }, [session])
+
+  useEffect(() => {
+    if (profile.skills && profile.skills.length > 0) {
+      setSelectedSkills(Array.isArray(profile.skills) ? profile.skills : [])
+    }
+  }, [profile.skills])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file", variant: "destructive" })
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be less than 5MB", variant: "destructive" })
+      return
+    }
+
+    setUploadingImage(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+        const email = profile.email || session?.user?.email || localStorage.getItem("email")
+
+        if (!email) {
+          toast({ title: "Error", description: "Email not found. Please log in again.", variant: "destructive" })
+          setUploadingImage(false)
+          return
+        }
+
+        try {
+          const response = await fetch("/api/user/upload-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: base64String, email }),
+          })
+
+          const data = await response.json()
+          if (response.ok) {
+            setProfile(prev => ({ ...prev, image: data.image }))
+            toast({ title: "Success", description: "Profile image updated successfully" })
+            router.refresh()
+          } else {
+            throw new Error(data.error || "Failed to upload image")
+          }
+        } catch (error: any) {
+          toast({ title: "Error", description: error.message || "Failed to upload image", variant: "destructive" })
+        } finally {
+          setUploadingImage(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to process image", variant: "destructive" })
+      setUploadingImage(false)
+    }
+  }
+
+  const handleRemoveImage = async () => {
+    const email = profile.email || session?.user?.email || localStorage.getItem("email")
+    if (!email) return
+
+    try {
+      const response = await fetch("/api/user/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: null, email }),
+      })
+
+      if (response.ok) {
+        setProfile(prev => ({ ...prev, image: "" }))
+        toast({ title: "Success", description: "Profile image removed" })
+        router.refresh()
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to remove image", variant: "destructive" })
+    }
+  }
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^\d{10}$/
+    return phoneRegex.test(phone.replace(/\D/g, ""))
+  }
+
+  const handlePhoneChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "")
+    const limitedDigits = digitsOnly.slice(0, 10)
+
+    setProfile(prev => ({ ...prev, phone: limitedDigits }))
+
+    if (limitedDigits.length > 0 && limitedDigits.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits")
+    } else {
+      setPhoneError("")
+    }
+  }
+
+
+  const handleLocationChange = async (value: string) => {
+    setProfile(prev => ({ ...prev, location: value }))
+
+    if (value.length > 2) {
+      try {
+        const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`)
+        const data = await response.json()
+        if (data.predictions) {
+          setLocationSuggestions(data.predictions)
+          setShowLocationSuggestions(true)
+        }
+      } catch (error) {
+        console.error("Error fetching location suggestions:", error)
+      }
+    } else {
+      setLocationSuggestions([])
+      setShowLocationSuggestions(false)
+    }
+  }
+
+  const selectLocation = (location: string) => {
+    setProfile(prev => ({ ...prev, location }))
+    setLocationSuggestions([])
+    setShowLocationSuggestions(false)
+  }
 
   const handleSaveProfile = async () => {
     const email = profile.email || session?.user?.email || localStorage.getItem("email")
     if (!email) {
       toast({ title: "Error", description: "Email not found. Please log in again.", variant: "destructive" })
+      return
+    }
+
+    // Validate phone number
+    if (profile.phone && !validatePhone(profile.phone)) {
+      setPhoneError("Phone number must be exactly 10 digits")
+      toast({ title: "Validation Error", description: "Phone number must be exactly 10 digits", variant: "destructive" })
+      return
+    }
+
+    // Validate portfolio website URL
+    if (profile.portfolioWebsite && !profile.portfolioWebsite.match(/^https?:\/\/.+/)) {
+      toast({ title: "Validation Error", description: "Portfolio website must be a valid URL (starting with http:// or https://)", variant: "destructive" })
       return
     }
 
@@ -96,7 +256,7 @@ export default function ClientSettings() {
         fullName: profile.fullName,
         phone: profile.phone,
         bio: profile.professionalBio,
-        skills: Array.isArray(profile.skills) ? profile.skills.join(",") : profile.skills,
+        skills: selectedSkills.length > 0 ? selectedSkills.join(",") : (Array.isArray(profile.skills) ? profile.skills.join(",") : profile.skills),
         notifications,
         privacy,
         preferences,
@@ -166,7 +326,7 @@ export default function ClientSettings() {
       if (!response.ok) throw new Error(data.message || "Failed to update password")
 
       toast({ title: "Success", description: "Password updated. Please login with the new password.", variant: "default" })
-      
+
       if (typeof window !== "undefined") {
         localStorage.removeItem("token")
       }
@@ -224,9 +384,39 @@ export default function ClientSettings() {
                       <Camera className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
-                    <p className="text-sm text-gray-400">Upload a professional photo</p>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Profile Picture</h3>
+                    <p className="text-sm text-gray-400 mb-3">Upload a professional photo</p>
+                    <div className="flex gap-2">
+                      <label htmlFor="client-image-upload" className="flex-1">
+                        <Button
+                          variant="outline"
+                          className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 cursor-pointer"
+                          disabled={uploadingImage}
+                          asChild
+                        >
+                          <span>
+                            <Upload className="w-4 h-4 mr-2" />
+                            {uploadingImage ? "Uploading..." : "Upload"}
+                          </span>
+                        </Button>
+                        <input
+                          id="client-image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <Button
+                        variant="outline"
+                        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        onClick={handleRemoveImage}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -244,14 +434,159 @@ export default function ClientSettings() {
                     <Input value={profile.email || (session?.user?.email ?? "")} onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))} type="email" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-300 mb-2 block">Phone</label>
-                    <Input value={profile.phone} onChange={e => setProfile(prev => ({ ...prev, phone: e.target.value }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
+                    <label className="text-sm font-medium text-gray-300 mb-2 block">Phone (10 digits)</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={e => handlePhoneChange(e.target.value)}
+                        placeholder="1234567890"
+                        maxLength={10}
+                        className={`bg-white/5 border-white/10 text-white placeholder:text-gray-400 pl-10 ${phoneError ? "border-red-500" : ""}`}
+                      />
+                    </div>
+                    {phoneError && (
+                      <p className="text-red-400 text-xs mt-1">{phoneError}</p>
+                    )}
+                    {profile.phone && !phoneError && (
+                      <p className="text-green-400 text-xs mt-1">Valid phone number</p>
+                    )}
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Location</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      value={profile.location}
+                      onChange={e => handleLocationChange(e.target.value)}
+                      onFocus={() => profile.location.length > 2 && setShowLocationSuggestions(true)}
+                      placeholder="Enter your location"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 pl-10"
+                    />
+                    {showLocationSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {locationSuggestions.map((prediction) => (
+                          <div
+                            key={prediction.place_id}
+                            className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
+                            onClick={() => selectLocation(prediction.description)}
+                          >
+                            {prediction.description}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {profile.location && (
+                    <div className="mt-2">
+                      <iframe
+                        width="100%"
+                        height="150"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=${encodeURIComponent(profile.location)}`}
+                        className="rounded-lg"
+                      />
+                      <div className="text-xs text-gray-400 mt-1">
+                        <a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(profile.location)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                          View larger map
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Portfolio Website</label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="url"
+                      value={profile.portfolioWebsite}
+                      onChange={e => setProfile(prev => ({ ...prev, portfolioWebsite: e.target.value }))}
+                      placeholder="https://yourportfolio.com"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 pl-10"
+                    />
+                  </div>
+                  {profile.portfolioWebsite && (
+                    <a
+                      href={profile.portfolioWebsite.startsWith("http") ? profile.portfolioWebsite : `https://${profile.portfolioWebsite}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 text-sm mt-1 inline-flex items-center gap-1"
+                    >
+                      <LinkIcon className="w-3 h-3" />
+                      Visit Portfolio
+                    </a>
+                  )}
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-300 mb-2 block">Bio</label>
                   <Textarea value={profile.professionalBio} onChange={e => setProfile(prev => ({ ...prev, professionalBio: e.target.value }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Skills & Expertise</label>
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      if (!selectedSkills.includes(value)) {
+                        const newSkills = [...selectedSkills, value]
+                        setSelectedSkills(newSkills)
+                        setProfile(prev => ({ ...prev, skills: newSkills }))
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white placeholder:text-gray-400">
+                      <SelectValue placeholder="Select a skill to add" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700 max-h-[200px]">
+                      {availableSkills
+                        .filter(skill => !selectedSkills.includes(skill))
+                        .map((skill) => (
+                          <SelectItem key={skill} value={skill} className="text-gray-100 hover:bg-gray-700">
+                            {skill}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {selectedSkills.length > 0 ? selectedSkills.map((skill, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-white/10 text-white cursor-pointer hover:bg-white/20"
+                        onClick={() => {
+                          const newSkills = selectedSkills.filter((_, i) => i !== index)
+                          setSelectedSkills(newSkills)
+                          setProfile(prev => ({ ...prev, skills: newSkills }))
+                        }}
+                      >
+                        {skill} ×
+                      </Badge>
+                    )) : (Array.isArray(profile.skills) ? profile.skills : []).map((skill, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-white/10 text-white cursor-pointer hover:bg-white/20"
+                        onClick={() => {
+                          const newSkills = (profile.skills || []).filter((_, i) => i !== index)
+                          setProfile(prev => ({ ...prev, skills: newSkills }))
+                        }}
+                      >
+                        {skill} ×
+                      </Badge>
+                    ))}
+                    {selectedSkills.length === 0 && (!profile.skills || profile.skills.length === 0) && (
+                      <p className="text-gray-400 text-sm">No skills selected. Use the dropdown above to add skills.</p>
+                    )}
+                  </div>
                 </div>
 
                 <Button onClick={handleSaveProfile} disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">

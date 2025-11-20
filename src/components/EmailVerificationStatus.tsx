@@ -51,7 +51,7 @@ export default function EmailVerificationStatus({ email, onVerified }: EmailVeri
         </div>
         <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
         <CardDescription>
-          We've sent a verification email to <strong>{email}</strong>
+          We&apos;ve sent a verification email to <strong>{email}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -94,12 +94,12 @@ export default function EmailVerificationStatus({ email, onVerified }: EmailVeri
             variant="ghost"
             className="w-full"
           >
-            I've verified my email
+            I&apos;ve verified my email
           </Button>
         </div>
 
         <div className="text-center text-xs text-gray-500">
-          <p>Can't find the email? Check your spam folder.</p>
+          <p>Can&apos;t find the email? Check your spam folder.</p>
         </div>
       </CardContent>
     </Card>

@@ -120,7 +120,7 @@ export async function GET(req: Request) {
     }
 
     const user = (await User.findOne({ email })
-      .select("fullName email image settings role phone location portfolioWebsite professionalBio")
+      .select("fullName email image settings role")
       .lean()) as UserLean | null;
       
     if (!user) {
@@ -128,17 +128,17 @@ export async function GET(req: Request) {
     }
     
     // Convert skills string back to array for the frontend
-    const skillsArray = user.settings?.skills ? user.settings.skills.split(", ").filter(Boolean) : [];
+    const skillsArray = user.settings?.skills ? (typeof user.settings.skills === "string" ? user.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : user.settings.skills) : [];
     
     return NextResponse.json({
       profile: { 
         fullName: user.fullName, 
         email: user.email, 
         image: user.image,
-        phone: user.phone || "",
-        location: user.location || "",
-        portfolioWebsite: user.portfolioWebsite || "",
-        professionalBio: user.professionalBio || "",
+        phone: user.settings?.phone || "",
+        location: user.settings?.location || "",
+        portfolioWebsite: user.settings?.portfolioWebsite || "",
+        professionalBio: user.settings?.bio || "",
       },
       settings: {
         ...user.settings,

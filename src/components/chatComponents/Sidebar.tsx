@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 
 const menuItems = [
@@ -44,7 +45,14 @@ export default function Sidebar() {
         </div>
         
         <div className="flex items-center gap-3">
-          <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" className="w-10 h-10 rounded-full border-2 border-blue-200" />
+          <Image
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            alt="User"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-full border-2 border-blue-200 object-cover"
+            unoptimized
+          />
           <div>
             <div className="font-semibold text-gray-700">Ravi Shah</div>
             <button

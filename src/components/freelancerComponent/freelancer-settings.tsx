@@ -12,17 +12,17 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Eye, 
-  EyeOff, 
-  Camera, 
-  Upload, 
-  Trash2, 
-  Save, 
-  Shield, 
-  Bell, 
-  CreditCard, 
-  Globe, 
+import {
+  Eye,
+  EyeOff,
+  Camera,
+  Upload,
+  Trash2,
+  Save,
+  Shield,
+  Bell,
+  CreditCard,
+  Globe,
   User,
   Mail,
   Phone,
@@ -103,6 +103,25 @@ export default function SettingsPage() {
     confirm: "",
   });
 
+  const [phoneError, setPhoneError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
+  // Common skills list
+  const availableSkills = [
+    "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
+    "PHP", "Ruby", "Go", "Swift", "Kotlin", "Dart", "Rust", "HTML/CSS",
+    "Vue.js", "Angular", "Next.js", "Express.js", "Django", "Flask", "Laravel",
+    "MongoDB", "PostgreSQL", "MySQL", "Redis", "GraphQL", "REST API",
+    "AWS", "Docker", "Kubernetes", "Git", "CI/CD", "DevOps",
+    "UI/UX Design", "Figma", "Adobe XD", "Photoshop", "Illustrator",
+    "Machine Learning", "Data Science", "Blockchain", "Web3", "Solidity",
+    "Mobile Development", "iOS", "Android", "React Native", "Flutter",
+    "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
+  ];
+
   useEffect(() => {
     // Get email from localStorage (for manual login) or session (for OAuth)
     const storedEmail = localStorage.getItem("email") || session?.user?.email || "";
@@ -123,8 +142,13 @@ export default function SettingsPage() {
     try {
       const response = await fetch(`/api/settings?email=${email}`);
       const data = await response.json();
-      
+
       if (response.ok) {
+        const skillsArray = Array.isArray(data.settings?.skills)
+          ? data.settings.skills
+          : (data.settings?.skills ? data.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
+
+        setSelectedSkills(skillsArray);
         setSettings(prev => ({
           ...prev,
           fullName: data.profile?.fullName || prev.fullName,
@@ -134,7 +158,7 @@ export default function SettingsPage() {
           location: data.profile?.location || "",
           portfolioWebsite: data.profile?.portfolioWebsite || "",
           professionalBio: data.profile?.professionalBio || "",
-          skills: data.settings?.skills || [],
+          skills: skillsArray,
           hourlyRate: data.settings?.hourlyRate || 75,
           language: data.settings?.preferences?.language || "English",
           timezone: data.settings?.preferences?.timezone || "UTC",
@@ -157,13 +181,196 @@ export default function SettingsPage() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        const email = localStorage.getItem("email") || session?.user?.email;
+
+        if (!email) {
+          toast({
+            title: "Error",
+            description: "Email not found. Please log in again.",
+            variant: "destructive",
+          });
+          setUploadingImage(false);
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/user/upload-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              imageUrl: base64String,
+              email,
+            }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            setSettings(prev => ({ ...prev, image: data.image }));
+            toast({
+              title: "Success",
+              description: "Profile image updated successfully",
+            });
+            router.refresh();
+          } else {
+            throw new Error(data.error || "Failed to upload image");
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to upload image",
+            variant: "destructive",
+          });
+        } finally {
+          setUploadingImage(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process image",
+        variant: "destructive",
+      });
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const email = localStorage.getItem("email") || session?.user?.email;
+    if (!email) return;
+
+    try {
+      const response = await fetch("/api/user/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: null,
+          email,
+        }),
+      });
+
+      if (response.ok) {
+        setSettings(prev => ({ ...prev, image: "" }));
+        toast({
+          title: "Success",
+          description: "Profile image removed",
+        });
+        router.refresh();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone.replace(/\D/g, ""));
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Remove non-digits
+    const digitsOnly = value.replace(/\D/g, "");
+
+    // Limit to 10 digits
+    const limitedDigits = digitsOnly.slice(0, 10);
+
+    setSettings(prev => ({ ...prev, phone: limitedDigits }));
+
+    if (limitedDigits.length > 0 && limitedDigits.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits");
+    } else {
+      setPhoneError("");
+    }
+  };
+
+  const handleLocationChange = async (value: string) => {
+    setSettings(prev => ({ ...prev, location: value }));
+
+    if (value.length > 2) {
+      try {
+        const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`);
+        const data = await response.json();
+        if (data.predictions) {
+          setLocationSuggestions(data.predictions);
+          setShowLocationSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Error fetching location suggestions:", error);
+      }
+    } else {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    }
+  };
+
+  const selectLocation = (location: string) => {
+    setSettings(prev => ({ ...prev, location }));
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+  };
+
   const handleSaveProfile = async () => {
     const email = localStorage.getItem("email") || session?.user?.email;
-    
+
     if (!email) {
       toast({
         title: "Error",
         description: "Email not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone number
+    if (settings.phone && !validatePhone(settings.phone)) {
+      setPhoneError("Phone number must be exactly 10 digits");
+      toast({
+        title: "Validation Error",
+        description: "Phone number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate portfolio website URL
+    if (settings.portfolioWebsite && !settings.portfolioWebsite.match(/^https?:\/\/.+/)) {
+      toast({
+        title: "Validation Error",
+        description: "Portfolio website must be a valid URL (starting with http:// or https://)",
         variant: "destructive",
       });
       return;
@@ -180,7 +387,7 @@ export default function SettingsPage() {
           fullName: settings.fullName,
           phone: settings.phone,
           bio: settings.professionalBio,
-          skills: settings.skills?.join(", ") || "",
+          skills: selectedSkills.length > 0 ? selectedSkills.join(", ") : settings.skills?.join(", ") || "",
           notifications: settings.notifications,
           privacy: settings.security,
           preferences: {
@@ -302,7 +509,7 @@ export default function SettingsPage() {
 
   const handleSavePreferences = async () => {
     const email = localStorage.getItem("email") || session?.user?.email;
-    
+
     if (!email) {
       toast({
         title: "Error",
@@ -359,36 +566,36 @@ export default function SettingsPage() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-gray-800 border border-gray-700">
-            <TabsTrigger 
-              value="profile" 
+            <TabsTrigger
+              value="profile"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <User className="w-4 h-4" />
               Profile
             </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
+            <TabsTrigger
+              value="notifications"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <Bell className="w-4 h-4" />
               Notifications
             </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
+            <TabsTrigger
+              value="security"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
-            <TabsTrigger 
-              value="billing" 
+            <TabsTrigger
+              value="billing"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <CreditCard className="w-4 h-4" />
               Billing
             </TabsTrigger>
-            <TabsTrigger 
-              value="preferences" 
+            <TabsTrigger
+              value="preferences"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <Globe className="w-4 h-4" />
@@ -422,11 +629,31 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1 bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload
-                    </Button>
-                    <Button variant="outline" className="flex-1 bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600">
+                    <label htmlFor="image-upload" className="flex-1">
+                      <Button
+                        variant="outline"
+                        className="w-full bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600 cursor-pointer"
+                        disabled={uploadingImage}
+                        asChild
+                      >
+                        <span>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {uploadingImage ? "Uploading..." : "Upload"}
+                        </span>
+                      </Button>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <Button
+                      variant="outline"
+                      className="flex-1 bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
+                      onClick={handleRemoveImage}
+                    >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Remove
                     </Button>
@@ -479,16 +706,25 @@ export default function SettingsPage() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="phone" className="text-gray-300">Phone</Label>
+                        <Label htmlFor="phone" className="text-gray-300">Phone (10 digits)</Label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                           <Input
                             id="phone"
+                            type="tel"
                             value={settings.phone}
-                            onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
-                            className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
+                            onChange={(e) => handlePhoneChange(e.target.value)}
+                            placeholder="1234567890"
+                            maxLength={10}
+                            className={`bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500 ${phoneError ? "border-red-500" : ""}`}
                           />
                         </div>
+                        {phoneError && (
+                          <p className="text-red-400 text-xs mt-1">{phoneError}</p>
+                        )}
+                        {settings.phone && !phoneError && (
+                          <p className="text-green-400 text-xs mt-1">Valid phone number</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor="location" className="text-gray-300">Location</Label>
@@ -497,10 +733,44 @@ export default function SettingsPage() {
                           <Input
                             id="location"
                             value={settings.location}
-                            onChange={(e) => setSettings(prev => ({ ...prev, location: e.target.value }))}
+                            onChange={(e) => handleLocationChange(e.target.value)}
+                            onFocus={() => settings.location && settings.location.length > 2 && setShowLocationSuggestions(true)}
+                            placeholder="Enter your location"
                             className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
                           />
+                          {showLocationSuggestions && locationSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                              {locationSuggestions.map((prediction) => (
+                                <div
+                                  key={prediction.place_id}
+                                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
+                                  onClick={() => selectLocation(prediction.description)}
+                                >
+                                  {prediction.description}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
+                        {settings.location && (
+                          <div className="mt-2">
+                            <iframe
+                              width="100%"
+                              height="150"
+                              style={{ border: 0 }}
+                              loading="lazy"
+                              allowFullScreen
+                              referrerPolicy="no-referrer-when-downgrade"
+                              src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=${encodeURIComponent(settings.location)}`}
+                              className="rounded-lg"
+                            />
+                            <div className="text-xs text-gray-400 mt-1">
+                              <a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(settings.location)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                View larger map
+                              </a>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor="website" className="text-gray-300">Portfolio Website</Label>
@@ -508,11 +778,24 @@ export default function SettingsPage() {
                           <Link className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                           <Input
                             id="website"
+                            type="url"
                             value={settings.portfolioWebsite}
                             onChange={(e) => setSettings(prev => ({ ...prev, portfolioWebsite: e.target.value }))}
+                            placeholder="https://yourportfolio.com"
                             className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
                           />
                         </div>
+                        {settings.portfolioWebsite && (
+                          <a
+                            href={settings.portfolioWebsite.startsWith("http") ? settings.portfolioWebsite : `https://${settings.portfolioWebsite}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 text-sm mt-1 inline-flex items-center gap-1"
+                          >
+                            <Link className="w-3 h-3" />
+                            Visit Portfolio
+                          </a>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -537,26 +820,61 @@ export default function SettingsPage() {
                     <CardTitle className="text-gray-100">Skills & Expertise</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative">
-                      <div className="absolute left-3 top-3 text-gray-400">
-                        &lt;/&gt;
-                      </div>
-                      <Input
-                        value={settings.skills?.join(", ") || ""}
-                        onChange={(e) => setSettings(prev => ({
-                          ...prev,
-                          skills: e.target.value.split(",").map(skill => skill.trim()).filter(Boolean)
-                        }))}
-                        placeholder="React, Node.js, TypeScript, Python..."
-                        className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {settings.skills?.map((skill, index) => (
-                        <Badge key={index} variant="secondary" className="bg-gray-600 text-gray-200">
-                          {skill}
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        if (!selectedSkills.includes(value)) {
+                          setSelectedSkills([...selectedSkills, value]);
+                          setSettings(prev => ({
+                            ...prev,
+                            skills: [...(prev.skills || []), value]
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
+                        <SelectValue placeholder="Select a skill to add" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
+                        {availableSkills
+                          .filter(skill => !selectedSkills.includes(skill))
+                          .map((skill) => (
+                            <SelectItem key={skill} value={skill} className="text-gray-100 hover:bg-gray-600">
+                              {skill}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {selectedSkills.length > 0 ? selectedSkills.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-gray-600 text-gray-200 cursor-pointer hover:bg-gray-500"
+                          onClick={() => {
+                            const newSkills = selectedSkills.filter((_, i) => i !== index);
+                            setSelectedSkills(newSkills);
+                            setSettings(prev => ({ ...prev, skills: newSkills }));
+                          }}
+                        >
+                          {skill} ×
+                        </Badge>
+                      )) : settings.skills?.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-gray-600 text-gray-200 cursor-pointer hover:bg-gray-500"
+                          onClick={() => {
+                            const newSkills = (settings.skills || []).filter((_, i) => i !== index);
+                            setSettings(prev => ({ ...prev, skills: newSkills }));
+                          }}
+                        >
+                          {skill} ×
                         </Badge>
                       ))}
+                      {selectedSkills.length === 0 && (!settings.skills || settings.skills.length === 0) && (
+                        <p className="text-gray-400 text-sm">No skills selected. Use the dropdown above to add skills.</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -709,9 +1027,9 @@ export default function SettingsPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
                         <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="EST">EST</SelectItem>
-                        <SelectItem value="PST">PST</SelectItem>
-                        <SelectItem value="GMT">GMT</SelectItem>
+                        <SelectItem value="EST">EST (UTC-5)</SelectItem>
+                        <SelectItem value="PST">PST (UTC-8)</SelectItem>
+                        <SelectItem value="IST">IST (UTC+5:30)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -725,7 +1043,7 @@ export default function SettingsPage() {
                         <SelectItem value="USD ($)">USD ($)</SelectItem>
                         <SelectItem value="EUR (€)">EUR (€)</SelectItem>
                         <SelectItem value="GBP (£)">GBP (£)</SelectItem>
-                        <SelectItem value="CAD ($)">CAD ($)</SelectItem>
+                        <SelectItem value="INR (₹)">INR (₹)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -738,6 +1056,16 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
+                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate ($)</Label>
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      value={settings.hourlyRate}
+                      onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
+                      className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="availability" className="text-gray-300">Availability Status</Label>
                     <Select value={settings.availabilityStatus} onValueChange={(value) => setSettings(prev => ({ ...prev, availabilityStatus: value }))}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
@@ -745,27 +1073,13 @@ export default function SettingsPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
                         <SelectItem value="Available for Work">Available for Work</SelectItem>
+                        <SelectItem value="Busy">Busy</SelectItem>
                         <SelectItem value="Not Available">Not Available</SelectItem>
-                        <SelectItem value="Part-time Only">Part-time Only</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-3 text-gray-400">$</span>
-                      <Input
-                        id="hourlyRate"
-                        type="number"
-                        value={settings.hourlyRate}
-                        onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
-                        className="bg-gray-700 border-gray-600 text-gray-100 pl-8 focus:border-blue-500"
-                        placeholder="75"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="workSchedule" className="text-gray-300">Work Schedule</Label>
+                    <Label htmlFor="schedule" className="text-gray-300">Work Schedule</Label>
                     <Select value={settings.workSchedule} onValueChange={(value) => setSettings(prev => ({ ...prev, workSchedule: value }))}>
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
                         <SelectValue />
@@ -780,15 +1094,17 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <div className="lg:col-span-2">
+                <Button
+                  onClick={handleSavePreferences}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                >
+                  {loading ? "Saving..." : "Save Preferences"}
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handleSavePreferences}
-              disabled={loading}
-              className="mt-6 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Preferences
-            </Button>
           </TabsContent>
 
           {/* Notifications Tab */}
@@ -797,67 +1113,59 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-gray-100">Notification Settings</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                  <div>
-                    <p className="text-gray-100 font-medium">Email Notifications</p>
-                    <p className="text-gray-400 text-sm">Receive notifications via email</p>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base text-gray-200">Email Notifications</Label>
+                    <p className="text-sm text-gray-400">Receive emails about new job opportunities</p>
                   </div>
                   <Switch
-                    checked={!!settings.notifications?.email}
-                    onCheckedChange={(checked) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        notifications: {
-                          ...prev.notifications,
-                          email: checked ?? false,
-                          push: prev.notifications?.push ?? false,
-                          sms: prev.notifications?.sms ?? false,
-                        }
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                  <div>
-                    <p className="text-gray-100 font-medium">Push Notifications</p>
-                    <p className="text-gray-400 text-sm">Receive push notifications</p>
-                  </div>
-                  <Switch
-                    checked={!!settings.notifications?.push}
-                    onCheckedChange={(checked) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        notifications: {
-                          ...prev.notifications,
-                          push: checked ?? false,
-                          email: prev.notifications?.email ?? false,
-                          sms: prev.notifications?.sms ?? false,
-                        }
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-                  <div>
-                    <p className="text-gray-100 font-medium">SMS Notifications</p>
-                    <p className="text-gray-400 text-sm">Receive notifications via SMS</p>
-                    <Switch
-                    checked={!!settings.notifications?.sms}
+                    checked={settings.notifications?.email ?? true}
                     onCheckedChange={(checked: boolean) =>
                       setSettings(prev => ({
-                      ...prev,
-                      notifications: {
-                        ...prev.notifications,
-                        sms: checked ?? false,
-                        email: prev.notifications?.email ?? false,
-                        push: prev.notifications?.push ?? false,
-                      },
+                        ...prev,
+                        notifications: { ...prev.notifications, email: checked, push: prev.notifications?.push ?? true, sms: prev.notifications?.sms ?? false }
                       }))
                     }
-                    />
-                  </div>
+                  />
                 </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base text-gray-200">Push Notifications</Label>
+                    <p className="text-sm text-gray-400">Receive push notifications on your device</p>
+                  </div>
+                  <Switch
+                    checked={settings.notifications?.push ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, push: checked, email: prev.notifications?.email ?? true, sms: prev.notifications?.sms ?? false }
+                      }))
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base text-gray-200">SMS Notifications</Label>
+                    <p className="text-sm text-gray-400">Receive text messages for urgent alerts</p>
+                  </div>
+                  <Switch
+                    checked={settings.notifications?.sms ?? false}
+                    onCheckedChange={(checked: boolean) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        notifications: { ...prev.notifications, sms: checked, email: prev.notifications?.email ?? true, push: prev.notifications?.push ?? true }
+                      }))
+                    }
+                  />
+                </div>
+                <Button
+                  onClick={handleSavePreferences}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white mt-4"
+                >
+                  {loading ? "Saving..." : "Save Notification Settings"}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -869,10 +1177,18 @@ export default function SettingsPage() {
                 <CardTitle className="text-gray-100">Billing Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-400">Billing settings will be available soon.</p>
+                <div className="text-center py-12">
+                  <CreditCard className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-200">No payment methods added</h3>
+                  <p className="text-gray-400 mt-2">Add a payment method to receive payments from clients.</p>
+                  <Button className="mt-6 bg-blue-600 hover:bg-blue-700 text-white">
+                    Add Payment Method
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </div>
     </div>

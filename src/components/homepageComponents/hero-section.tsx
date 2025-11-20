@@ -74,7 +74,7 @@ export default function HeroSection() {
           className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
         >
           Bridge Web2 and Web3 with AI-generated smart contracts, seamless crypto & fiat payments, and
-          blockchain-secured agreements. The only platform you'll ever need.
+          blockchain-secured agreements. The only platform you&apos;ll ever need.
         </motion.p>
 
         {/* CTA Buttons */}

@@ -43,13 +43,17 @@ export const authOptions: NextAuthOptions = {
     await connectDB();
 
     // If client called update(), immediately apply provided session fields
-    if (trigger === "update" && session) {
+  if (trigger === "update" && session) {
       const nextName = (session as any).user?.name ?? (session as any).name;
       const nextRole = (session as any).user?.role ?? (session as any).role;
       const nextImage = (session as any).user?.image ?? (session as any).image;
+    const nextWalletAddress = (session as any).user?.walletAddress ?? (session as any).walletAddress;
+    const nextWalletLinkedAt = (session as any).user?.walletLinkedAt ?? (session as any).walletLinkedAt;
       if (typeof nextName !== "undefined") (token as any).name = nextName;
       if (typeof nextRole !== "undefined") (token as any).role = nextRole;
       if (typeof nextImage !== "undefined") (token as any).image = nextImage;
+    if (typeof nextWalletAddress !== "undefined") (token as any).walletAddress = nextWalletAddress;
+    if (typeof nextWalletLinkedAt !== "undefined") (token as any).walletLinkedAt = nextWalletLinkedAt;
     }
 
     // On first sign-in, seed token from user/DB
@@ -59,6 +63,8 @@ export const authOptions: NextAuthOptions = {
       token.email = dbUser?.email || user.email || "";
       token.role = dbUser?.role ?? "pending";
       token.image = dbUser?.image || user.image || "";
+      (token as any).walletAddress = dbUser?.walletAddress ?? null;
+      (token as any).walletLinkedAt = dbUser?.walletLinkedAt?.toISOString?.() ?? null;
       return token;
     }
 
@@ -69,6 +75,9 @@ export const authOptions: NextAuthOptions = {
         token.name = dbUser.fullName || (token as any).name || "";
         token.role = dbUser.role ?? (token as any).role ?? "pending";
         token.image = dbUser.image || (token as any).image || "";
+        (token as any).walletAddress = dbUser.walletAddress ?? (token as any).walletAddress ?? null;
+        (token as any).walletLinkedAt =
+          dbUser.walletLinkedAt?.toISOString?.() ?? (token as any).walletLinkedAt ?? null;
       }
     }
 
@@ -81,6 +90,8 @@ export const authOptions: NextAuthOptions = {
       session.user.email = (token as any).email as string;
       (session.user as any).role = (token as any).role;
       session.user.image = (token as any).image as string;
+      (session.user as any).walletAddress = (token as any).walletAddress ?? null;
+      (session.user as any).walletLinkedAt = (token as any).walletLinkedAt ?? null;
     }
     return session;
   },

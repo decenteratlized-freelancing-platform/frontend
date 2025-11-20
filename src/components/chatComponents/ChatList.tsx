@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 interface User {
   id: string;
@@ -49,7 +50,14 @@ export default function ChatList({ users, conversations, onSelect, selectedId, s
               className={`flex items-center gap-3 p-3 rounded-xl mb-2 cursor-pointer transition border border-transparent ${selectedId === user.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}
               onClick={() => onSelect(user.id)}
             >
-              <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
+              <Image
+                src={user.avatar}
+                alt={user.name}
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover"
+                unoptimized
+              />
               <div className="flex-1">
                 <div className="font-semibold text-gray-800 flex items-center gap-2">
                   {user.name}

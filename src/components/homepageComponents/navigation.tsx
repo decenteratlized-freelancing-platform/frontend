@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Home, Users, Shield, Zap, Wallet } from "lucide-react"
+import { Menu, X, Home, Users, Shield, Zap, Wallet, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useWalletConnection } from "@/hooks/useWalletConnection"
 
 const navItems = [
   { name: "Home", href: "#home", icon: Home },
@@ -14,13 +16,12 @@ const navItems = [
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
+  const router = useRouter()
+  const { address, connectWallet, isConnecting } = useWalletConnection()
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
-
       // Update active section based on scroll position
       const sections = ["home", "features", "how-it-works", "security"]
       const scrollPosition = window.scrollY + 200
@@ -55,6 +56,23 @@ export default function Navigation() {
 
     setIsOpen(false)
   }
+
+  const handleSignInClick = useCallback(() => {
+    router.push("/login")
+    setIsOpen(false)
+  }, [router])
+
+  const handleWalletClick = useCallback(async () => {
+    await connectWallet()
+    setIsOpen(false)
+  }, [connectWallet])
+
+  const walletLabel = useMemo(() => {
+    if (address) {
+      return `${address.slice(0, 6)}...${address.slice(-4)}`
+    }
+    return isConnecting ? "Connecting..." : "Connect Wallet"
+  }, [address, isConnecting])
 
   return (
     <>
@@ -122,13 +140,25 @@ export default function Navigation() {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4 ml-8">
-              <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white border-none">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/10 hover:text-white border-none"
+                onClick={handleSignInClick}
+              >
                 Sign In
               </Button>
 
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300 group">
-                <Wallet className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                Connect Wallet
+              <Button
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300 group"
+                onClick={handleWalletClick}
+                disabled={isConnecting}
+              >
+                {isConnecting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Wallet className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                )}
+                {walletLabel}
               </Button>
             </div>
 
@@ -195,13 +225,25 @@ export default function Navigation() {
                 })}
 
                 <div className="pt-4 border-t border-white/10 space-y-3">
-                  <Button variant="ghost" className="w-full text-white hover:bg-white/10 justify-start">
+                  <Button
+                    variant="ghost"
+                    className="w-full text-white hover:bg-white/10 justify-start"
+                    onClick={handleSignInClick}
+                  >
                     Sign In
                   </Button>
 
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Connect Wallet
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                    onClick={handleWalletClick}
+                    disabled={isConnecting}
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Wallet className="w-4 h-4 mr-2" />
+                    )}
+                    {walletLabel}
                   </Button>
                 </div>
               </div>

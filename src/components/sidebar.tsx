@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,11 +31,13 @@ import {
   Shield,
   Palette,
   ChevronDown,
+  Wallet,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 interface SidebarProps {
   userType: "client" | "freelancer";
   currentPath?: string;
@@ -74,6 +76,7 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
   const menuItems = userType === "client" ? clientMenuItems : freelancerMenuItems;
   const { data: session } = useSession();
   const router = useRouter();
+  const { address, connectWallet, isConnecting } = useWalletConnection();
   
 
   useEffect(() => {
@@ -104,6 +107,17 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
       router.push("/login");
     }
   };
+
+  const handleWalletClick = useCallback(async () => {
+    await connectWallet();
+  }, [connectWallet]);
+
+  const walletLabel = useMemo(() => {
+    if (address) {
+      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    }
+    return isConnecting ? "Connecting..." : "Connect Wallet";
+  }, [address, isConnecting]);
 
   return (
     <motion.div
@@ -190,8 +204,26 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mx-3"
+            className="mx-3 space-y-3"
           >
+            {/* Wallet connect button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
+              onClick={handleWalletClick}
+              disabled={isConnecting}
+            >
+              <span className="flex items-center gap-2">
+                {isConnecting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Wallet className="w-4 h-4" />
+                )}
+                <span className="text-xs font-medium">{walletLabel}</span>
+              </span>
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div

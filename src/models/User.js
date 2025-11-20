@@ -5,6 +5,8 @@ const SettingsSchema = new mongoose.Schema({
   phone: { type: String, default: "" },
   bio: { type: String, default: "" },
   skills: { type: String, default: "" },
+  location: { type: String, default: "" },
+  portfolioWebsite: { type: String, default: "" },
   notifications: {
     email: { type: Boolean, default: true },
     push: { type: Boolean, default: false },
@@ -33,10 +35,13 @@ const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String }, 
+    password: { type: String },
     role: { type: String, enum: ["freelancer", "client", "pending"], default: "pending" },
     image: { type: String, default: null },
     settings: { type: SettingsSchema, default: () => ({}) },
+    walletAddress: { type: String, default: null },
+    walletLinkedAt: { type: Date },
+    walletMessage: { type: String, default: null },
   },
   { timestamps: true }
 );
