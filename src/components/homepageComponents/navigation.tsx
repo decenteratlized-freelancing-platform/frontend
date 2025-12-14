@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Home, Users, Shield, Zap, Wallet, Loader2 } from "lucide-react"
+import { Menu, X, Home, Users, Shield, Zap, Wallet, Loader2, ArrowBigRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useWalletConnection } from "@/hooks/useWalletConnection"
 
@@ -11,7 +11,7 @@ const navItems = [
   { name: "Home", href: "#home", icon: Home },
   { name: "Features", href: "#features", icon: Zap },
   { name: "How It Works", href: "#how-it-works", icon: Users },
-  { name: "Security", href: "#security", icon: Shield },
+  { name: "Get Started", href: "#security", icon: ArrowBigRight },
 ]
 
 export default function Navigation() {

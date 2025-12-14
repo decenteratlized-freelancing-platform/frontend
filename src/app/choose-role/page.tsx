@@ -45,12 +45,12 @@ export default function ChooseRolePage() {
   };
 
   if (status === "loading" || loading) {
-    return <div className="text-center mt-8">Loading...</div>;
+    return <div className="text-center mt-8 text-white">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center flex-col gap-6">
-      <h1 className="text-2xl font-bold">Choose your role</h1>
+      <h1 className="text-2xl font-bold text-white">Choose your role</h1>
       <div className="flex gap-4">
         <button
           onClick={() => handleRoleSelect("freelancer")}

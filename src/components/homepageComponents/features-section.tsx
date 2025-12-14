@@ -1,8 +1,9 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useScroll, useTransform } from "framer-motion"
 import { Brain, Shield, CreditCard, Globe, Zap, Lock, Users, TrendingUp, Coins } from "lucide-react"
 import FeatureCard from "./feature-card"
+import { useRef } from "react"
 
 const features = [
   {
@@ -56,10 +57,26 @@ const features = [
 ]
 
 export default function FeaturesSection() {
+  const ref = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  })
+
+  const y = useTransform(scrollYProgress, [0, 1], ["100px", "-100px"])
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0])
+
   return (
-    <section id="features" className="py-32 bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+    <motion.section
+      ref={ref}
+      id="features"
+      className="py-32 bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden"
+      style={{ opacity }}
+    >
+      <motion.div
+        className="absolute inset-0 opacity-5"
+        style={{ y: useTransform(scrollYProgress, [0, 1], ["0px", "50px"]) }}
+      >
         <div
           className="absolute inset-0"
           style={{
@@ -67,10 +84,9 @@ export default function FeaturesSection() {
             backgroundSize: "50px 50px",
           }}
         />
-      </div>
+      </motion.div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* Section Header */}
+      <motion.div className="max-w-7xl mx-auto px-6 relative z-10" style={{ y }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -90,7 +106,6 @@ export default function FeaturesSection() {
           </p>
         </motion.div>
 
-        {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <FeatureCard
@@ -102,7 +117,7 @@ export default function FeaturesSection() {
             />
           ))}
         </div>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   )
 }

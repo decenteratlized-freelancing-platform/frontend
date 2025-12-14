@@ -363,7 +363,7 @@ export default function SettingsPage() {
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <Globe className="w-4 h-4" />
-              Preferences
+              Preferences  
             </TabsTrigger>
           </TabsList>
 

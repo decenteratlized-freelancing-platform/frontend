@@ -7,10 +7,6 @@ export default function ClientLayout({
   children: React.ReactNode
 }) {
   return (
-    <html>
-      <body>
       <SidebarLayout userType="client">{children}</SidebarLayout>
-      </body>
-    </html>
 )
 }

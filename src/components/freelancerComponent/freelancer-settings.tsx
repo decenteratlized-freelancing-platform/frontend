@@ -29,7 +29,8 @@ import {
   MapPin,
   Link,
   Lock,
-  Key
+  Key,
+  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -558,10 +559,14 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-100 mb-2">Settings</h1>
-          <p className="text-gray-400">Manage your freelancer profile and preferences</p>
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+            <Settings className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-white">Account Settings</span>
         </div>
+        <div className="text-4xl md:text-5xl font-bold text-white mb-8">
+          <h1 className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">Settings</h1>
+        </div>
+          <p className="text-gray-400 text-xl">Manage your freelancer profile and preferences</p>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -587,13 +592,13 @@ export default function SettingsPage() {
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="billing"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
               <CreditCard className="w-4 h-4" />
               Billing
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger
               value="preferences"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
@@ -1171,7 +1176,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing" className="mt-6">
+          {/* <TabsContent value="billing" className="mt-6">
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
                 <CardTitle className="text-gray-100">Billing Information</CardTitle>
@@ -1187,7 +1192,7 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
 
         </Tabs>
       </div>

@@ -2,18 +2,23 @@ import './globals.css';
 import SessionWrapper from './../components/SessionWrapper';
 import { ReactNode } from 'react';
 import { Toaster } from '@/components/ui/toaster';
-import { SocketContextProvider } from '@/context/SocketContext';
+import ClientLayout from './ClientLayout';
+import { SocketContextProvider } from '../context/SocketContext';
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <SessionWrapper>
-          <SocketContextProvider>
+          <SessionWrapper>
+            <SocketContextProvider>
+        <ClientLayout>
             {children}
             <Toaster />
-          </SocketContextProvider>
-        </SessionWrapper>
+        </ClientLayout>
+            </SocketContextProvider>
+          </SessionWrapper>
       </body>
     </html>
   );
 }
+
