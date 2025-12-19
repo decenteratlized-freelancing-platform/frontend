@@ -1,279 +1,684 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion, AnimatePresence } from "framer-motion"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Target, Plus, Edit, Trash2, Calendar, CheckCircle, Clock, TrendingUp } from "lucide-react"
 
-const goals = [
+interface Milestone {
+  id: string
+  title: string
+  completed: boolean
+  dueDate: string
+}
+
+interface Goal {
+  id: string
+  title: string
+  description: string
+  category: string
+  status: "pending" | "in-progress" | "completed" | "overdue"
+  progress: number
+  targetDate: string
+  createdAt: string
+  milestones: Milestone[]
+  priority: "low" | "medium" | "high"
+}
+
+const initialGoals: Goal[] = [
   {
-    id: 1,
-    title: "Launch E-commerce Platform",
-    description: "Complete development and launch of the new e-commerce platform",
-    progress: 75,
-    target: 100,
-    deadline: "2024-02-15",
+    id: "1",
+    title: "Increase Monthly Revenue",
+    description: "Achieve $50,000 monthly recurring revenue through new client acquisitions",
+    category: "Financial",
     status: "in-progress",
-    category: "Development",
+    progress: 65,
+    targetDate: "2024-12-31",
+    createdAt: "2024-01-15",
+    priority: "high",
     milestones: [
-      { title: "Frontend Development", completed: true },
-      { title: "Backend API", completed: true },
-      { title: "Payment Integration", completed: true },
-      { title: "Testing & QA", completed: false },
-      { title: "Deployment", completed: false },
+      { id: "m1", title: "Reach $30K MRR", completed: true, dueDate: "2024-06-30" },
+      { id: "m2", title: "Reach $40K MRR", completed: true, dueDate: "2024-09-30" },
+      { id: "m3", title: "Reach $50K MRR", completed: false, dueDate: "2024-12-31" },
     ],
   },
   {
-    id: 2,
-    title: "Hire 5 New Freelancers",
-    description: "Expand team by hiring 5 skilled freelancers across different domains",
-    progress: 60,
-    target: 100,
-    deadline: "2024-01-30",
+    id: "2",
+    title: "Build Strong Client Network",
+    description: "Establish relationships with 25 high-quality clients",
+    category: "Networking",
     status: "in-progress",
-    category: "Team Building",
+    progress: 40,
+    targetDate: "2024-11-30",
+    createdAt: "2024-02-01",
+    priority: "medium",
     milestones: [
-      { title: "React Developer", completed: true },
-      { title: "UI/UX Designer", completed: true },
-      { title: "Content Writer", completed: true },
-      { title: "Mobile Developer", completed: false },
-      { title: "DevOps Engineer", completed: false },
+      { id: "m4", title: "Connect with 10 clients", completed: true, dueDate: "2024-05-31" },
+      { id: "m5", title: "Connect with 20 clients", completed: false, dueDate: "2024-08-31" },
+      { id: "m6", title: "Connect with 25 clients", completed: false, dueDate: "2024-11-30" },
     ],
   },
   {
-    id: 3,
-    title: "Reduce Project Costs by 20%",
-    description: "Optimize project costs while maintaining quality standards",
-    progress: 45,
-    target: 100,
-    deadline: "2024-03-01",
-    status: "in-progress",
-    category: "Finance",
+    id: "3",
+    title: "Launch New Service Line",
+    description: "Develop and launch AI consulting services",
+    category: "Business Development",
+    status: "pending",
+    progress: 15,
+    targetDate: "2024-10-15",
+    createdAt: "2024-03-01",
+    priority: "high",
     milestones: [
-      { title: "Cost Analysis", completed: true },
-      { title: "Vendor Negotiation", completed: true },
-      { title: "Process Optimization", completed: false },
-      { title: "Implementation", completed: false },
-    ],
-  },
-  {
-    id: 4,
-    title: "Complete Mobile App Project",
-    description: "Finish the mobile app development project ahead of schedule",
-    progress: 100,
-    target: 100,
-    deadline: "2024-01-05",
-    status: "completed",
-    category: "Development",
-    milestones: [
-      { title: "Design Phase", completed: true },
-      { title: "Development", completed: true },
-      { title: "Testing", completed: true },
-      { title: "App Store Submission", completed: true },
+      { id: "m7", title: "Market research", completed: true, dueDate: "2024-04-30" },
+      { id: "m8", title: "Service development", completed: false, dueDate: "2024-07-31" },
+      { id: "m9", title: "Launch campaign", completed: false, dueDate: "2024-10-15" },
     ],
   },
 ]
 
 export default function ClientGoals() {
-  const [showAddGoal, setShowAddGoal] = useState(false)
+  const [goals, setGoals] = useState<Goal[]>(initialGoals)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
+  const [newGoal, setNewGoal] = useState({
+    title: "",
+    description: "",
+    category: "",
+    targetDate: "",
+    priority: "medium" as "low" | "medium" | "high",
+    milestones: [{ title: "", dueDate: "" }],
+  })
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Goal["status"]) => {
     switch (status) {
       case "completed":
-        return "bg-green-500/20 text-green-300 border border-green-500/30"
+        return "bg-green-500/20 text-green-300 border-green-500/30"
       case "in-progress":
-        return "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+        return "bg-blue-500/20 text-blue-300 border-blue-500/30"
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
       case "overdue":
-        return "bg-red-500/20 text-red-300 border border-red-500/30"
+        return "bg-red-500/20 text-red-300 border-red-500/30"
       default:
-        return "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+        return "bg-gray-500/20 text-gray-300 border-gray-500/30"
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return CheckCircle
-      case "in-progress":
-        return Clock
-      case "overdue":
-        return AlertCircle
+  const getPriorityColor = (priority: Goal["priority"]) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-500/20 text-red-300 border-red-500/30"
+      case "medium":
+        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
+      case "low":
+        return "bg-green-500/20 text-green-300 border-green-500/30"
       default:
-        return Target
+        return "bg-gray-500/20 text-gray-300 border-gray-500/30"
     }
+  }
+
+  const addGoal = () => {
+    const goal: Goal = {
+      id: Date.now().toString(),
+      title: newGoal.title,
+      description: newGoal.description,
+      category: newGoal.category,
+      status: "pending",
+      progress: 0,
+      targetDate: newGoal.targetDate,
+      createdAt: new Date().toISOString().split("T")[0],
+      priority: newGoal.priority,
+      milestones: newGoal.milestones
+        .map((m, index) => ({
+          id: `${Date.now()}-${index}`,
+          title: m.title,
+          completed: false,
+          dueDate: m.dueDate,
+        }))
+        .filter((m) => m.title.trim() !== ""),
+    }
+
+    setGoals([...goals, goal])
+    setNewGoal({
+      title: "",
+      description: "",
+      category: "",
+      targetDate: "",
+      priority: "medium",
+      milestones: [{ title: "", dueDate: "" }],
+    })
+    setIsAddDialogOpen(false)
+  }
+
+  const updateGoal = () => {
+    if (!editingGoal) return
+
+    setGoals(goals.map((goal) => (goal.id === editingGoal.id ? editingGoal : goal)))
+    setIsEditDialogOpen(false)
+    setEditingGoal(null)
+  }
+
+  const deleteGoal = (goalId: string) => {
+    setGoals(goals.filter((goal) => goal.id !== goalId))
+  }
+
+  const toggleMilestone = (goalId: string, milestoneId: string) => {
+    setGoals(
+      goals.map((goal) => {
+        if (goal.id === goalId) {
+          const updatedMilestones = goal.milestones.map((milestone) =>
+            milestone.id === milestoneId ? { ...milestone, completed: !milestone.completed } : milestone,
+          )
+
+          const completedCount = updatedMilestones.filter((m) => m.completed).length
+          const progress = Math.round((completedCount / updatedMilestones.length) * 100)
+
+          let status: Goal["status"] = "pending"
+          if (progress === 100) status = "completed"
+          else if (progress > 0) status = "in-progress"
+
+          return {
+            ...goal,
+            milestones: updatedMilestones,
+            progress,
+            status,
+          }
+        }
+        return goal
+      }),
+    )
+  }
+
+  const addMilestone = () => {
+    setNewGoal({
+      ...newGoal,
+      milestones: [...newGoal.milestones, { title: "", dueDate: "" }],
+    })
+  }
+
+  const updateMilestone = (index: number, field: "title" | "dueDate", value: string) => {
+    const updatedMilestones = newGoal.milestones.map((milestone, i) =>
+      i === index ? { ...milestone, [field]: value } : milestone,
+    )
+    setNewGoal({ ...newGoal, milestones: updatedMilestones })
+  }
+
+  const removeMilestone = (index: number) => {
+    setNewGoal({
+      ...newGoal,
+      milestones: newGoal.milestones.filter((_, i) => i !== index),
+    })
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="flex items-center justify-between mb-8"
-      >
-        <div>
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-            <Target className="w-4 h-4 text-pink-400" />
-            <span className="text-sm font-medium text-white">Goal Management</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            <span className="bg-gradient-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent">
-              Your Goals
-            </span>
-          </h1>
-          <p className="text-xl text-gray-300">Track and achieve your business objectives</p>
-        </div>
-        <Button
-          onClick={() => setShowAddGoal(!showAddGoal)}
-          className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-2xl"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Goal
-        </Button>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                Goals & Objectives
+              </h1>
+              <p className="text-gray-400 text-lg">Track your progress and achieve your business objectives</p>
+            </div>
 
-      {/* Add Goal Form */}
-      {showAddGoal && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="mb-8"
-        >
-          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-white">Create New Goal</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Goal Title</label>
-                  <Input
-                    placeholder="Enter goal title"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Deadline</label>
-                  <Input type="date" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-300 mb-2 block">Description</label>
-                <Textarea
-                  placeholder="Describe your goal"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                />
-              </div>
-              <div className="flex gap-4">
-                <Button className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700">
-                  Create Goal
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Goal
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddGoal(false)}
-                  className="border-white/20 text-white hover:bg-white/10 bg-transparent"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+              </DialogTrigger>
+              <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+                {/* ... existing dialog content ... */}
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-white">Create New Goal</DialogTitle>
+                  <DialogDescription className="text-gray-400">
+                    Set a new goal with milestones to track your progress
+                  </DialogDescription>
+                </DialogHeader>
 
-      {/* Goals Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {goals.map((goal, index) => {
-          const StatusIcon = getStatusIcon(goal.status)
-          return (
-            <motion.div
-              key={goal.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-            >
-              <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 h-full">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <StatusIcon className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-bold text-white">{goal.title}</CardTitle>
-                        <p className="text-sm text-gray-400">{goal.category}</p>
-                      </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title" className="text-white">
+                      Goal Title
+                    </Label>
+                    <Input
+                      id="title"
+                      value={newGoal.title}
+                      onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white"
+                      placeholder="Enter goal title"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description" className="text-white">
+                      Description
+                    </Label>
+                    <Textarea
+                      id="description"
+                      value={newGoal.description}
+                      onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white"
+                      placeholder="Describe your goal"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="category" className="text-white">
+                        Category
+                      </Label>
+                      <Input
+                        id="category"
+                        value={newGoal.category}
+                        onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
+                        className="bg-white/10 border-white/20 text-white"
+                        placeholder="e.g., Financial, Marketing"
+                      />
                     </div>
-                    <Badge className={getStatusColor(goal.status)}>{goal.status}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-gray-300">{goal.description}</p>
 
-                  {/* Progress */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-300">Progress</span>
-                      <span className="text-white font-semibold">{goal.progress}%</span>
+                    <div>
+                      <Label htmlFor="priority" className="text-white">
+                        Priority
+                      </Label>
+                      <Select
+                        value={newGoal.priority}
+                        onValueChange={(value: "low" | "medium" | "high") =>
+                          setNewGoal({ ...newGoal, priority: value })
+                        }
+                      >
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-white/20">
+                          <SelectItem value="low" className="text-white">
+                            Low
+                          </SelectItem>
+                          <SelectItem value="medium" className="text-white">
+                            Medium
+                          </SelectItem>
+                          <SelectItem value="high" className="text-white">
+                            High
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Progress value={goal.progress} className="h-2" />
                   </div>
 
-                  {/* Deadline */}
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Calendar className="w-4 h-4" />
-                    <span>Deadline: {goal.deadline}</span>
+                  <div>
+                    <Label htmlFor="targetDate" className="text-white">
+                      Target Date
+                    </Label>
+                    <Input
+                      id="targetDate"
+                      type="date"
+                      value={newGoal.targetDate}
+                      onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white"
+                    />
                   </div>
 
-                  {/* Milestones */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-300">Milestones</h4>
-                    <div className="space-y-1">
-                      {goal.milestones.map((milestone, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-sm">
-                          <div
-                            className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                              milestone.completed ? "bg-green-500" : "bg-gray-600 border border-gray-500"
-                            }`}
-                          >
-                            {milestone.completed && <CheckCircle className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className={milestone.completed ? "text-green-300 line-through" : "text-gray-300"}>
-                            {milestone.title}
-                          </span>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-white">Milestones</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addMilestone}
+                        className="border-white/20 text-white hover:bg-white/10 bg-transparent"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {newGoal.milestones.map((milestone, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            value={milestone.title}
+                            onChange={(e) => updateMilestone(index, "title", e.target.value)}
+                            className="bg-white/10 border-white/20 text-white flex-1"
+                            placeholder="Milestone title"
+                          />
+                          <Input
+                            type="date"
+                            value={milestone.dueDate}
+                            onChange={(e) => updateMilestone(index, "dueDate", e.target.value)}
+                            className="bg-white/10 border-white/20 text-white w-40"
+                          />
+                          {newGoal.milestones.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeMilestone(index)}
+                              className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      size="sm"
-                      className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
-                    >
-                      Update Progress
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-white/20 text-white hover:bg-white/10 bg-transparent"
-                    >
-                      Edit Goal
-                    </Button>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddDialogOpen(false)}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={addGoal}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    disabled={!newGoal.title || !newGoal.description}
+                  >
+                    Create Goal
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Target className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">{goals.length}</p>
+                      <p className="text-sm text-gray-400">Total Goals</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
-          )
-        })}
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">
+                        {goals.filter((g) => g.status === "completed").length}
+                      </p>
+                      <p className="text-sm text-gray-400">Completed</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">
+                        {goals.filter((g) => g.status === "in-progress").length}
+                      </p>
+                      <p className="text-sm text-gray-400">In Progress</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+            >
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">
+                        {Math.round(goals.reduce((acc, goal) => acc + goal.progress, 0) / goals.length)}%
+                      </p>
+                      <p className="text-sm text-gray-400">Avg Progress</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Goals List */}
+          <div className="space-y-6">
+            <AnimatePresence>
+              {goals.map((goal, index) => (
+                <motion.div
+                  key={goal.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300 shadow-lg">
+                    <CardHeader className="pb-4">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <CardTitle className="text-xl text-white">{goal.title}</CardTitle>
+                            <Badge className={`${getStatusColor(goal.status)} border text-xs px-2 py-1`}>
+                              {goal.status.replace("-", " ")}
+                            </Badge>
+                            <Badge className={`${getPriorityColor(goal.priority)} border text-xs px-2 py-1`}>
+                              {goal.priority}
+                            </Badge>
+                          </div>
+                          <CardDescription className="text-gray-400 text-base leading-relaxed">
+                            {goal.description}
+                          </CardDescription>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                            <span className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Due: {new Date(goal.targetDate).toLocaleDateString()}
+                            </span>
+                            <span>Category: {goal.category}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Dialog
+                            open={isEditDialogOpen && editingGoal?.id === goal.id}
+                            onOpenChange={(open) => {
+                              setIsEditDialogOpen(open)
+                              if (!open) setEditingGoal(null)
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingGoal(goal)}
+                                className="border-white/20 text-white hover:bg-white/10"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle className="text-xl font-bold text-white">Edit Goal</DialogTitle>
+                              </DialogHeader>
+
+                              {editingGoal && (
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="edit-title" className="text-white">
+                                      Goal Title
+                                    </Label>
+                                    <Input
+                                      id="edit-title"
+                                      value={editingGoal.title}
+                                      onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
+                                      className="bg-white/10 border-white/20 text-white"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="edit-description" className="text-white">
+                                      Description
+                                    </Label>
+                                    <Textarea
+                                      id="edit-description"
+                                      value={editingGoal.description}
+                                      onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
+                                      className="bg-white/10 border-white/20 text-white"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label htmlFor="edit-category" className="text-white">
+                                        Category
+                                      </Label>
+                                      <Input
+                                        id="edit-category"
+                                        value={editingGoal.category}
+                                        onChange={(e) => setEditingGoal({ ...editingGoal, category: e.target.value })}
+                                        className="bg-white/10 border-white/20 text-white"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <Label htmlFor="edit-targetDate" className="text-white">
+                                        Target Date
+                                      </Label>
+                                      <Input
+                                        id="edit-targetDate"
+                                        type="date"
+                                        value={editingGoal.targetDate}
+                                        onChange={(e) => setEditingGoal({ ...editingGoal, targetDate: e.target.value })}
+                                        className="bg-white/10 border-white/20 text-white"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setIsEditDialogOpen(false)}
+                                  className="border-white/20 text-white hover:bg-white/10"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={updateGoal}
+                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                                >
+                                  Update Goal
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteGoal(goal.id)}
+                            className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-6">
+                      {/* Progress Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-white">Progress</span>
+                          <span className="text-sm text-gray-400">{goal.progress}%</span>
+                        </div>
+                        <Progress value={goal.progress} className="h-2 bg-white/10" />
+                      </div>
+
+                      {/* Milestones */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-white">Milestones</h4>
+                        <div className="space-y-2">
+                          {goal.milestones.map((milestone) => (
+                            <div
+                              key={milestone.id}
+                              className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10"
+                            >
+                              <Checkbox
+                                checked={milestone.completed}
+                                onCheckedChange={() => toggleMilestone(goal.id, milestone.id)}
+                                className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              />
+                              <div className="flex-1">
+                                <p
+                                  className={`text-sm ${milestone.completed ? "text-gray-400 line-through" : "text-white"}`}
+                                >
+                                  {milestone.title}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   )

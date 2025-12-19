@@ -1,5 +1,6 @@
 "use client"
 import type React from "react"
+import { useState } from "react"
 import { usePathname } from "next/navigation"
 import Sidebar from "@/components/sidebar"
 
@@ -10,6 +11,7 @@ interface SidebarLayoutProps {
 
 export default function SidebarLayout({ children, userType }: SidebarLayoutProps) {
   const pathname = usePathname()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Darker blue/purple hero gradient (closer to homepage but much darker)
   const backgroundGradient = "from-[#030517] via-[#06132a]/80 to-[#041028]"
@@ -30,10 +32,15 @@ export default function SidebarLayout({ children, userType }: SidebarLayoutProps
       <div className="fixed inset-0 overflow-hidden pointer-events-none">{backgroundElements}</div>
 
       {/* Sidebar */}
-      <Sidebar userType={userType} currentPath={pathname} />
+      <Sidebar
+        userType={userType}
+        currentPath={pathname}
+        isCollapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(!isCollapsed)}
+      />
 
       {/* Main Content Area */}
-      <div className="pl-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? "pl-16" : "pl-64"}`}>
         <main className="relative z-10 min-h-screen">{children}</main>
       </div>
     </div>

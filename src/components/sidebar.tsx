@@ -41,6 +41,8 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 interface SidebarProps {
   userType: "client" | "freelancer";
   currentPath?: string;
+  isCollapsed: boolean;
+  onToggle: () => void;
 }
 
 const clientMenuItems = [
@@ -65,13 +67,14 @@ const freelancerMenuItems = [
   { name: "Support", href: "/freelancer/support", icon: HelpCircle, color: "from-red-400 to-pink-400" },
 ];
 
-export default function Sidebar({ userType, currentPath }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; image?: string }>({
-    name: "",
-    email: "",
-    image: "",
-  });
+export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }: SidebarProps) {
+  const [user, setUser] = useState<{ name: string; email: string; image?: string }>(
+    {
+      name: "",
+      email: "",
+      image: "",
+    }
+  );
 
   const menuItems = userType === "client" ? clientMenuItems : freelancerMenuItems;
   const { data: session } = useSession();
@@ -159,7 +162,7 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={onToggle}
               className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 h-auto min-w-0"
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -179,17 +182,29 @@ export default function Sidebar({ userType, currentPath }: SidebarProps) {
                 >
                   <Link href={item.href}>
                     <div
-                      className={`group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 ${isActive
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/70 hover:text-white hover:bg-white/8"
-                        } ${isCollapsed ? "justify-center" : ""}`}
+                      className={`group relative flex items-center p-2.5 rounded-xl transition-all duration-200 ${
+                        isActive
+                          ? "bg-white/15 text-white shadow-sm"
+                          : "text-white/70 hover:text-white hover:bg-white/8"
+                      } ${isCollapsed ? "justify-center" : "gap-3"}`}
                     >
                       <div
-                        className={`relative w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center`}
+                        className={`relative w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center flex-shrink-0`}
                       >
                         <item.icon className="w-4 h-4 text-white" />
                       </div>
-                      {!isCollapsed && <span className="font-medium text-sm">{item.name}</span>}
+                      <AnimatePresence>
+                        {!isCollapsed && (
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: "auto", transition: { duration: 0.2, delay: 0.1 } }}
+                            exit={{ opacity: 0, width: 0, transition: { duration: 0.15 } }}
+                            className="font-medium text-sm whitespace-nowrap overflow-hidden"
+                          >
+                            {item.name}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </Link>
                 </motion.div>
