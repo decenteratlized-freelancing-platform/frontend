@@ -83,7 +83,8 @@ export default function CTASection() {
         >
           <Button
             size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
+            onClick={() => { window.location.href = "/login" }}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-7 py-6 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
           >
             Get Started Free
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -92,7 +93,7 @@ export default function CTASection() {
           <Button
             variant="outline"
             size="lg"
-            className="border-white/20 text-white hover:bg-white/10 px-12 py-4 text-lg font-semibold rounded-2xl backdrop-blur-sm bg-transparent"
+            className="border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold rounded-2xl backdrop-blur-sm bg-transparent"
           >
             Schedule Demo
           </Button>
