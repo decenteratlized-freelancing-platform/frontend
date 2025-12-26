@@ -179,7 +179,7 @@ export default function BrowseJobs() {
                   className="pl-12 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-400 text-lg"
                 />
               </div>
-              <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 h-12 px-8">
+              <Button className="bg-blue-600 to-purple-600 hover:bg-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group">
                 <Search className="w-5 h-5 mr-2" />
                 Search Jobs
               </Button>
@@ -312,7 +312,7 @@ export default function BrowseJobs() {
                         >
                           <DialogTrigger asChild>
                             <Button
-                              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                              className="bg-blue-700 hover:to-purple-700 hover:bg-blue-600 to-purple-600 text-white px-6 py-4 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
                               onClick={() => setSelectedJob(job)}
                             >
                               Submit Proposal

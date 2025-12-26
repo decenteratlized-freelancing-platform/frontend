@@ -610,7 +610,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handlePasswordUpdate}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  className="w-full bg-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
                 >
                   Update Password
                 </Button>

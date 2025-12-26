@@ -358,11 +358,11 @@ export default function ClientSettings() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 bg-white/5 backdrop-blur-sm border border-white/10">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 text-white"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10 text-white"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-white/10 text-white"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
-            <TabsTrigger value="billing" className="data-[state=active]:bg-white/10 text-white"><CreditCard className="w-4 h-4 mr-2" />Billing</TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/10 text-white"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Billing</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}

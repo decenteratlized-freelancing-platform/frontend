@@ -349,7 +349,7 @@ export default function FreelancerPortfolio() {
             className={
               selectedCategory === category
                 ? "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
-                : "border-white/20 text-white hover:bg-white/10 bg-transparent"
+                : "border-white/20 text-white hover:bg-white/10 bg-transparent hover:text-white"
             }
           >
             {category === "all" ? "All Projects" : category}

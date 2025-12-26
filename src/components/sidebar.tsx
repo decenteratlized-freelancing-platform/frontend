@@ -226,7 +226,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
+                    className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
                   >
                     <span className="flex items-center gap-2">
                       <Wallet className="w-4 h-4" />
@@ -235,8 +235,8 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                     <ChevronDown className="w-3 h-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl">
-                  <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500/10 cursor-pointer">
+                <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl hover:text-red-800">
+                  <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500 cursor-pointer hover:text-red-800">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Disconnect Wallet</span>
                   </DropdownMenuItem>
@@ -246,7 +246,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-between bg-white/5 hover:bg-white/10 border-white/20 text-white"
+                className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
                 onClick={handleWalletClick}
                 disabled={isConnecting}
               >
@@ -291,31 +291,31 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                 <DropdownMenuSeparator className="bg-white/10" />
 
                 <Link href="/freelancer/settings" className="block">
-                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10">
+                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <User className="mr-2 h-4 w-4" />
                     <span>View Profile</span>
                   </DropdownMenuItem>
                 </Link>
 
                 <Link href="/notifications" className="block">
-                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10">
+                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <Bell className="mr-2 h-4 w-4" />
                     <span>Notifications</span>
                   </DropdownMenuItem>
                 </Link>
 
                 <Link href="/security" className="block">
-                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10">
+                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Password & Security</span>
                   </DropdownMenuItem>
                 </Link>
 
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-white/10 hover:text-red-600" />
 
-                <DropdownMenuItem onClick={handleLogout} className="text-red-400 hover:bg-red-500/10 cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                <DropdownMenuItem onClick={handleLogout} className="text-red-400 cursor-pointer hover:text-red-600">
+                  <LogOut className="mr-2 h-4 w-4 hover:text-red-600"/>
+                  <span className="hover:text-red-600">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

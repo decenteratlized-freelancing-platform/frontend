@@ -559,35 +559,41 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
             <Settings className="w-4 h-4 text-gray-400" />
             <span className="text-sm font-medium text-white">Account Settings</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+              Settings
+            </span>
+          </h1>
+          <p className="text-xl text-gray-300">
+            Manage your freelancer profile and preferences
+          </p>
         </div>
-        <div className="text-4xl md:text-5xl font-bold text-white mb-8">
-          <h1 className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">Settings</h1>
-        </div>
-          <p className="text-gray-400 text-xl">Manage your freelancer profile and preferences</p>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800 border border-gray-700">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-800 border border-gray-700">
             <TabsTrigger
               value="profile"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <User className="w-4 h-4" />
               Profile
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <Bell className="w-4 h-4" />
               Notifications
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <Shield className="w-4 h-4" />
               Security
@@ -601,7 +607,7 @@ export default function SettingsPage() {
             </TabsTrigger> */}
             <TabsTrigger
               value="preferences"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <Globe className="w-4 h-4" />
               Preferences
@@ -962,7 +968,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handlePasswordUpdate}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
                 >
                   Update Password
                 </Button>
@@ -1167,7 +1173,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSavePreferences}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white mt-4"
+                  className="w-full bg-green-600 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white mt-4"
                 >
                   {loading ? "Saving..." : "Save Notification Settings"}
                 </Button>
