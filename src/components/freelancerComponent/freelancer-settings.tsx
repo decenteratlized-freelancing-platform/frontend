@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import PaymentMethods from "@/components/shared/payment-methods";
 
 interface UserSettings {
   fullName: string;
@@ -576,7 +577,7 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-800 border border-gray-700">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-800 border border-gray-700">
             <TabsTrigger
               value="profile"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
@@ -598,13 +599,13 @@ export default function SettingsPage() {
               <Shield className="w-4 h-4" />
               Security
             </TabsTrigger>
-            {/* <TabsTrigger
+            <TabsTrigger
               value="billing"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <CreditCard className="w-4 h-4" />
               Billing
-            </TabsTrigger> */}
+            </TabsTrigger>
             <TabsTrigger
               value="preferences"
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
@@ -1182,26 +1183,14 @@ export default function SettingsPage() {
           </TabsContent>
 
           {/* Billing Tab */}
-          {/* <TabsContent value="billing" className="mt-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-gray-100">Billing Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <CreditCard className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-200">No payment methods added</h3>
-                  <p className="text-gray-400 mt-2">Add a payment method to receive payments from clients.</p>
-                  <Button className="mt-6 bg-blue-600 hover:bg-blue-700 text-white">
-                    Add Payment Method
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent> */}
+          <TabsContent value="billing" className="mt-6">
+            <PaymentMethods />
+          </TabsContent>
+
 
         </Tabs>
       </div>
+
     </div>
   );
 }

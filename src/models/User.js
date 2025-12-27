@@ -31,6 +31,13 @@ const SettingsSchema = new mongoose.Schema({
   availableForJobs: { type: Boolean, default: true },
 });
 
+const BankSchema = new mongoose.Schema({
+  accountNo: String,
+  ifsc: String,
+  upiId: String,
+  holderName: String,
+}, { _id: false });
+
 const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
@@ -39,6 +46,8 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["freelancer", "client", "pending"], default: "pending" },
     image: { type: String, default: null },
     settings: { type: SettingsSchema, default: () => ({}) },
+    bankAccount: { type: BankSchema, default: null }, // Added
+    paymentMode: { type: String, enum: ["crypto", "bank", "upi", "card", "both"], default: "bank" }, // Added
     walletAddress: { type: String, default: null },
     walletLinkedAt: { type: Date },
     walletMessage: { type: String, default: null },

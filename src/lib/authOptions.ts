@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       await connectDB();
 
-      // If client called update(), immediately apply provided session fields
+
       if (trigger === "update" && session) {
         const nextName = (session as any).user?.name ?? (session as any).name;
         const nextRole = (session as any).user?.role ?? (session as any).role;
@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         if (typeof nextWalletLinkedAt !== "undefined") (token as any).walletLinkedAt = nextWalletLinkedAt;
       }
 
-      // On first sign-in, seed token from user/DB
+
       if (user) {
         const dbUser = await User.findOne({ email: user.email });
         token.name = dbUser?.fullName || user.name || "";
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await User.findOne({ email: token.email as string });
         if (dbUser) {
           token.name = dbUser.fullName || (token as any).name || "";
-          token.role = dbUser.role ?? (token as any).role ?? "pending";
+          token.role = dbUser.role ?? "pending";
           token.image = dbUser.image || (token as any).image || "";
           (token as any).id = dbUser._id?.toString(); // For chat system
           (token as any).walletAddress = dbUser.walletAddress ?? (token as any).walletAddress ?? null;

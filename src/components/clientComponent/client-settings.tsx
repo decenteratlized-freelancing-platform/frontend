@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
+import PaymentMethods from "@/components/shared/payment-methods"
 
 export default function ClientSettings() {
   const [profile, setProfile] = useState({
@@ -705,39 +706,7 @@ export default function ClientSettings() {
 
           {/* Billing Tab */}
           <TabsContent value="billing">
-            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">Billing & Payment Methods</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-white/5 border border-white/10">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-white">Credit Card</h3>
-                        <div className="text-2xl">💳</div>
-                      </div>
-                      <p className="text-gray-400">**** **** **** 1234</p>
-                      <p className="text-sm text-gray-500">Expires 12/25</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-white/5 border border-white/10">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-white">PayPal</h3>
-                        <div className="text-2xl">🅿️</div>
-                      </div>
-                      <p className="text-gray-400">john@example.com</p>
-                      <p className="text-sm text-gray-500">Verified</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  Add Payment Method
-                </Button>
-              </CardContent>
-            </Card>
+            <PaymentMethods />
           </TabsContent>
 
           {/* Preferences Tab */}

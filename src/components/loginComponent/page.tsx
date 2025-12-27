@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Github } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -136,12 +136,42 @@ const LoginPage = () => {
   };
 
 
+  // Handle URL error parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error === "RoleMismatch") {
+      setStatusMessage({
+        type: "error",
+        text: "Account already exists with a different role. You cannot sign up/login as a different role."
+      });
+    }
+  }, []);
+
   const handleGoogleAuth = () => {
-    signIn('google', { callbackUrl: '/choose-role' });
+    const intentRole = !isLogin ? formData.role : (formData.role || 'freelancer'); // Default to freelancer if not set, or handle logic for 'login' tab where role might be ambiguous if not selected, but usually for login we might not want to enforce UNLESS the user explicitly picked a role. 
+    // Actually, for Login tab, standard flow is just "Sign In". The user expects to go to THEIR dashboard.
+    // But the user specifically asked: "sign up the client page... say error".
+    // So if they are on SIGN UP tab, we enforce `formData.role`.
+
+    // Constructing URL
+    const params = new URLSearchParams();
+    params.set('intentRole', !isLogin ? formData.role : ''); // Only enforce on Signup or if we want to enforce on Login too. The user said "sign up the client page".
+    // Let's enforce it if we can determine it. On Login tab, we don't really have a role selector usually visible or relevant if we just want to "Start Session". 
+    // BUT, if the user tries to "Login as Client" (implied context), we might want to check.
+    // However, the prompt specifically mentioned "Sign Up the client page".
+    // Let's pass the role only if it is Signup mode for now to be safe, OR if the UI suggests a role context. 
+    // Looking at the UI code, there is a role selector ONLY in `!isLogin` (Sign Up) mode.
+    // In Login mode, there is NO role selector.
+    // So we only pass intentRole if !isLogin.
+
+    const callbackUrl = `/auth-callback${!isLogin ? `?intentRole=${formData.role}` : ''}`;
+    signIn('google', { callbackUrl });
   };
 
   const handleGithubAuth = () => {
-    signIn('github', { callbackUrl: '/choose-role' });
+    const callbackUrl = `/auth-callback${!isLogin ? `?intentRole=${formData.role}` : ''}`;
+    signIn('github', { callbackUrl });
   };
 
   const handleResendVerification = async () => {
