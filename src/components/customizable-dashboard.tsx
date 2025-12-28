@@ -9,6 +9,8 @@ import StatsWidget from "./widgets/stats-widget"
 import ChartWidget from "./widgets/chart-widget"
 import ActivityWidget from "./widgets/activity-widget"
 import QuickActionsWidget from "@/components/widgets/quick-action-widget"
+import { useCurrency } from "@/context/CurrencyContext";
+import CurrencyToggle from "@/components/shared/currency-toggle";
 import { DollarSign, Users, Clock, Eye, Star, CheckCircle } from "lucide-react"
 
 interface CustomizableDashboardProps {
@@ -16,6 +18,7 @@ interface CustomizableDashboardProps {
 }
 
 export default function CustomizableDashboard({ userType }: CustomizableDashboardProps) {
+  const { getConvertedAmount } = useCurrency();
   const [widgets, setWidgets] = useState<Widget[]>([
     {
       id: "stats-1",
@@ -37,11 +40,10 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       size: "small",
       position: { x: 1, y: 0 },
       data: {
-        value: userType === "client" ? 24500 : 18750,
-        change: userType === "client" ? "+$1,200 this month" : "+$2,400 this month",
+        value: getConvertedAmount(userType === "client" ? 24500 * 80 : 18750 * 80),
+        change: userType === "client" ? "+₹96,000 this month" : "+₹1,92,000 this month",
         icon: DollarSign,
         color: "from-green-500 to-emerald-500",
-        prefix: "$",
       },
     },
     {
@@ -79,12 +81,12 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       size: "medium",
       position: { x: 0, y: 1 },
       data: [
-        { name: "Jan", value: 4000 },
-        { name: "Feb", value: 3000 },
-        { name: "Mar", value: 5000 },
-        { name: "Apr", value: 4500 },
-        { name: "May", value: 6000 },
-        { name: "Jun", value: 5500 },
+        { name: "Jan", value: 4000 * 80 },
+        { name: "Feb", value: 3000 * 80 },
+        { name: "Mar", value: 5000 * 80 },
+        { name: "Apr", value: 4500 * 80 },
+        { name: "May", value: 6000 * 80 },
+        { name: "Jun", value: 5500 * 80 },
       ],
     },
     {

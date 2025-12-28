@@ -23,6 +23,8 @@ import AnimatedCounter from "@/components/homepageComponents/animated-counter"
 import { ProposalReviewModal } from "./proposal-review-modal"
 import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
+import { useCurrency } from "@/context/CurrencyContext"
+import CurrencyToggle from "@/components/shared/currency-toggle"
 
 const recentActivity = [
   {
@@ -51,6 +53,7 @@ const recentActivity = [
 export default function ClientDashboard() {
   const { data: session } = useSession()
   const user = useCurrentUser()
+  const { currency, getConvertedAmount } = useCurrency()
   const [displayName, setDisplayName] = useState("Client")
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -90,6 +93,7 @@ export default function ClientDashboard() {
   }, [session])
 
   const activeJobsCount = jobs.filter(job => job.status === 'open' || job.status === 'in_progress').length
+  const totalSpent = 24500;
 
   const stats = [
     {
@@ -101,11 +105,11 @@ export default function ClientDashboard() {
     },
     {
       title: "Total Spent",
-      value: 24500, // Placeholder for now
-      change: "+$1,200 this month",
+      value: totalSpent,
+      displayValue: getConvertedAmount(totalSpent),
+      change: "+1,200 this month",
       icon: DollarSign,
       color: "from-green-500 to-emerald-500",
-      prefix: "$",
     },
     {
       title: "Freelancers Hired",
@@ -154,9 +158,12 @@ export default function ClientDashboard() {
         className="flex items-center justify-between mb-12"
       >
         <div>
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-            <Sparkles className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-white">Client Dashboard</span>
+          <div className="flex justify-between items-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-medium text-white">Client Dashboard</span>
+            </div>
+            <CurrencyToggle />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
             Welcome Back,{" "}
@@ -178,7 +185,7 @@ export default function ClientDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
+        {stats.map((stat: any, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 50 }}
@@ -192,7 +199,11 @@ export default function ClientDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-300">{stat.title}</p>
                     <p className="text-2xl font-bold text-white mt-2">
-                      <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
+                      {stat.displayValue ? (
+                        <span>{stat.displayValue}</span>
+                      ) : (
+                        <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
+                      )}
                     </p>
                     <p className="text-sm text-green-400 mt-1">{stat.change}</p>
                   </div>
@@ -241,7 +252,7 @@ export default function ClientDashboard() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg font-bold text-white">${job.budget?.toLocaleString()}</span>
+                          <span className="text-lg font-bold text-white">{getConvertedAmount(job.budget)}</span>
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="w-3 h-3 text-gray-400" />
                             <span className="text-xs text-gray-400">

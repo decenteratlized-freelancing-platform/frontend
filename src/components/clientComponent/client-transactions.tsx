@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { useCurrency } from "@/context/CurrencyContext";
+import CurrencyToggle from "@/components/shared/currency-toggle";
 import { Search, Filter, Download, CreditCard, ArrowUpRight, ArrowDownLeft, Calendar, DollarSign } from "lucide-react"
 
 const transactions = [
@@ -14,7 +16,7 @@ const transactions = [
     id: "TXN-001",
     type: "payment",
     description: "Payment to John Doe - React Development",
-    amount: -2500,
+    amount: -2500 * 80,
     status: "completed",
     date: "2024-01-15",
     method: "Credit Card",
@@ -24,7 +26,7 @@ const transactions = [
     id: "TXN-002",
     type: "refund",
     description: "Refund for cancelled project",
-    amount: 800,
+    amount: 800 * 80,
     status: "completed",
     date: "2024-01-12",
     method: "Bank Transfer",
@@ -34,7 +36,7 @@ const transactions = [
     id: "TXN-003",
     type: "payment",
     description: "Payment to Mike Johnson - UI/UX Design",
-    amount: -1800,
+    amount: -1800 * 80,
     status: "pending",
     date: "2024-01-10",
     method: "PayPal",
@@ -44,7 +46,7 @@ const transactions = [
     id: "TXN-004",
     type: "payment",
     description: "Payment to Sarah Wilson - Content Writing",
-    amount: -600,
+    amount: -600 * 80,
     status: "completed",
     date: "2024-01-08",
     method: "Crypto",
@@ -52,16 +54,17 @@ const transactions = [
   },
 ]
 
-const stats = [
-  { title: "Total Spent", value: "$24,500", change: "+12%", color: "from-red-500 to-pink-500" },
-  { title: "This Month", value: "$3,200", change: "+8%", color: "from-blue-500 to-cyan-500" },
-  { title: "Pending", value: "$1,800", change: "-5%", color: "from-orange-500 to-yellow-500" },
-  { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
-]
-
 export default function ClientTransactions() {
+  const { getConvertedAmount } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+
+  const stats = [
+    { title: "Total Spent", value: getConvertedAmount(1960000), change: "+12%", color: "from-red-500 to-pink-500" },
+    { title: "This Month", value: getConvertedAmount(256000), change: "+8%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getConvertedAmount(144000), change: "-5%", color: "from-orange-500 to-yellow-500" },
+    { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
+  ]
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -72,9 +75,12 @@ export default function ClientTransactions() {
         transition={{ duration: 0.8 }}
         className="mb-8"
       >
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-          <CreditCard className="w-4 h-4 text-green-400" />
-          <span className="text-sm font-medium text-white">Transaction History</span>
+        <div className="flex justify-between items-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+            <CreditCard className="w-4 h-4 text-green-400" />
+            <span className="text-sm font-medium text-white">Transaction History</span>
+          </div>
+          <CurrencyToggle />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
@@ -208,7 +214,7 @@ export default function ClientTransactions() {
                     </div>
                     <div className="text-right">
                       <p className={`text-xl font-bold ${transaction.amount > 0 ? "text-green-400" : "text-white"}`}>
-                        {transaction.amount > 0 ? "+" : ""}${Math.abs(transaction.amount).toLocaleString()}
+                        {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount))}
                       </p>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}

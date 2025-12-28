@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoadingButton } from "@/components/shared/loading-button"
+import { useCurrency } from "@/context/CurrencyContext";
+import CurrencyToggle from "@/components/shared/currency-toggle";
 import {
   FileText,
   Plus,
@@ -54,7 +56,7 @@ const contractsData = [
       email: "john.doe@email.com",
     },
     contractId: "CT-2024-001",
-    amount: "$6,500",
+    amount: 6500 * 80,
     status: "Active",
     startDate: "2024-01-15",
     endDate: "2024-02-15",
@@ -87,7 +89,7 @@ const contractsData = [
         id: 1,
         title: "Design & Planning",
         completed: true,
-        amount: "$1,300",
+        amount: 1300 * 80,
         deadline: "2024-01-20",
         description: "Complete wireframes and design mockups",
       },
@@ -95,7 +97,7 @@ const contractsData = [
         id: 2,
         title: "Frontend Development",
         completed: true,
-        amount: "$2,600",
+        amount: 2600 * 80,
         deadline: "2024-01-30",
         description: "Implement responsive frontend",
       },
@@ -103,7 +105,7 @@ const contractsData = [
         id: 3,
         title: "Backend Integration",
         completed: false,
-        amount: "$1,950",
+        amount: 1950 * 80,
         deadline: "2024-02-10",
         description: "API integration and database setup",
       },
@@ -111,7 +113,7 @@ const contractsData = [
         id: 4,
         title: "Testing & Launch",
         completed: false,
-        amount: "$650",
+        amount: 650 * 80,
         deadline: "2024-02-15",
         description: "Quality assurance and deployment",
       },
@@ -148,7 +150,7 @@ const contractsData = [
         action: "Payment Released",
         user: "TechCorp Inc.",
         timestamp: "2024-01-21 9:00 AM",
-        details: "$1,300 payment released for milestone 1",
+        details: "1300 payment released for milestone 1",
       },
     ],
     signatures: {
@@ -203,6 +205,7 @@ const getStatusIcon = (status?: string) => {
 }
 
 export default function UnifiedContract({ userRole }: ContractProps) {
+  const { getConvertedAmount } = useCurrency();
   const role = userRole || "client"
 
   const [contracts, setContracts] = useState(contractsData)
@@ -240,7 +243,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["React", "Node.js", "TypeScript"],
       avatar: "/placeholder.svg?height=40&width=40&text=JD",
       rating: 4.9,
-      hourlyRate: 85,
+      hourlyRate: 85 * 80,
       status: "Available",
       hiredDate: "2024-01-10",
     },
@@ -251,7 +254,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["UI/UX", "Figma", "Adobe XD"],
       avatar: "/placeholder.svg?height=40&width=40&text=JS",
       rating: 4.8,
-      hourlyRate: 65,
+      hourlyRate: 65 * 80,
       status: "Busy",
       hiredDate: "2024-01-08",
     },
@@ -262,7 +265,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["Python", "Django", "PostgreSQL"],
       avatar: "/placeholder.svg?height=40&width=40&text=MJ",
       rating: 4.7,
-      hourlyRate: 75,
+      hourlyRate: 75 * 80,
       status: "Available",
       hiredDate: "2024-01-12",
     },
@@ -273,7 +276,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["Content Writing", "SEO", "Marketing"],
       avatar: "/placeholder.svg?height=40&width=40&text=SW",
       rating: 4.6,
-      hourlyRate: 45,
+      hourlyRate: 45 * 80,
       status: "Available",
       hiredDate: "2024-01-15",
     },
@@ -331,7 +334,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
           email: createFormData.freelancerEmail,
         },
         contractId: `CT-2024-${String(contracts.length + 1).padStart(3, "0")}`,
-        amount: `$${createFormData.amount}`,
+        amount: createFormData.amount,
         status: "Pending",
         startDate: createFormData.startDate,
         endDate: createFormData.endDate,
@@ -420,6 +423,8 @@ export default function UnifiedContract({ userRole }: ContractProps) {
     window.location.href = `/client/discover`
   }
 
+  const totalAmountInINR = contracts.reduce((sum, c) => sum + c.amount, 0);
+
   const stats = [
     {
       title: "Total Contracts",
@@ -435,7 +440,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
     },
     {
       title: role === "client" ? "Total Spent" : "Total Earned",
-      value: `$${contracts.reduce((sum, c) => sum + Number.parseInt(c.amount.replace("$", "").replace(",", "")), 0).toLocaleString()}`,
+      value: getConvertedAmount(totalAmountInINR),
       icon: DollarSign,
       color: "from-purple-500 to-pink-500",
     },
@@ -466,25 +471,28 @@ export default function UnifiedContract({ userRole }: ContractProps) {
               : "Track your client contracts and project deliverables"}
           </p>
         </div>
-        {role === "client" && (
-          <div className="flex gap-3">
-            <Button
-              onClick={() => setShowHireDialog(true)}
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 bg-transparent px-6 py-3 rounded-xl"
-            >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Hire Freelancer
-            </Button>
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create Contract
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <CurrencyToggle />
+          {role === "client" && (
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowHireDialog(true)}
+                variant="outline"
+                className="border-white/20 text-white hover:bg-white/10 bg-transparent px-6 py-3 rounded-xl"
+              >
+                <UserPlus className="w-5 h-5 mr-2" />
+                Hire Freelancer
+              </Button>
+              <Button
+                onClick={() => setShowCreateDialog(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Create Contract
+              </Button>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Stats */}
@@ -563,7 +571,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                         <div className="flex items-center gap-1 text-xs">
                           <span className="text-yellow-400">★</span>
                           <span className="text-white">{freelancer.rating}</span>
-                          <span className="text-green-400">${freelancer.hourlyRate}/hr</span>
+                          <span className="text-green-400">{getConvertedAmount(freelancer.hourlyRate)}/hr</span>
                         </div>
                       </div>
                     </div>
@@ -714,7 +722,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-green-400 mb-2">{contract.amount}</div>
+                    <div className="text-2xl font-bold text-green-400 mb-2">{getConvertedAmount(contract.amount)}</div>
                     <Badge className={`${getStatusColor(contract.status)} border flex items-center gap-1`}>
                       {getStatusIcon(contract.status)}
                       {contract.status}
@@ -936,7 +944,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                         <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-white/10">
                           <div>
                             <span className="text-gray-400">Total Amount:</span>
-                            <span className="text-green-400 font-semibold ml-2">{selectedContract?.amount}</span>
+                            <span className="text-green-400 font-semibold ml-2">{getConvertedAmount(selectedContract?.amount)}</span>
                           </div>
                           <div>
                             <span className="text-gray-400">Payment Type:</span>
@@ -1048,7 +1056,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-white/5 rounded-lg p-4">
                         <h5 className="text-white font-medium mb-2">Total Amount</h5>
-                        <p className="text-2xl font-bold text-green-400">{selectedContract?.amount}</p>
+                        <p className="text-2xl font-bold text-green-400">{getConvertedAmount(selectedContract?.amount)}</p>
                       </div>
                       <div className="bg-white/5 rounded-lg p-4">
                         <h5 className="text-white font-medium mb-2">Payment Type</h5>
@@ -1089,7 +1097,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="text-green-400 font-semibold">{milestone.amount}</span>
+                                <span className="text-green-400 font-semibold">{getConvertedAmount(milestone.amount)}</span>
                                 <p className="text-gray-400 text-sm">Due: {milestone.deadline}</p>
                               </div>
                             </div>
@@ -1281,10 +1289,10 @@ export default function UnifiedContract({ userRole }: ContractProps) {
             {/* Amount and Payment Type */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Amount (USD) *</label>
+                <label className="block text-sm font-medium text-white mb-2">Amount (INR) *</label>
                 <Input
                   type="number"
-                  placeholder="5000"
+                  placeholder="50000"
                   value={createFormData.amount}
                   onChange={(e) => setCreateFormData({ ...createFormData, amount: e.target.value })}
                   className="bg-white/10 border-white/20 text-white placeholder-gray-400"
@@ -1478,7 +1486,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
               >
                 <FileSignature className="w-4 h-4 mr-2" />
                 Create Contract
-              </LoadingButton>
+              </Button>
             </div>
           </div>
         </DialogContent>

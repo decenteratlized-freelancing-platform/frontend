@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEffect, useState } from "react"
+import { useCurrency } from "@/context/CurrencyContext";
+import CurrencyToggle from "@/components/shared/currency-toggle";
 import {
   DollarSign,
   Clock,
@@ -72,6 +74,7 @@ const getStatusText = (status: string) => {
 }
 
 export default function FreelancerDashboard() {
+  const { getConvertedAmount } = useCurrency();
   const user = useCurrentUser();
   const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("Guest");
@@ -166,9 +169,12 @@ export default function FreelancerDashboard() {
         transition={{ duration: 0.8 }}
         className="mb-8"
       >
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-          <Briefcase className="w-4 h-4 text-green-400" />
-          <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
+        <div className="flex justify-between items-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+            <Briefcase className="w-4 h-4 text-green-400" />
+            <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
+          </div>
+          <CurrencyToggle />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
@@ -182,7 +188,7 @@ export default function FreelancerDashboard() {
         {[
           {
             title: "Total Earnings",
-            value: "$12,450", // Placeholder
+            value: getConvertedAmount(12450 * 80), // Placeholder
             change: "+18%",
             icon: DollarSign,
             color: "from-green-500 to-emerald-500",
@@ -288,11 +294,11 @@ export default function FreelancerDashboard() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                         <div>
                           <p className="text-xs text-gray-400">Client Budget</p>
-                          <p className="text-sm font-medium text-white">${proposal.job?.budget?.toLocaleString()}</p>
+                          <p className="text-sm font-medium text-white">{getConvertedAmount(proposal.job?.budget * 80)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Your Rate</p>
-                          <p className="text-sm font-medium text-green-400">${proposal.proposedRate?.toLocaleString()}</p>
+                          <p className="text-sm font-medium text-green-400">{getConvertedAmount(proposal.proposedRate * 80)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Delivery</p>

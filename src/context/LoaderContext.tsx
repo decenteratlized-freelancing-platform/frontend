@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import Loader from '@/components/ui/loader';
 
 interface LoaderContextType {
@@ -13,8 +13,8 @@ const LoaderContext = createContext<LoaderContextType | undefined>(undefined);
 export const LoaderProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
 
-  const showLoader = () => setLoading(true);
-  const hideLoader = () => setLoading(false);
+  const showLoader = useCallback(() => setLoading(true), []);
+  const hideLoader = useCallback(() => setLoading(false), []);
 
   return (
     <LoaderContext.Provider value={{ showLoader, hideLoader }}>

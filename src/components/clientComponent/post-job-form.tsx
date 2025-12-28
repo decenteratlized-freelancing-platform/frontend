@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { X, Plus, Sparkles, Briefcase } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
+import { useCurrency } from "@/context/CurrencyContext" // Import useCurrency
 
 export default function PostJobForm() {
   const { data: session } = useSession()
@@ -19,6 +20,7 @@ export default function PostJobForm() {
   const [skills, setSkills] = useState<string[]>([])
   const [newSkill, setNewSkill] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { currency, toggleCurrency, getConvertedAmount } = useCurrency(); // Use useCurrency
 
   const [formData, setFormData] = useState({
     title: "",
@@ -28,6 +30,7 @@ export default function PostJobForm() {
     budgetAmount: "",
     duration: "",
     experienceLevel: "",
+    paymentCurrency: "INR", // Add paymentCurrency to formData
   })
 
   const addSkill = () => {
@@ -54,19 +57,28 @@ export default function PostJobForm() {
 
     setIsSubmitting(true)
     try {
+      const INR_TO_ETH = 0.000004; // Defined in CurrencyContext, for conversion
+
+      let budgetInINR = parseFloat(formData.budgetAmount);
+      if (formData.paymentCurrency === 'ETH') {
+        // Convert ETH amount entered by user to INR for backend storage
+        budgetInINR = budgetInINR / INR_TO_ETH;
+      }
+
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
-          budget: parseFloat(formData.budgetAmount),
+          budget: budgetInINR, // Send converted budget
           skills: skills,
           email: session.user.email,
           category: formData.category,
           experienceLevel: formData.experienceLevel,
           budgetType: formData.budgetType,
           duration: formData.duration,
+          paymentCurrency: formData.paymentCurrency, // Send selected payment currency
         }),
       })
 
@@ -150,7 +162,7 @@ export default function PostJobForm() {
             />
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Changed to 3 columns */}
             <motion.div
               className="space-y-2"
               initial={{ opacity: 0, x: -20 }}
@@ -170,7 +182,7 @@ export default function PostJobForm() {
             </motion.div>
             <motion.div
               className="space-y-2"
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 0 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
@@ -183,13 +195,30 @@ export default function PostJobForm() {
                 onChange={(e) => setFormData({ ...formData, budgetAmount: e.target.value })}
               />
             </motion.div>
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <label className="text-sm font-medium text-gray-300">Payment Currency</label>
+              <Select onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-white/10">
+                  <SelectItem value="INR">₹ INR</SelectItem>
+                  <SelectItem value="ETH">ETH</SelectItem>
+                </SelectContent>
+              </Select>
+            </motion.div>
           </div>
 
           <motion.div
             className="space-y-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
           >
             <label className="text-sm font-medium text-gray-300">Required Skills</label>
             <div className="flex gap-2 mb-2">
@@ -237,7 +266,7 @@ export default function PostJobForm() {
               className="space-y-2"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
             >
               <label className="text-sm font-medium text-gray-300">Project Duration</label>
               <Select onValueChange={(val) => setFormData({ ...formData, duration: val })}>
@@ -256,7 +285,7 @@ export default function PostJobForm() {
               className="space-y-2"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
+              transition={{ duration: 0.5, delay: 0.9 }}
             >
               <label className="text-sm font-medium text-gray-300">Experience Level</label>
               <Select onValueChange={(val) => setFormData({ ...formData, experienceLevel: val })}>
@@ -276,7 +305,7 @@ export default function PostJobForm() {
             className="flex gap-4 pt-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.9 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
           >
             <Button
               onClick={handleSubmit}
@@ -298,3 +327,4 @@ export default function PostJobForm() {
     </motion.div>
   )
 }
+

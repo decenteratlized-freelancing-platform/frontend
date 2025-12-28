@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Users,
   Bell,
   Shield,
   Palette,
@@ -47,6 +48,7 @@ interface SidebarProps {
 
 const clientMenuItems = [
   { name: "Dashboard", href: "/client/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
+  { name: "Discover", href: "/client/discover", icon: Users, color: "from-cyan-400 to-sky-400" },
   { name: "Transactions", href: "/client/transactions", icon: CreditCard, color: "from-green-400 to-emerald-400" },
   { name: "Post Job", href: "/client/post-job", icon: Calendar, color: "from-blue-400 to-cyan-400" },
   { name: "Goals", href: "/client/goals", icon: Target, color: "from-pink-400 to-rose-400" },

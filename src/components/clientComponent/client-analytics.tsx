@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, Users, DollarSign, Clock, BarChart3, Target, Award, Zap } from "lucide-react"
+import { BarChart3, TrendingUp, Users, DollarSign, Clock, Target, Award, Zap } from "lucide-react"
 import {
   LineChart,
   Line,
   XAxis,
-  YAxis,
+YAxis,
   CartesianGrid,
   ResponsiveContainer,
   BarChart,
@@ -21,12 +21,12 @@ import {
 } from "recharts"
 
 const monthlyData = [
-  { name: "Jan", spending: 4000, projects: 12, freelancers: 8, completed: 10 },
-  { name: "Feb", spending: 3000, projects: 10, freelancers: 6, completed: 8 },
-  { name: "Mar", spending: 5000, projects: 15, freelancers: 12, completed: 13 },
-  { name: "Apr", spending: 4500, projects: 13, freelancers: 10, completed: 11 },
-  { name: "May", spending: 6000, projects: 18, freelancers: 15, completed: 16 },
-  { name: "Jun", spending: 5500, projects: 16, freelancers: 13, completed: 14 },
+  { name: "Jan", spending: 4000 * 80, projects: 12, freelancers: 8, completed: 10 },
+  { name: "Feb", spending: 3000 * 80, projects: 10, freelancers: 6, completed: 8 },
+  { name: "Mar", spending: 5000 * 80, projects: 15, freelancers: 12, completed: 13 },
+  { name: "Apr", spending: 4500 * 80, projects: 13, freelancers: 10, completed: 11 },
+  { name: "May", spending: 6000 * 80, projects: 18, freelancers: 15, completed: 16 },
+  { name: "Jun", spending: 5500 * 80, projects: 16, freelancers: 13, completed: 14 },
 ]
 
 const categoryData = [
@@ -50,7 +50,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-white font-medium">{`${label}`}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {`${entry.dataKey}: ${entry.value}`}
+            {`${entry.dataKey}: ${entry.dataKey === 'spending' ? '₹' : ''}${entry.value.toLocaleString('en-IN')}`}
           </p>
         ))}
       </div>
@@ -69,9 +69,11 @@ export default function ClientAnalytics() {
         transition={{ duration: 0.8 }}
         className="mb-8"
       >
+        <div className="flex justify-between items-center">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
           <BarChart3 className="w-4 h-4 text-indigo-400" />
           <span className="text-sm font-medium text-white">Analytics Dashboard</span>
+        </div>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
@@ -80,13 +82,12 @@ export default function ClientAnalytics() {
         </h1>
         <p className="text-xl text-gray-300">Track your project performance and spending insights</p>
       </motion.div>
-
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
           {
             title: "Total Spending",
-            value: "$32,500",
+            value: "₹26,00,000",
             change: "+12%",
             icon: DollarSign,
             color: "from-blue-500 to-indigo-500",
