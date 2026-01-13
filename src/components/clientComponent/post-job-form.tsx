@@ -57,21 +57,22 @@ export default function PostJobForm() {
 
     setIsSubmitting(true)
     try {
-      const INR_TO_ETH = 0.000004; // Defined in CurrencyContext, for conversion
-
-      let budgetInINR = parseFloat(formData.budgetAmount);
-      if (formData.paymentCurrency === 'ETH') {
-        // Convert ETH amount entered by user to INR for backend storage
-        budgetInINR = budgetInINR / INR_TO_ETH;
+      const budget = parseFloat(formData.budgetAmount);
+      if (isNaN(budget)) {
+        toast({ title: "Error", description: "Invalid budget amount", variant: "destructive" });
+        return;
       }
-
+      if (budget <= 0) {
+        toast({ title: "Error", description: "Budget amount must be greater than 0", variant: "destructive" });
+        return;
+      }
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
-          budget: budgetInINR, // Send converted budget
+          budget: budget, // Send raw budget amount
           skills: skills,
           email: session.user.email,
           category: formData.category,
@@ -202,7 +203,11 @@ export default function PostJobForm() {
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               <label className="text-sm font-medium text-gray-300">Payment Currency</label>
-              <Select onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}>
+              <Select
+                onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}
+                value={formData.paymentCurrency}
+                defaultValue="INR"
+              >
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
@@ -317,7 +322,7 @@ export default function PostJobForm() {
             </Button>
             <Button
               variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 rounded-xl bg-transparent"
+              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 rounded-xl bg-transparent hover:text-white hover:border-blue-400"
             >
               Save as Draft
             </Button>

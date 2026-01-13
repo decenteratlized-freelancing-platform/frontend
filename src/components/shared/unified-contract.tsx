@@ -1,4 +1,5 @@
 "use client"
+// Force update timestamp
 
 import { useState } from "react"
 import { motion } from "framer-motion"
@@ -13,28 +14,26 @@ import { LoadingButton } from "@/components/shared/loading-button"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
 import {
-  FileText,
-  Plus,
-  Search,
-  Calendar,
-  DollarSign,
-  Clock,
-  User,
-  MessageSquare,
-  Download,
-  Edit,
-  CheckCircle,
-  X,
-  Check,
-  FileSignature,
-  Activity,
-  Shield,
-  Target,
-  CreditCard,
-  Users,
-  UserPlus,
+FileText,
+Plus,
+Search,
+Calendar,
+Clock,
+User,
+MessageSquare,
+Download,
+Edit,
+CheckCircle,
+X,
+Check,
+FileSignature,
+Activity,
+Shield,
+Target,
+CreditCard,
+Users,
+UserPlus,
 } from "lucide-react"
-
 interface ContractProps {
   userRole: "client" | "freelancer"
 }
@@ -56,7 +55,7 @@ const contractsData = [
       email: "john.doe@email.com",
     },
     contractId: "CT-2024-001",
-    amount: 6500 * 80,
+    amount: 6500,
     status: "Active",
     startDate: "2024-01-15",
     endDate: "2024-02-15",
@@ -89,7 +88,7 @@ const contractsData = [
         id: 1,
         title: "Design & Planning",
         completed: true,
-        amount: 1300 * 80,
+        amount: 1300,
         deadline: "2024-01-20",
         description: "Complete wireframes and design mockups",
       },
@@ -97,7 +96,7 @@ const contractsData = [
         id: 2,
         title: "Frontend Development",
         completed: true,
-        amount: 2600 * 80,
+        amount: 2600,
         deadline: "2024-01-30",
         description: "Implement responsive frontend",
       },
@@ -105,7 +104,7 @@ const contractsData = [
         id: 3,
         title: "Backend Integration",
         completed: false,
-        amount: 1950 * 80,
+        amount: 1950,
         deadline: "2024-02-10",
         description: "API integration and database setup",
       },
@@ -113,7 +112,7 @@ const contractsData = [
         id: 4,
         title: "Testing & Launch",
         completed: false,
-        amount: 650 * 80,
+        amount: 650,
         deadline: "2024-02-15",
         description: "Quality assurance and deployment",
       },
@@ -205,7 +204,7 @@ const getStatusIcon = (status?: string) => {
 }
 
 export default function UnifiedContract({ userRole }: ContractProps) {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
   const role = userRole || "client"
 
   const [contracts, setContracts] = useState(contractsData)
@@ -243,7 +242,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["React", "Node.js", "TypeScript"],
       avatar: "/placeholder.svg?height=40&width=40&text=JD",
       rating: 4.9,
-      hourlyRate: 85 * 80,
+      hourlyRate: 85,
       status: "Available",
       hiredDate: "2024-01-10",
     },
@@ -254,7 +253,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["UI/UX", "Figma", "Adobe XD"],
       avatar: "/placeholder.svg?height=40&width=40&text=JS",
       rating: 4.8,
-      hourlyRate: 65 * 80,
+      hourlyRate: 65,
       status: "Busy",
       hiredDate: "2024-01-08",
     },
@@ -265,7 +264,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["Python", "Django", "PostgreSQL"],
       avatar: "/placeholder.svg?height=40&width=40&text=MJ",
       rating: 4.7,
-      hourlyRate: 75 * 80,
+      hourlyRate: 75,
       status: "Available",
       hiredDate: "2024-01-12",
     },
@@ -276,7 +275,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
       skills: ["Content Writing", "SEO", "Marketing"],
       avatar: "/placeholder.svg?height=40&width=40&text=SW",
       rating: 4.6,
-      hourlyRate: 45 * 80,
+      hourlyRate: 45,
       status: "Available",
       hiredDate: "2024-01-15",
     },
@@ -420,37 +419,10 @@ export default function UnifiedContract({ userRole }: ContractProps) {
   }
 
   const handleHireFreelancer = () => {
-    window.location.href = `/client/discover`
-  }
+    window.location.href = `/client/discover`;
+  };
 
   const totalAmountInINR = contracts.reduce((sum, c) => sum + c.amount, 0);
-
-  const stats = [
-    {
-      title: "Total Contracts",
-      value: contracts.length,
-      icon: FileText,
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      title: "Active Contracts",
-      value: contracts.filter((c) => c.status === "Active").length,
-      icon: Activity,
-      color: "from-green-500 to-emerald-500",
-    },
-    {
-      title: role === "client" ? "Total Spent" : "Total Earned",
-      value: getConvertedAmount(totalAmountInINR),
-      icon: DollarSign,
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      title: "Completed",
-      value: contracts.filter((c) => c.status === "Completed").length,
-      icon: CheckCircle,
-      color: "from-orange-500 to-red-500",
-    },
-  ]
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -497,7 +469,32 @@ export default function UnifiedContract({ userRole }: ContractProps) {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
+        {[
+          {
+            title: "Total Contracts",
+            value: contracts.length,
+            icon: FileText,
+            color: "from-blue-500 to-cyan-500",
+          },
+          {
+            title: "Active Contracts",
+            value: contracts.filter((c) => c.status === "Active").length,
+            icon: Activity,
+            color: "from-green-500 to-emerald-500",
+          },
+          {
+            title: role === "client" ? "Total Spent" : "Total Earned",
+            value: getFormattedAmount(totalAmountInINR, "INR"),
+            icon: FileText,
+            color: "from-purple-500 to-pink-500",
+          },
+          {
+            title: "Completed",
+            value: contracts.filter((c) => c.status === "Completed").length,
+            icon: CheckCircle,
+            color: "from-orange-500 to-red-500",
+          },
+        ].map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 50 }}
@@ -571,7 +568,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                         <div className="flex items-center gap-1 text-xs">
                           <span className="text-yellow-400">★</span>
                           <span className="text-white">{freelancer.rating}</span>
-                          <span className="text-green-400">{getConvertedAmount(freelancer.hourlyRate)}/hr</span>
+                          <span className="text-green-400">{getFormattedAmount(freelancer.hourlyRate, 'INR')}/hr</span>
                         </div>
                       </div>
                     </div>
@@ -722,7 +719,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-green-400 mb-2">{getConvertedAmount(contract.amount)}</div>
+                    <div className="text-2xl font-bold text-green-400 mb-2">{getFormattedAmount(contract.amount, 'INR')}</div>
                     <Badge className={`${getStatusColor(contract.status)} border flex items-center gap-1`}>
                       {getStatusIcon(contract.status)}
                       {contract.status}
@@ -944,7 +941,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                         <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-white/10">
                           <div>
                             <span className="text-gray-400">Total Amount:</span>
-                            <span className="text-green-400 font-semibold ml-2">{getConvertedAmount(selectedContract?.amount)}</span>
+                            <span className="text-green-400 font-semibold ml-2">{getFormattedAmount(selectedContract?.amount, 'INR')}</span>
                           </div>
                           <div>
                             <span className="text-gray-400">Payment Type:</span>
@@ -1056,7 +1053,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-white/5 rounded-lg p-4">
                         <h5 className="text-white font-medium mb-2">Total Amount</h5>
-                        <p className="text-2xl font-bold text-green-400">{getConvertedAmount(selectedContract?.amount)}</p>
+                        <p className="text-2xl font-bold text-green-400">{getFormattedAmount(selectedContract?.amount, 'INR')}</p>
                       </div>
                       <div className="bg-white/5 rounded-lg p-4">
                         <h5 className="text-white font-medium mb-2">Payment Type</h5>
@@ -1097,7 +1094,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="text-green-400 font-semibold">{getConvertedAmount(milestone.amount)}</span>
+                                <span className="text-green-400 font-semibold">{getFormattedAmount(milestone.amount, 'INR')}</span>
                                 <p className="text-gray-400 text-sm">Due: {milestone.deadline}</p>
                               </div>
                             </div>

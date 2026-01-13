@@ -31,6 +31,7 @@ import {
   Lock,
   Key,
   Settings,
+  IndianRupee,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -82,10 +83,10 @@ export default function SettingsPage() {
     portfolioWebsite: "",
     professionalBio: "",
     skills: [],
-    hourlyRate: 75,
+    hourlyRate: 5000,
     language: "English",
     timezone: "UTC",
-    currency: "USD ($)",
+    currency: "INR (₹)",
     availabilityStatus: "Available for Work",
     workSchedule: "Full-time",
     notifications: {
@@ -161,10 +162,10 @@ export default function SettingsPage() {
           portfolioWebsite: data.profile?.portfolioWebsite || "",
           professionalBio: data.profile?.professionalBio || "",
           skills: skillsArray,
-          hourlyRate: data.settings?.hourlyRate || 75,
+          hourlyRate: data.settings?.hourlyRate || 5000,
           language: data.settings?.preferences?.language || "English",
           timezone: data.settings?.preferences?.timezone || "UTC",
-          currency: data.settings?.preferences?.currency || "USD ($)",
+          currency: data.settings?.preferences?.currency || "INR (₹)",
           availabilityStatus: data.settings?.availableForJobs ? "Available for Work" : "Not Available",
           workSchedule: data.settings?.workSchedule || "Full-time",
           notifications: {
@@ -566,7 +567,7 @@ export default function SettingsPage() {
             <span className="text-sm font-medium text-white">Account Settings</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">
               Settings
             </span>
           </h1>
@@ -604,7 +605,7 @@ export default function SettingsPage() {
               className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
             >
               <CreditCard className="w-4 h-4" />
-              Billing
+              Payment
             </TabsTrigger>
             <TabsTrigger
               value="preferences"
@@ -894,7 +895,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSaveProfile}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  className="w-full bg-blue-800 hover:bg-blue-700 text-white"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </Button>
@@ -1052,10 +1053,10 @@ export default function SettingsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="USD ($)">USD ($)</SelectItem>
+<SelectItem value="INR (₹)">INR (₹)</SelectItem>
                         <SelectItem value="EUR (€)">EUR (€)</SelectItem>
                         <SelectItem value="GBP (£)">GBP (£)</SelectItem>
-                        <SelectItem value="INR (₹)">INR (₹)</SelectItem>
+                        <SelectItem value="USD ($)">USD ($)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1068,14 +1069,18 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate ($)</Label>
-                    <Input
-                      id="hourlyRate"
-                      type="number"
-                      value={settings.hourlyRate}
-                      onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
-                      className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                    />
+                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate (₹)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-3 text-gray-400">₹</span>
+                      <Input
+                        id="hourlyRate"
+                        type="number"
+                        value={settings.hourlyRate}
+                        onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
+                        className="bg-gray-700 border-gray-600 text-gray-100 pl-8 focus:border-blue-500"
+                        placeholder="5000"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="availability" className="text-gray-300">Availability Status</Label>
@@ -1111,7 +1116,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSavePreferences}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  className="w-full bg-blue-800 hover:bg-blue-700 text-white text-white"
                 >
                   {loading ? "Saving..." : "Save Preferences"}
                 </Button>

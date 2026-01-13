@@ -9,7 +9,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser"
 import {
   Plus,
   Sparkles,
-  DollarSign,
+  IndianRupeeIcon,
   Users,
   Clock,
   Eye,
@@ -25,6 +25,7 @@ import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
 import { useCurrency } from "@/context/CurrencyContext"
 import CurrencyToggle from "@/components/shared/currency-toggle"
+import { JobDetailsModal } from "@/components/shared/job-details-modal"
 
 const recentActivity = [
   {
@@ -53,13 +54,15 @@ const recentActivity = [
 export default function ClientDashboard() {
   const { data: session } = useSession()
   const user = useCurrentUser()
-  const { currency, getConvertedAmount } = useCurrency()
+  const { currency, getFormattedAmount, getConvertedAmount } = useCurrency()
   const [displayName, setDisplayName] = useState("Client")
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<{ id: string, name: string, image?: string } | null>(null)
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     const nameFromSession = session?.user?.name
@@ -106,9 +109,9 @@ export default function ClientDashboard() {
     {
       title: "Total Spent",
       value: totalSpent,
-      displayValue: getConvertedAmount(totalSpent),
+      displayValue: getConvertedAmount(totalSpent, 'INR'),
       change: "+1,200 this month",
-      icon: DollarSign,
+      icon: IndianRupeeIcon,
       color: "from-green-500 to-emerald-500",
     },
     {
@@ -139,6 +142,11 @@ export default function ClientDashboard() {
           setIsReviewModalOpen(false) // Optional: close modal when chat starts
         }}
       />
+      <JobDetailsModal
+        job={selectedJob}
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+      />
 
       <AnimatePresence>
         {activeChat && (
@@ -151,6 +159,14 @@ export default function ClientDashboard() {
         )}
       </AnimatePresence>
 
+      <div className="flex justify-between items-center mb-6">
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
+          <Sparkles className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-medium text-white">Client Dashboard</span>
+        </div>
+        <CurrencyToggle />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -158,13 +174,6 @@ export default function ClientDashboard() {
         className="flex items-center justify-between mb-12"
       >
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-medium text-white">Client Dashboard</span>
-            </div>
-            <CurrencyToggle />
-          </div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
             Welcome Back,{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
@@ -175,7 +184,7 @@ export default function ClientDashboard() {
         </div>
         <Link href="/client/post-job">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group">
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 py-6 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group">
               <Plus className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
               Post New Job
             </Button>
@@ -252,7 +261,9 @@ export default function ClientDashboard() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg font-bold text-white">{getConvertedAmount(job.budget)}</span>
+                          <span className="text-lg font-bold text-white">
+                            {job.paymentCurrency === 'INR' ? `₹${job.budget}` : `${job.budget} ETH`}
+                          </span>
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="w-3 h-3 text-gray-400" />
                             <span className="text-xs text-gray-400">
@@ -287,17 +298,30 @@ export default function ClientDashboard() {
                         >
                           {job.status.replace('_', ' ').toUpperCase()}
                         </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-white/20 text-white hover:bg-white/10 bg-transparent"
-                          onClick={() => {
-                            setSelectedJobId(job._id)
-                            setIsReviewModalOpen(true)
-                          }}
-                        >
-                          View Proposals ({job.proposalsCount})
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10 bg-transparent hover:text-white"
+                            onClick={() => {
+                              setSelectedJob(job)
+                              setIsDetailsModalOpen(true)
+                            }}
+                          >
+                            View Job
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10 bg-transparent hover:text-white"
+                            onClick={() => {
+                              setSelectedJobId(job._id)
+                              setIsReviewModalOpen(true)
+                            }}
+                          >
+                            View Proposals ({job.proposalsCount})
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   ))
@@ -356,3 +380,4 @@ export default function ClientDashboard() {
     </div>
   )
 }
+

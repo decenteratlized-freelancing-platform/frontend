@@ -11,7 +11,7 @@ import ActivityWidget from "./widgets/activity-widget"
 import QuickActionsWidget from "@/components/widgets/quick-action-widget"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
-import { DollarSign, Users, Clock, Eye, Star, CheckCircle } from "lucide-react"
+import { IndianRupee, Users, Clock, Eye, Star, CheckCircle } from "lucide-react"
 
 interface CustomizableDashboardProps {
   userType: "client" | "freelancer"
@@ -40,9 +40,9 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       size: "small",
       position: { x: 1, y: 0 },
       data: {
-        value: getConvertedAmount(userType === "client" ? 24500 * 80 : 18750 * 80),
+        value: getConvertedAmount(userType === "client" ? 24500 : 18750, 'INR'),
         change: userType === "client" ? "+₹96,000 this month" : "+₹1,92,000 this month",
-        icon: DollarSign,
+        icon: IndianRupee,
         color: "from-green-500 to-emerald-500",
       },
     },
@@ -81,14 +81,13 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       size: "medium",
       position: { x: 0, y: 1 },
       data: [
-        { name: "Jan", value: 4000 * 80 },
-        { name: "Feb", value: 3000 * 80 },
-        { name: "Mar", value: 5000 * 80 },
-        { name: "Apr", value: 4500 * 80 },
-        { name: "May", value: 6000 * 80 },
-        { name: "Jun", value: 5500 * 80 },
-      ],
-    },
+                  { name: "Jan", value: 4000 },
+                  { name: "Feb", value: 3000 },
+                  { name: "Mar", value: 5000 },
+                  { name: "Apr", value: 4500 },
+                  { name: "May", value: 6000 },
+                  { name: "Jun", value: 5500 },
+                ],    },
     {
       id: "activity-1",
       type: "activity",

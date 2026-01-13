@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, TrendingUp, Users, DollarSign, Clock, Target, Award, Zap } from "lucide-react"
+import { BarChart3, TrendingUp, Users, IndianRupee, Clock, Target, Award, Zap } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -21,12 +21,12 @@ YAxis,
 } from "recharts"
 
 const monthlyData = [
-  { name: "Jan", spending: 4000 * 80, projects: 12, freelancers: 8, completed: 10 },
-  { name: "Feb", spending: 3000 * 80, projects: 10, freelancers: 6, completed: 8 },
-  { name: "Mar", spending: 5000 * 80, projects: 15, freelancers: 12, completed: 13 },
-  { name: "Apr", spending: 4500 * 80, projects: 13, freelancers: 10, completed: 11 },
-  { name: "May", spending: 6000 * 80, projects: 18, freelancers: 15, completed: 16 },
-  { name: "Jun", spending: 5500 * 80, projects: 16, freelancers: 13, completed: 14 },
+  { name: "Jan", spending: 4000, projects: 12, freelancers: 8, completed: 10 },
+  { name: "Feb", spending: 3000, projects: 10, freelancers: 6, completed: 8 },
+  { name: "Mar", spending: 5000, projects: 15, freelancers: 12, completed: 13 },
+  { name: "Apr", spending: 4500, projects: 13, freelancers: 10, completed: 11 },
+  { name: "May", spending: 6000, projects: 18, freelancers: 15, completed: 16 },
+  { name: "Jun", spending: 5500, projects: 16, freelancers: 13, completed: 14 },
 ]
 
 const categoryData = [
@@ -36,6 +36,8 @@ const categoryData = [
   { name: "Marketing", value: 15, color: "#6366f1" },
 ]
 
+import { useCurrency } from "@/context/CurrencyContext";
+
 const performanceData = [
   { name: "Week 1", satisfaction: 4.2, delivery: 85, quality: 4.5 },
   { name: "Week 2", satisfaction: 4.5, delivery: 92, quality: 4.3 },
@@ -43,14 +45,14 @@ const performanceData = [
   { name: "Week 4", satisfaction: 4.7, delivery: 95, quality: 4.8 },
 ]
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, getConvertedAmount, fromCurrency }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
         <p className="text-white font-medium">{`${label}`}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {`${entry.dataKey}: ${entry.dataKey === 'spending' ? '₹' : ''}${entry.value.toLocaleString('en-IN')}`}
+            {`${entry.dataKey}: ${entry.dataKey === 'spending' ? getConvertedAmount(entry.value, fromCurrency) : entry.value.toLocaleString('en-IN')}`}
           </p>
         ))}
       </div>
@@ -60,6 +62,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 }
 
 export default function ClientAnalytics() {
+  const { getConvertedAmount } = useCurrency();
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
       {/* Header */}
@@ -87,9 +90,9 @@ export default function ClientAnalytics() {
         {[
           {
             title: "Total Spending",
-            value: "₹26,00,000",
+            value: getConvertedAmount(2600000, 'INR'),
             change: "+12%",
-            icon: DollarSign,
+            icon: IndianRupee,
             color: "from-blue-500 to-indigo-500",
           },
           {
@@ -169,7 +172,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
                     <Area
                       type="monotone"
                       dataKey="spending"
@@ -214,7 +217,7 @@ export default function ClientAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -245,7 +248,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
                     <Bar dataKey="projects" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -275,7 +278,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
                     <Line
                       type="monotone"
                       dataKey="satisfaction"

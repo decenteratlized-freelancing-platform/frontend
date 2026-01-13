@@ -5,7 +5,8 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, CreditCard, ArrowDownLeft, Calendar, DollarSign } from "lucide-react"
+import { useCurrency } from "@/context/CurrencyContext";
+import { Download, CreditCard, ArrowDownLeft, Calendar, IndianRupee } from "lucide-react"
 
 const transactions = [
   {
@@ -40,15 +41,15 @@ const transactions = [
   },
 ]
 
-const stats = [
-  { title: "Total Earned", value: "$18,750", change: "+15%", color: "from-green-500 to-emerald-500" },
-  { title: "This Month", value: "$4,900", change: "+22%", color: "from-blue-500 to-cyan-500" },
-  { title: "Pending", value: "$600", change: "-10%", color: "from-orange-500 to-yellow-500" },
-  { title: "Transactions", value: "89", change: "+18%", color: "from-purple-500 to-pink-500" },
-]
-
 export default function FreelancerTransactions() {
   const [searchTerm, setSearchTerm] = useState("")
+    const { getFormattedAmount } = useCurrency();
+    const stats = [
+        { title: "Total Earned", value: getFormattedAmount(18750, 'INR'), change: "+15%", color: "from-green-500 to-emerald-500" },
+        { title: "This Month", value: getFormattedAmount(4900, 'INR'), change: "+22%", color: "from-blue-500 to-cyan-500" },
+        { title: "Pending", value: getFormattedAmount(600, 'INR'), change: "-10%", color: "from-orange-500 to-yellow-500" },
+        { title: "Transactions", value: "89", change: "+18%", color: "from-purple-500 to-pink-500" },
+      ]
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -92,7 +93,7 @@ export default function FreelancerTransactions() {
                   <div
                     className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
                   >
-                    <DollarSign className="w-6 h-6 text-white" />
+                    <IndianRupee className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -148,7 +149,7 @@ export default function FreelancerTransactions() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-green-400">+${transaction.amount.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-green-400">+{getFormattedAmount(transaction.amount, 'INR')}</p>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}
                         className={

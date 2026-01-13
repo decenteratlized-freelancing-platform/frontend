@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
-import { Search, Filter, Download, CreditCard, ArrowUpRight, ArrowDownLeft, Calendar, DollarSign } from "lucide-react"
+import { Search, Filter, Download, CreditCard, ArrowUpRight, ArrowDownLeft, Calendar, IndianRupeeIcon } from "lucide-react"
 
 const transactions = [
   {
@@ -60,9 +60,9 @@ export default function ClientTransactions() {
   const [statusFilter, setStatusFilter] = useState("all")
 
   const stats = [
-    { title: "Total Spent", value: getConvertedAmount(1960000), change: "+12%", color: "from-red-500 to-pink-500" },
-    { title: "This Month", value: getConvertedAmount(256000), change: "+8%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getConvertedAmount(144000), change: "-5%", color: "from-orange-500 to-yellow-500" },
+    { title: "Total Spent", value: getConvertedAmount(1960000, 'INR'), change: "+12%", color: "from-red-500 to-pink-500" },
+    { title: "This Month", value: getConvertedAmount(256000, 'INR'), change: "+8%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getConvertedAmount(144000, 'INR'), change: "-5%", color: "from-orange-500 to-yellow-500" },
     { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
   ]
 
@@ -111,7 +111,7 @@ export default function ClientTransactions() {
                   <div
                     className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
                   >
-                    <DollarSign className="w-6 h-6 text-white" />
+                    <IndianRupeeIcon className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -214,7 +214,7 @@ export default function ClientTransactions() {
                     </div>
                     <div className="text-right">
                       <p className={`text-xl font-bold ${transaction.amount > 0 ? "text-green-400" : "text-white"}`}>
-                        {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount))}
+                        {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount), 'INR')}
                       </p>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}

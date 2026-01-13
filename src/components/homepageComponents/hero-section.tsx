@@ -143,7 +143,7 @@ export default function HeroSection() {
           <Button
             variant="outline"
             size="lg"
-            className="border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold rounded-2xl backdrop-blur-sm bg-transparent"
+            className="border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold rounded-2xl backdrop-blur-sm bg-transparent hover:text-white transition-all duration-300 group"
           >
             Watch Demo
           </Button>
@@ -165,9 +165,8 @@ export default function HeroSection() {
 
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-              $<AnimatedCounter end={10} suffix="M+" />
-            </div>
-            <p className="text-gray-400">Transactions</p>
+            <AnimatedCounter end={1} prefix="₹" suffix="M+" />
+            </div>            <p className="text-gray-400">Transactions</p>
           </div>
 
           <div className="text-center">

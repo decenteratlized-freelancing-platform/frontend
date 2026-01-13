@@ -99,7 +99,7 @@ const LoginPage = () => {
             skills: "",
             notifications: { email: true, push: false, sms: true, marketing: false },
             privacy: { profileVisible: true, showEmail: false, showPhone: false, allowMessages: true },
-            preferences: { language: "en", timezone: "utc", currency: "usd", theme: "dark" },
+            preferences: { language: "en", timezone: "utc", currency: "inr", theme: "dark" },
           },
         });
 

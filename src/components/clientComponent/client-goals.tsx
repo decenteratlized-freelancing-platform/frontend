@@ -19,6 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useCurrency } from "@/context/CurrencyContext";
 import { Target, Plus, Edit, Trash2, Calendar, CheckCircle, Clock, TrendingUp } from "lucide-react"
 
 interface Milestone {
@@ -45,7 +46,7 @@ const initialGoals: Goal[] = [
   {
     id: "1",
     title: "Increase Monthly Revenue",
-    description: "Achieve $50,000 monthly recurring revenue through new client acquisitions",
+    description: "Achieve ₹4,000,000 monthly recurring revenue through new client acquisitions",
     category: "Financial",
     status: "in-progress",
     progress: 65,
@@ -53,9 +54,9 @@ const initialGoals: Goal[] = [
     createdAt: "2024-01-15",
     priority: "high",
     milestones: [
-      { id: "m1", title: "Reach $30K MRR", completed: true, dueDate: "2024-06-30" },
-      { id: "m2", title: "Reach $40K MRR", completed: true, dueDate: "2024-09-30" },
-      { id: "m3", title: "Reach $50K MRR", completed: false, dueDate: "2024-12-31" },
+      { id: "m1", title: "Reach ₹2,400,000 MRR", completed: true, dueDate: "2024-06-30" },
+      { id: "m2", title: "Reach ₹3,200,000 MRR", completed: true, dueDate: "2024-09-30" },
+      { id: "m3", title: "Reach ₹4,000,000 MRR", completed: false, dueDate: "2024-12-31" },
     ],
   },
   {
@@ -105,6 +106,7 @@ export default function ClientGoals() {
     priority: "medium" as "low" | "medium" | "high",
     milestones: [{ title: "", dueDate: "" }],
   })
+    const { getConvertedAmount } = useCurrency();
 
   const getStatusColor = (status: Goal["status"]) => {
     switch (status) {

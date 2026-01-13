@@ -68,6 +68,7 @@ export const authOptions: NextAuthOptions = {
         (token as any).id = dbUser?._id?.toString(); // For chat system
         (token as any).walletAddress = dbUser?.walletAddress ?? null;
         (token as any).walletLinkedAt = dbUser?.walletLinkedAt?.toISOString?.() ?? null;
+        (token as any).bankAccount = dbUser?.bankAccount ?? null;
         return token;
       }
 
@@ -82,6 +83,7 @@ export const authOptions: NextAuthOptions = {
           (token as any).walletAddress = dbUser.walletAddress ?? (token as any).walletAddress ?? null;
           (token as any).walletLinkedAt =
             dbUser.walletLinkedAt?.toISOString?.() ?? (token as any).walletLinkedAt ?? null;
+          (token as any).bankAccount = dbUser.bankAccount ?? (token as any).bankAccount ?? null;
         }
       }
 
@@ -98,6 +100,7 @@ export const authOptions: NextAuthOptions = {
         session.user.image = (token as any).image as string;
         (session.user as any).walletAddress = (token as any).walletAddress ?? null;
         (session.user as any).walletLinkedAt = (token as any).walletLinkedAt ?? null;
+        (session.user as any).bankAccount = (token as any).bankAccount ?? null;
       }
       return session;
     },

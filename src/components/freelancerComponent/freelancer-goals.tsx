@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { useCurrency } from "@/context/CurrencyContext";
 import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy } from 'lucide-react'
 
 interface Goal {
@@ -28,11 +29,11 @@ interface Goal {
 const initialGoals: Goal[] = [
   {
     id: 1,
-    title: "Earn $50,000 This Year",
+    title: "Earn ₹4,000,000 This Year",
     description: "Reach annual income target through quality freelance projects",
     progress: 75,
-    target: 50000,
-    current: 37500,
+    target: 4000000,
+    current: 3000000,
     deadline: "2024-12-31",
     status: "in-progress",
     category: "Financial",
@@ -86,6 +87,7 @@ export default function FreelancerGoals() {
     deadline: "",
     category: "",
   })
+  const { getFormattedAmount } = useCurrency();
 
   const handleAddGoal = () => {
     if (newGoal.title && newGoal.description && newGoal.target && newGoal.deadline && newGoal.category) {
@@ -391,8 +393,8 @@ export default function FreelancerGoals() {
                       <Progress value={goal.progress} className="h-2 bg-white/10" />
                       {goal.category === "Financial" && (
                         <div className="flex justify-between text-sm text-gray-400 text-xs">
-                          <span>${goal.current.toLocaleString()}</span>
-                          <span>${goal.target.toLocaleString()}</span>
+                          <span>{getFormattedAmount(goal.current, 'INR')}</span>
+                          <span>{getFormattedAmount(goal.target, 'INR')}</span>
                         </div>
                       )}
                       {goal.category !== "Financial" && (

@@ -222,6 +222,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
             className="mx-3 space-y-3"
           >
             {/* Wallet connect button */}
+            {/* Wallet connect button */}
             {address ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -232,36 +233,36 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   >
                     <span className="flex items-center gap-2">
                       <Wallet className="w-4 h-4" />
-                      <span className="text-xs font-medium">{walletLabel}</span>
+                      {!isCollapsed && <span className="text-xs font-medium">{walletLabel}</span>}
                     </span>
                     <ChevronDown className="w-3 h-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl hover:text-red-800">
-                  <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500 cursor-pointer hover:text-red-800">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Disconnect Wallet</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
-                onClick={handleWalletClick}
-                disabled={isConnecting}
-              >
-                <span className="flex items-center gap-2">
-                  {isConnecting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wallet className="w-4 h-4" />
-                  )}
-                  <span className="text-xs font-medium">{walletLabel}</span>
-                </span>
-              </Button>
-            )}
+                      <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500 cursor-pointer hover:text-red-800">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Disconnect Wallet</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
+                    onClick={handleWalletClick}
+                    disabled={isConnecting}
+                  >
+                    <span className="flex items-center gap-2">
+                      {isConnecting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wallet className="w-4 h-4" />
+                      )}
+                      <span className="text-xs font-medium">{walletLabel}</span>
+                    </span>
+                  </Button>
+                )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -292,7 +293,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
 
                 <DropdownMenuSeparator className="bg-white/10" />
 
-                <Link href="/freelancer/settings" className="block">
+                <Link href="/settings" className="block">
                   <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <User className="mr-2 h-4 w-4" />
                     <span>View Profile</span>
@@ -315,9 +316,9 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
 
                 <DropdownMenuSeparator className="bg-white/10 hover:text-red-600" />
 
-                <DropdownMenuItem onClick={handleLogout} className="text-red-400 cursor-pointer hover:text-red-600">
-                  <LogOut className="mr-2 h-4 w-4 hover:text-red-600"/>
-                  <span className="hover:text-red-600">Log out</span>
+                <DropdownMenuItem onClick={handleLogout} className="text-red-400 cursor-pointer data-[highlighted]:bg-red-500/20 data-[highlighted]:text-red-300">
+                  <LogOut className="mr-2 h-4 w-4"/>
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

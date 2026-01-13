@@ -46,7 +46,7 @@ export default function ClientSettings() {
   const [preferences, setPreferences] = useState({
     language: "en",
     timezone: "utc",
-    currency: "usd",
+    currency: "inr",
     hourlyRate: "",
     theme: "dark",
   })
@@ -350,7 +350,7 @@ export default function ClientSettings() {
           <span className="text-sm font-medium text-white">Account Settings</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          <span className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">Settings</span>
+          <span className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">Account Settings</span>
         </h1>
         <p className="text-xl text-gray-300">Manage your account preferences and security</p>
       </motion.div>
@@ -358,12 +358,12 @@ export default function ClientSettings() {
       {/* Settings Tabs */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/5 backdrop-blur-sm border border-white/10">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
-            <TabsTrigger value="billing" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Billing</TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/10 text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-white text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -392,7 +392,7 @@ export default function ClientSettings() {
                       <label htmlFor="client-image-upload" className="flex-1">
                         <Button
                           variant="outline"
-                          className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 cursor-pointer"
+                          className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 cursor-pointer hover:text-white"
                           disabled={uploadingImage}
                           asChild
                         >
@@ -411,7 +411,7 @@ export default function ClientSettings() {
                       </label>
                       <Button
                         variant="outline"
-                        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
                         onClick={handleRemoveImage}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
@@ -736,11 +736,11 @@ export default function ClientSettings() {
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
                     <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.currency} onChange={e => setPreferences(prev => ({ ...prev, currency: e.target.value }))}>
-                      <option value="usd">USD ($)</option>
-                      <option value="eur">EUR (€)</option>
-                      <option value="gbp">GBP (£)</option>
-                    </select>
-                  </div>
+                                            <option value="inr">INR (₹)</option>
+                                            <option value="usd">USD ($)</option>
+                                            <option value="eur">EUR (€)</option>
+                                            <option value="gbp">GBP (£)</option>
+                                          </select>                  </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Theme</label>
                     <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.theme} onChange={e => setPreferences(prev => ({ ...prev, theme: e.target.value }))}>

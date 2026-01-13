@@ -41,15 +41,20 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
     }, [receiverId, currentUserId])
 
     useEffect(() => {
-        if (socket) {
-            socket.on("newMessage", (message: Message) => {
-                if (message.senderId === receiverId) {
-                    setMessages((prev) => [...prev, message])
-                }
-            })
-            return () => socket.off("newMessage")
-        }
-    }, [socket, receiverId])
+        if (!socket) return;
+
+        const handleNewMessage = (message: Message) => {
+            if (message.senderId === receiverId) {
+                setMessages((prev) => [...prev, message]);
+            }
+        };
+
+        socket.on("newMessage", handleNewMessage);
+
+        return () => {
+            socket.off("newMessage", handleNewMessage);
+        };
+    }, [socket, receiverId]);
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" })

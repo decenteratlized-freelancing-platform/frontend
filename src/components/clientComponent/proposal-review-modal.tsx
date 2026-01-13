@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { CheckCircle, XCircle, Clock, Mail, DollarSign } from "lucide-react"
+import { useCurrency } from "@/context/CurrencyContext";
+import { CheckCircle, XCircle, Clock, Mail } from "lucide-react"
 import { toast } from "sonner"
 
 interface Proposal {
@@ -41,12 +42,26 @@ interface ProposalReviewModalProps {
 export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: ProposalReviewModalProps) {
     const [proposals, setProposals] = useState<Proposal[]>([])
     const [loading, setLoading] = useState(false)
+    const [jobCurrency, setJobCurrency] = useState<'INR' | 'ETH'>('INR');
 
     useEffect(() => {
         if (isOpen && jobId) {
             fetchProposals()
+            fetchJobDetails()
         }
     }, [isOpen, jobId])
+
+    const fetchJobDetails = async () => {
+        try {
+            const res = await fetch(`http://localhost:5000/api/jobs/${jobId}`);
+            if (res.ok) {
+                const job = await res.json();
+                setJobCurrency(job.paymentCurrency);
+            }
+        } catch (error) {
+            console.error("Error fetching job details:", error);
+        }
+    };
 
     const fetchProposals = async () => {
         setLoading(true)
@@ -146,8 +161,9 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
 
                                         <div className="grid grid-cols-2 gap-4 py-2 border-y border-white/10">
                                             <div className="flex items-center gap-2 text-gray-300">
-                                                <DollarSign className="w-4 h-4 text-green-400" />
-                                                <span className="font-medium">${proposal.proposedRate}</span>
+                                                <span className="font-medium">
+                                                    {jobCurrency === 'INR' ? `₹${proposal.proposedRate}` : `${proposal.proposedRate} ETH`}
+                                                </span>
                                                 <span className="text-xs text-gray-500">Proposed Rate</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-300">
@@ -191,7 +207,8 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                ))
+                            }
                             </div>
                         </ScrollArea>
                     )}

@@ -1,24 +1,9 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useSession } from "next-auth/react"
-import { toast } from "@/hooks/use-toast"
+"use client";
 import {
   Search,
   Filter,
   Clock,
-  DollarSign,
+  IndianRupee,
   MapPin,
   Heart,
   Star,
@@ -28,7 +13,26 @@ import {
   Briefcase,
   Award,
   CheckCircle,
-} from "lucide-react"
+  Tag
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { JobDetailsModal } from "../shared/job-details-modal";
 
 export default function BrowseJobs() {
   const { data: session } = useSession()
@@ -49,6 +53,8 @@ export default function BrowseJobs() {
   const [proposalDelivery, setProposalDelivery] = useState("")
   const [showProposalDialog, setShowProposalDialog] = useState(false)
   const [submittedProposals, setSubmittedProposals] = useState<string[]>([])
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
 
   useEffect(() => {
     fetchJobs()
@@ -76,6 +82,22 @@ export default function BrowseJobs() {
     if (!session?.user?.email) {
       toast({ title: "Error", description: "You must be logged in to submit a proposal", variant: "destructive" })
       return
+    }
+
+    if (selectedJob?.paymentCurrency === 'ETH' && !session?.user?.walletAddress) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to apply for ETH-based jobs.",
+        variant: "destructive",
+      });
+      return;
+    } else if (selectedJob?.paymentCurrency === 'INR' && !session?.user?.bankAccount) {
+        toast({
+            title: "Bank Account Required",
+            description: "Please add your bank details to apply for INR-based jobs.",
+            variant: "destructive",
+        });
+        return;
     }
 
     if (selectedJob && proposalText && proposalBudget && proposalDelivery) {
@@ -155,7 +177,7 @@ export default function BrowseJobs() {
           <span className="text-sm font-medium text-white">Job Marketplace</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Browse Jobs</span>
+          <span className="text-white">Browse Jobs</span>
         </h1>
         <p className="text-xl text-gray-300">Find your next opportunity from {jobs.length} available projects</p>
       </motion.div>
@@ -176,10 +198,10 @@ export default function BrowseJobs() {
                   placeholder="Search jobs, skills, or keywords..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-400 text-lg"
+                  className="pl-12 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-400 text-lg rounded-lg focus:bg-white/10 transition-colors focus:border-blue-300"
                 />
               </div>
-              <Button className="bg-blue-600 to-purple-600 hover:bg-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group">
+              <Button className="bg-white text-black px-8 py-6 text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group hover:bg-white-90">
                 <Search className="w-5 h-5 mr-2" />
                 Search Jobs
               </Button>
@@ -233,7 +255,7 @@ export default function BrowseJobs() {
                         </div>
                       </div>
 
-                      <p className="text-gray-300 mb-4 leading-relaxed">{job.description}</p>
+                      <p className="text-gray-300 mb-4 leading-relaxed line-clamp-2">{job.description}</p>
 
                       {/* Skills */}
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -251,10 +273,14 @@ export default function BrowseJobs() {
                       {/* Job Details */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-green-400" />
+                          {job.paymentCurrency === 'INR' ? (
+                            <IndianRupee className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <Tag className="w-4 h-4 text-purple-400" />
+                          )}
                           <div>
                             <span className="font-semibold text-white">
-                              ${job.budget?.toLocaleString()}
+                              {job.paymentCurrency === 'INR' ? `₹${job.budget}` : `${job.budget} ETH`}
                             </span>
                             <p className="text-xs text-gray-400">Budget</p>
                           </div>
@@ -300,6 +326,16 @@ export default function BrowseJobs() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            className="border-white/40 text-white hover:bg-white/10 bg-transparent hover:text-white"
+                            onClick={() => {
+                                setSelectedJob(job);
+                                setIsDetailsModalOpen(true);
+                            }}
+                        >
+                            View Job
+                        </Button>
                       {submittedProposals.includes(job._id) ? (
                         <Button disabled className="bg-green-600/50 text-white">
                           <CheckCircle className="w-4 h-4 mr-2" />
@@ -339,7 +375,7 @@ export default function BrowseJobs() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <Label htmlFor="budget" className="text-white mb-2 block">
-                                    Your Rate *
+                                    Your Rate (in {selectedJob?.paymentCurrency}) *
                                   </Label>
                                   <Input
                                     id="budget"
@@ -372,7 +408,7 @@ export default function BrowseJobs() {
                                 </Button>
                                 <Button
                                   onClick={handleSubmitProposal}
-                                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                                  className="bg-blue-600 hover:bg-blue-700"
                                   disabled={!proposalText || !proposalBudget || !proposalDelivery}
                                 >
                                   <Send className="w-4 h-4 mr-2" />
@@ -391,6 +427,13 @@ export default function BrowseJobs() {
           ))}
         </AnimatePresence>
       </div>
+
+        <JobDetailsModal
+            job={selectedJob}
+            isOpen={isDetailsModalOpen}
+            onClose={() => setIsDetailsModalOpen(false)}
+        />
     </div>
   )
 }
+

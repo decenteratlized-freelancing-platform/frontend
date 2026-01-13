@@ -10,7 +10,7 @@ import { useEffect, useState } from "react"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
 import {
-  DollarSign,
+  IndianRupee,
   Clock,
   Star,
   Briefcase,
@@ -74,7 +74,7 @@ const getStatusText = (status: string) => {
 }
 
 export default function FreelancerDashboard() {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
   const user = useCurrentUser();
   const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("Guest");
@@ -188,9 +188,9 @@ export default function FreelancerDashboard() {
         {[
           {
             title: "Total Earnings",
-            value: getConvertedAmount(12450 * 80), // Placeholder
+            value: getFormattedAmount(12450, 'INR'), // Placeholder
             change: "+18%",
-            icon: DollarSign,
+            icon: IndianRupee,
             color: "from-green-500 to-emerald-500",
           },
           {
@@ -228,7 +228,7 @@ export default function FreelancerDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-300">{stat.title}</p>
                     <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
-                    <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p>
+                    {/* <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p> */}
                   </div>
                   <div
                     className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
@@ -294,11 +294,15 @@ export default function FreelancerDashboard() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                         <div>
                           <p className="text-xs text-gray-400">Client Budget</p>
-                          <p className="text-sm font-medium text-white">{getConvertedAmount(proposal.job?.budget * 80)}</p>
+                          <p className="text-sm font-medium text-white">
+                            {proposal.job?.paymentCurrency === 'INR' ? `₹${proposal.job?.budget}` : `${proposal.job?.budget} ETH`}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Your Rate</p>
-                          <p className="text-sm font-medium text-green-400">{getConvertedAmount(proposal.proposedRate * 80)}</p>
+                          <p className="text-sm font-medium text-green-400">
+                            {proposal.job?.paymentCurrency === 'INR' ? `₹${proposal.proposedRate}` : `${proposal.proposedRate} ETH`}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Delivery</p>
@@ -327,7 +331,7 @@ export default function FreelancerDashboard() {
                         {proposal.status === "accepted" && (
                           <Button
                             size="sm"
-                            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                            className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-4 text-sm font-semibold rounded-xl shadow-xl hover:shadow-blue-500/25 transition-all duration-300 group"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Start Project
@@ -355,15 +359,15 @@ export default function FreelancerDashboard() {
                 <CardTitle className="text-lg font-bold text-white">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
                   <Briefcase className="w-4 h-4 mr-2" />
                   Browse New Jobs
                 </Button>
-                <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
                   <Target className="w-4 h-4 mr-2" />
                   Update Goals
                 </Button>
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Check Messages
                 </Button>
