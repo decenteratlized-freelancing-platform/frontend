@@ -244,7 +244,7 @@ export default function ClientGoals() {
 
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                <Button className="bg-white text-black hover:bg-white shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-200">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Goal
                 </Button>
@@ -397,7 +397,7 @@ export default function ClientGoals() {
                   </Button>
                   <Button
                     onClick={addGoal}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    className="bg-white text-black hover:bg-white hover:shadow-blue-500/25"
                     disabled={!newGoal.title || !newGoal.description}
                   >
                     Create Goal
@@ -482,7 +482,7 @@ export default function ClientGoals() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-white">
-                        {Math.round(goals.reduce((acc, goal) => acc + goal.progress, 0) / goals.length)}%
+                        {goals.length === 0 ? 0 : Math.round(goals.reduce((acc, goal) => acc + goal.progress, 0) / goals.length)}%
                       </p>
                       <p className="text-sm text-gray-400">Avg Progress</p>
                     </div>
@@ -492,196 +492,396 @@ export default function ClientGoals() {
             </motion.div>
           </div>
 
-          {/* Goals List */}
-          <div className="space-y-6">
-            <AnimatePresence>
-              {goals.map((goal, index) => (
-                <motion.div
-                  key={goal.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300 shadow-lg">
-                    <CardHeader className="pb-4">
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <CardTitle className="text-xl text-white">{goal.title}</CardTitle>
-                            <Badge className={`${getStatusColor(goal.status)} border text-xs px-2 py-1`}>
-                              {goal.status.replace("-", " ")}
-                            </Badge>
-                            <Badge className={`${getPriorityColor(goal.priority)} border text-xs px-2 py-1`}>
-                              {goal.priority}
-                            </Badge>
-                          </div>
-                          <CardDescription className="text-gray-400 text-base leading-relaxed">
-                            {goal.description}
-                          </CardDescription>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                            <span className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4" />
-                              Due: {new Date(goal.targetDate).toLocaleDateString()}
-                            </span>
-                            <span>Category: {goal.category}</span>
-                          </div>
-                        </div>
+                    {/* Goals List */}
 
-                        <div className="flex items-center gap-2">
-                          <Dialog
-                            open={isEditDialogOpen && editingGoal?.id === goal.id}
-                            onOpenChange={(open) => {
-                              setIsEditDialogOpen(open)
-                              if (!open) setEditingGoal(null)
-                            }}
+                    <div className="space-y-6">
+
+                      <AnimatePresence>
+
+                        {goals.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-col items-center justify-center p-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-lg text-center"
                           >
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingGoal(goal)}
-                                className="border-white/20 text-white hover:bg-white/10"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle className="text-xl font-bold text-white">Edit Goal</DialogTitle>
-                              </DialogHeader>
+                            <Target className="w-12 h-12 text-gray-400 mb-4" />
+                            <p className="text-xl font-semibold text-white mb-2">No Goals Yet!</p>
+                            <p className="text-gray-400">Start by adding a new goal to track your progress.</p>
+                          </motion.div>
+                        ) : (
+                          goals.map((goal, index) => (
+                            <motion.div
 
-                              {editingGoal && (
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="edit-title" className="text-white">
-                                      Goal Title
-                                    </Label>
-                                    <Input
-                                      id="edit-title"
-                                      value={editingGoal.title}
-                                      onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
-                                      className="bg-white/10 border-white/20 text-white"
-                                    />
-                                  </div>
+                            key={goal.id}
 
-                                  <div>
-                                    <Label htmlFor="edit-description" className="text-white">
-                                      Description
-                                    </Label>
-                                    <Textarea
-                                      id="edit-description"
-                                      value={editingGoal.description}
-                                      onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
-                                      className="bg-white/10 border-white/20 text-white"
-                                    />
-                                  </div>
+                            initial={{ opacity: 0, y: 20 }}
 
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label htmlFor="edit-category" className="text-white">
-                                        Category
-                                      </Label>
-                                      <Input
-                                        id="edit-category"
-                                        value={editingGoal.category}
-                                        onChange={(e) => setEditingGoal({ ...editingGoal, category: e.target.value })}
-                                        className="bg-white/10 border-white/20 text-white"
-                                      />
+                            animate={{ opacity: 1, y: 0 }}
+
+                            exit={{ opacity: 0, y: -20 }}
+
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+
+                          >
+
+                            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/8 transition-all duration-300 shadow-lg">
+
+                              <CardHeader className="pb-4">
+
+                                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+
+                                  <div className="flex-1 space-y-3">
+
+                                    <div className="flex flex-wrap items-center gap-3">
+
+                                      <CardTitle className="text-xl text-white">{goal.title}</CardTitle>
+
+                                      <Badge className={`${getStatusColor(goal.status)} border text-xs px-2 py-1`}>
+
+                                        {goal.status.replace("-", " ")}
+
+                                      </Badge>
+
+                                      <Badge className={`${getPriorityColor(goal.priority)} border text-xs px-2 py-1`}>
+
+                                        {goal.priority}
+
+                                      </Badge>
+
                                     </div>
 
-                                    <div>
-                                      <Label htmlFor="edit-targetDate" className="text-white">
-                                        Target Date
-                                      </Label>
-                                      <Input
-                                        id="edit-targetDate"
-                                        type="date"
-                                        value={editingGoal.targetDate}
-                                        onChange={(e) => setEditingGoal({ ...editingGoal, targetDate: e.target.value })}
-                                        className="bg-white/10 border-white/20 text-white"
-                                      />
+                                    <CardDescription className="text-gray-400 text-base leading-relaxed">
+
+                                      {goal.description}
+
+                                    </CardDescription>
+
+                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+
+                                      <span className="flex items-center gap-2">
+
+                                        <Calendar className="w-4 h-4" />
+
+                                        Due: {new Date(goal.targetDate).toLocaleDateString()}
+
+                                      </span>
+
+                                      <span>Category: {goal.category}</span>
+
                                     </div>
+
                                   </div>
+
+          
+
+                                  <div className="flex items-center gap-2">
+
+                                    <Dialog
+
+                                      open={isEditDialogOpen && editingGoal?.id === goal.id}
+
+                                      onOpenChange={(open) => {
+
+                                        setIsEditDialogOpen(open)
+
+                                        if (!open) setEditingGoal(null)
+
+                                      }}
+
+                                    >
+
+                                      <DialogTrigger asChild>
+
+                                        <Button
+
+                                          variant="outline"
+
+                                          size="sm"
+
+                                          onClick={() => setEditingGoal(goal)}
+
+                                          className="border-white/20 text-white hover:bg-white/10"
+
+                                        >
+
+                                          <Edit className="w-4 h-4" />
+
+                                        </Button>
+
+                                      </DialogTrigger>
+
+                                      <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+
+                                        <DialogHeader>
+
+                                          <DialogTitle className="text-xl font-bold text-white">Edit Goal</DialogTitle>
+
+                                        </DialogHeader>
+
+          
+
+                                        {editingGoal && (
+
+                                          <div className="space-y-4">
+
+                                            <div>
+
+                                              <Label htmlFor="edit-title" className="text-white">
+
+                                                Goal Title
+
+                                              </Label>
+
+                                              <Input
+
+                                                id="edit-title"
+
+                                                value={editingGoal.title}
+
+                                                onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
+
+                                                className="bg-white/10 border-white/20 text-white"
+
+                                              />
+
+                                            </div>
+
+          
+
+                                            <div>
+
+                                              <Label htmlFor="edit-description" className="text-white">
+
+                                                Description
+
+                                              </Label>
+
+                                              <Textarea
+
+                                                id="edit-description"
+
+                                                value={editingGoal.description}
+
+                                                onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
+
+                                                className="bg-white/10 border-white/20 text-white"
+
+                                              />
+
+                                            </div>
+
+          
+
+                                            <div className="grid grid-cols-2 gap-4">
+
+                                              <div>
+
+                                                <Label htmlFor="edit-category" className="text-white">
+
+                                                  Category
+
+                                                </Label>
+
+                                                <Input
+
+                                                  id="edit-category"
+
+                                                  value={editingGoal.category}
+
+                                                  onChange={(e) => setEditingGoal({ ...editingGoal, category: e.target.value })}
+
+                                                  className="bg-white/10 border-white/20 text-white"
+
+                                                />
+
+                                              </div>
+
+          
+
+                                              <div>
+
+                                                <Label htmlFor="edit-targetDate" className="text-white">
+
+                                                  Target Date
+
+                                                </Label>
+
+                                                <Input
+
+                                                  id="edit-targetDate"
+
+                                                  type="date"
+
+                                                  value={editingGoal.targetDate}
+
+                                                  onChange={(e) => setEditingGoal({ ...editingGoal, targetDate: e.target.value })}
+
+                                                  className="bg-white/10 border-white/20 text-white"
+
+                                                />
+
+                                              </div>
+
+                                            </div>
+
+                                          </div>
+
+                                        )}
+
+          
+
+                                        <div className="flex justify-end gap-2 pt-4">
+
+                                          <Button
+
+                                            variant="outline"
+
+                                            onClick={() => setIsEditDialogOpen(false)}
+
+                                            className="border-white/20 text-white hover:bg-white/10"
+
+                                          >
+
+                                            Cancel
+
+                                          </Button>
+
+                                          <Button
+
+                                            onClick={updateGoal}
+
+                                            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+
+                                          >
+
+                                            Update Goal
+
+                                          </Button>
+
+                                        </div>
+
+                                      </DialogContent>
+
+                                    </Dialog>
+
+          
+
+                                    <Button
+
+                                      variant="outline"
+
+                                      size="sm"
+
+                                      onClick={() => deleteGoal(goal.id)}
+
+                                      className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+
+                                    >
+
+                                      <Trash2 className="w-4 h-4" />
+
+                                    </Button>
+
+                                  </div>
+
                                 </div>
-                              )}
 
-                              <div className="flex justify-end gap-2 pt-4">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setIsEditDialogOpen(false)}
-                                  className="border-white/20 text-white hover:bg-white/10"
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  onClick={updateGoal}
-                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                                >
-                                  Update Goal
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                              </CardHeader>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteGoal(goal.id)}
-                            className="border-red-500/20 text-red-400 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
+          
 
-                    <CardContent className="space-y-6">
-                      {/* Progress Section */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-white">Progress</span>
-                          <span className="text-sm text-gray-400">{goal.progress}%</span>
-                        </div>
-                        <Progress value={goal.progress} className="h-2 bg-white/10" />
-                      </div>
+                              <CardContent className="space-y-6">
 
-                      {/* Milestones */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-white">Milestones</h4>
-                        <div className="space-y-2">
-                          {goal.milestones.map((milestone) => (
-                            <div
-                              key={milestone.id}
-                              className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10"
-                            >
-                              <Checkbox
-                                checked={milestone.completed}
-                                onCheckedChange={() => toggleMilestone(goal.id, milestone.id)}
-                                className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                              />
-                              <div className="flex-1">
-                                <p
-                                  className={`text-sm ${milestone.completed ? "text-gray-400 line-through" : "text-white"}`}
-                                >
-                                  {milestone.title}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </div>
+                                {/* Progress Section */}
+
+                                <div className="space-y-3">
+
+                                  <div className="flex items-center justify-between">
+
+                                    <span className="text-sm font-medium text-white">Progress</span>
+
+                                    <span className="text-sm text-gray-400">{goal.progress}%</span>
+
+                                  </div>
+
+                                  <Progress value={goal.progress} className="h-2 bg-white/10" />
+
+                                </div>
+
+          
+
+                                {/* Milestones */}
+
+                                <div className="space-y-3">
+
+                                  <h4 className="text-sm font-medium text-white">Milestones</h4>
+
+                                  <div className="space-y-2">
+
+                                    {goal.milestones.map((milestone) => (
+
+                                      <div
+
+                                        key={milestone.id}
+
+                                        className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10"
+
+                                      >
+
+                                        <Checkbox
+
+                                          checked={milestone.completed}
+
+                                          onCheckedChange={() => toggleMilestone(goal.id, milestone.id)}
+
+                                          className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+
+                                        />
+
+                                        <div className="flex-1">
+
+                                          <p
+
+                                            className={`text-sm ${milestone.completed ? "text-gray-400 line-through" : "text-white"}`}
+
+                                          >
+
+                                            {milestone.title}
+
+                                          </p>
+
+                                          <p className="text-xs text-gray-500">
+
+                                            Due: {new Date(milestone.dueDate).toLocaleDateString()}
+
+                                          </p>
+
+                                        </div>
+
+                                      </div>
+
+                                    ))}
+
+                                  </div>
+
+                                </div>
+
+                              </CardContent>
+
+                            </Card>
+
+                          </motion.div>
+
+                        )))}
+
+                      </AnimatePresence>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
   )
 }

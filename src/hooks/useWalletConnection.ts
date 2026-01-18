@@ -185,10 +185,6 @@ export function useWalletConnection() {
   }, [session, update, toast]);
 
   const disconnectWallet = useCallback(async () => {
-    setLocalAddress(null);
-    setLinkedAt(null);
-    setIsDisconnected(true);
-
     if (typeof window !== "undefined") {
       const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
       if (currentUser.walletAddress) {
@@ -206,6 +202,10 @@ export function useWalletConnection() {
         },
       });
     }
+
+    setLocalAddress(null);
+    setLinkedAt(null);
+    setIsDisconnected(true);
 
     toast({
       title: "Wallet disconnected",

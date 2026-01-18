@@ -172,7 +172,7 @@ export default function FreelancerGoals() {
   }
 
   const completedGoals = goals.filter((g) => g.status === "completed").length
-  const averageProgress = Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)
+  const averageProgress = goals.length === 0 ? 0 : Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -353,9 +353,20 @@ export default function FreelancerGoals() {
       {/* Goals Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence>
-          {goals.map((goal, index) => {
-            const StatusIcon = getStatusIcon(goal.status)
-            return (
+          {goals.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="lg:col-span-2 flex flex-col items-center justify-center p-10 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg text-center"
+            >
+              <Target className="w-12 h-12 text-gray-400 mb-4" />
+              <p className="text-xl font-semibold text-white mb-2">No Goals Yet!</p>
+              <p className="text-gray-400">Start by adding a new goal to track your progress.</p>
+            </motion.div>
+          ) : (
+            goals.map((goal, index) => {
+              const StatusIcon = getStatusIcon(goal.status)
+              return (
               <motion.div
                 key={goal.id}
                 initial={{ opacity: 0, y: 30 }}

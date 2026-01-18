@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Github } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { signOut } from 'next-auth/react';
 const LoginPage = () => {
   const router = useRouter();
@@ -206,29 +207,29 @@ const LoginPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
       <div className="relative z-10 flex min-h-screen">
-        <div className="flex-1 flex items-center justify-center px-8 py-12">
-          <div className="w-full max-w-md">
-            <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <div className="w-1/2 flex items-center justify-center px-8 py-12">
+          <div className="w-full max-w-2xl px-8">
+            <div className="p-8">
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                <h1 className="text-5xl font-bold text-white mb-2">
                   SmartHire
                 </h1>
-                <p className="text-gray-600 text-sm">Blockchain-Backed Freelance Platform</p>
+                <p className="text-zinc-300 text-sm">Blockchain-Backed Freelance Platform</p>
               </div>
 
-              <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
+              <div className="flex bg-zinc-800 rounded-xl p-1 mb-8">
                 <button
                   onClick={() => setIsLogin(true)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${isLogin ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${isLogin ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                     }`}
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => setIsLogin(false)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${!isLogin ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${!isLogin ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                     }`}
                 >
                   Sign Up
@@ -237,7 +238,7 @@ const LoginPage = () => {
               <div className="space-y-4 mb-6">
                 <button
                   onClick={handleGoogleAuth}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 font-medium text-gray-700 hover:text-blue-600"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-zinc-700 rounded-xl hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-200 font-medium text-zinc-300 hover:text-white"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -250,7 +251,7 @@ const LoginPage = () => {
 
                 <button
                   onClick={handleGithubAuth}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 font-medium text-gray-700 hover:text-gray-900"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-zinc-700 rounded-xl hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-200 font-medium text-zinc-300 hover:text-white"
                 >
                   <Github className="w-5 h-5" />
                   Continue with GitHub
@@ -270,25 +271,26 @@ const LoginPage = () => {
                 {!isLogin && (
                   <>
                     <div className="space-y-2">
-                      <label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name</label>
+                      <label htmlFor="fullName" className="text-sm font-medium text-zinc-300">Full Name</label>
                       <input
                         type="text"
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                        className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
                         placeholder="Enter your full name"
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label htmlFor="role" className="text-sm font-medium text-gray-700">Select Role</label>
+                      <label htmlFor="role" className="text-sm font-medium text-zinc-300">Select Role</label>
                       <select
                         name="role"
                         value={formData.role}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                        className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white appearance-none pr-10 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
+                        style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3e%3cpath fill=\'none\' stroke=\'%23ffffff\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'m2 5 6 6 6-6\'/%3e%3c/svg%3e")' }}
                       >
                         <option value="freelancer">Freelancer</option>
                         <option value="client">Client</option>
@@ -298,27 +300,27 @@ const LoginPage = () => {
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
+                  <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                    className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
                     placeholder="Enter your email"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+                  <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                      className="w-full px-4 py-3 pr-12 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
                       placeholder="Enter your password"
                       required
                     />
@@ -334,14 +336,14 @@ const LoginPage = () => {
 
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</label>
+                    <label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-300">Confirm Password</label>
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-500"
+                        className="w-full px-4 py-3 pr-12 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
                         placeholder="Confirm your password"
                         required
                       />
@@ -360,7 +362,7 @@ const LoginPage = () => {
                   type="submit"
                   onClick={handleSubmit}
                   disabled={authState.loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:scale-105 transition-all"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all"
                 >
                   {authState.loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
                 </button>
@@ -368,13 +370,13 @@ const LoginPage = () => {
 
               {isLogin && (
                 <div className="mt-6 text-center space-y-3">
-                  <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium block">
+                  <a href="#" className="text-blue-400 hover:text-blue-300 text-sm font-medium block">
                     Forgot your password?
                   </a>
                   <button
                     onClick={handleResendVerification}
                     disabled={authState.loading}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium block w-full"
+                    className="text-blue-400 hover:text-blue-300 text-sm font-medium block w-full"
                   >
                     {authState.loading ? 'Sending...' : 'Resend Verification Email'}
                   </button>
@@ -385,20 +387,13 @@ const LoginPage = () => {
         </div>
 
         {/* Right branding block remains the same */}
-        <div className="flex-1 flex items-center justify-center px-8 py-12 text-white">
-          <div className="max-w-lg text-center">
-            <h1 className="text-6xl font-bold mb-6 animate-pulse">SmartHire</h1>
-            <p className="text-2xl font-light mb-8 opacity-90">
-              The Future of Freelancing
-            </p>
-            <p className="text-lg mb-12 opacity-80 leading-relaxed">
-              Experience the next generation of freelancing with blockchain-powered smart contracts.
-              Build trust, automate payments, and work with confidence in a decentralized ecosystem
-              that puts you in control.
-            </p>
-            <div>
-            </div>
-          </div>
+        <div className="w-1/2 flex items-center justify-center text-white relative">
+          <Image
+            src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmFja2dyb3VuZHxlbnwwfHwwfHx8MA%3D%3D"
+            alt="Login Illustration"
+            fill
+            className="object-cover h-full w-full absolute rounded-2xl"
+          />
         </div>
       </div>
     </div>

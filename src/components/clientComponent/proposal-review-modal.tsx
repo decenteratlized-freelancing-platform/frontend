@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCurrency } from "@/context/CurrencyContext";
 import { CheckCircle, XCircle, Clock, Mail } from "lucide-react"
 import { toast } from "sonner"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 interface Proposal {
     _id: string
@@ -43,6 +44,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
     const [proposals, setProposals] = useState<Proposal[]>([])
     const [loading, setLoading] = useState(false)
     const [jobCurrency, setJobCurrency] = useState<'INR' | 'ETH'>('INR');
+    const currentUser = useCurrentUser();
 
     useEffect(() => {
         if (isOpen && jobId) {
@@ -83,10 +85,17 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
 
     const handleStatusUpdate = async (proposalId: string, status: "accepted" | "rejected") => {
         try {
+            if (!currentUser?.email) {
+                toast.error("You must be logged in to perform this action.");
+                return;
+            }
             const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/status`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ 
+                    status,
+                    clientEmail: currentUser.email 
+                }),
             })
 
             if (res.ok) {

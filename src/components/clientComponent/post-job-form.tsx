@@ -315,7 +315,7 @@ export default function PostJobForm() {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group"
+              className="bg-white text-black hover:bg-white px-8 py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group"
             >
               <Sparkles className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
               {isSubmitting ? "Posting..." : "Post Job"}

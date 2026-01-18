@@ -87,6 +87,10 @@ const FreelancerCard = ({
         </div>
       </div>
       
+      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+        {freelancer.bio.substring(0, 100)}{freelancer.bio.length > 100 && "..."}
+      </p>
+
       <div className="flex flex-wrap gap-2 mb-4">
         {freelancer.skills.slice(0, 4).map((skill) => (
           <SkillChip key={skill} skill={skill} />
@@ -94,6 +98,13 @@ const FreelancerCard = ({
       </div>
 
       <div className="space-y-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-1">
+                <Users className="w-4 h-4 text-gray-500" />
+                <span className="font-bold text-gray-800">{freelancer.projectsCompleted}</span>
+                <span className="text-gray-500">Projects Completed</span>
+            </div>
+        </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4 text-yellow-500" />
@@ -410,7 +421,8 @@ export default function DiscoverFreelancersPage() {
         const data: any[] = await response.json();
         
         const processedData: Freelancer[] = data.map((f) => {
-          const hourlyRateInINR = f.hourlyRate || 0;
+          const settings = f.settings || {};
+          
           let totalEarnedInINR = 0;
           if (typeof f.totalEarned === 'string') {
             const numericValue = parseFloat(f.totalEarned.replace(/[^0-9.-]+/g, ""));
@@ -427,19 +439,19 @@ export default function DiscoverFreelancersPage() {
             fullName: f.fullName || "N/A",
             email: f.email || "N/A",
             role: f.role || "freelancer",
-            skills: f.skills || [],
-            bio: f.bio || "No bio provided.",
-            hourlyRate: hourlyRateInINR,
-            status: f.status || "Available",
-            location: f.location || "Remote",
+            skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map(s => s.trim()) : [],
+            bio: settings.bio || "No bio provided.",
+            hourlyRate: settings.hourlyRate || 0,
+            status: settings.availableForJobs ? "Available" : "Busy",
+            location: settings.location || "Remote",
             responseTime: f.responseTime || "24 hours",
             isFavorite: false,
             image: f.image || "https://i.pravatar.cc/150",
-            portfolio: f.portfolio || [],
+            portfolio: settings.portfolioWebsite ? [{ id: 1, title: 'Portfolio Website', imageUrl: settings.portfolioWebsite }] : [],
             languages: f.languages || [],
-            projectsCompleted: f.projectsCompleted || 0,
+            projectsCompleted: settings.projectsCompleted || 0,
             totalEarned: totalEarnedInINR,
-            averageRating: f.averageRating || 0,
+            averageRating: settings.rating || 0,
             reviewsCount: f.reviewsCount || 0,
           };
         });
@@ -521,7 +533,7 @@ export default function DiscoverFreelancersPage() {
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
           Discover{" "}
-          <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <span className="text-violet-500 text-transparent">
             Freelancers
           </span>
         </h1>
