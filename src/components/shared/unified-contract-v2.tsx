@@ -85,7 +85,7 @@ const formatNatively = (amount: number, currency: 'INR' | 'ETH') => {
     return `₹${amount.toLocaleString('en-IN')}`;
 };
 
-export default function UnifiedContract({ userRole }: ContractProps) {
+export default function UnifiedContractV2({ userRole }: ContractProps) {
   const role = userRole || "client";
   const currentUser = useCurrentUser();
 
@@ -105,6 +105,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
     description: "",
     milestones: [{ description: "", amount: "" }],
     totalAmount: "0",
+    paymentType: "fiat",
   });
 
   useEffect(() => {
@@ -147,6 +148,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
         description: '',
         milestones: [{ description: "", amount: "" }],
         totalAmount: proposal.proposedRate.toString(),
+        paymentType: proposal.paymentType,
     });
     setShowCreateDialog(true);
   };
@@ -182,6 +184,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                 proposalId: createFormData.proposalId,
                 milestones: validMilestones,
                 totalAmount: createFormData.totalAmount,
+                paymentType: createFormData.paymentType,
             }),
         });
         if (!response.ok) {
@@ -231,20 +234,39 @@ export default function UnifiedContract({ userRole }: ContractProps) {
         {role === 'client' && hirableProposals.length > 0 && (
             <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">Ready to Contract</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {hirableProposals.map((proposal) => (
-                        <Card key={proposal._id} className="bg-white/5 border-white/10">
-                            <CardContent className="p-4 flex flex-col">
-                                <h4 className="text-white font-semibold">{proposal.freelancer.fullName}</h4>
-                                <p className="text-gray-400 text-sm flex-grow">{proposal.job.title}</p>
-                                <Button size="sm" className="w-full mt-4 bg-blue-600 hover:bg-blue-700" onClick={() => handleOpenCreateDialog(proposal)}>
-                                    <FileSignature className="w-4 h-4 mr-2" />
-                                    Create Contract
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {hirableProposals.map((proposal) => (
+        <motion.div
+            key={proposal._id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+        >
+            <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-green-500/50 transition-all duration-300 rounded-lg shadow-lg overflow-hidden h-full flex flex-col">
+                <CardContent className="p-5 flex flex-col flex-grow">
+                    <div className="flex items-center mb-3">
+                        <Avatar className="h-10 w-10 text-black bg-white">
+                            <AvatarImage src={proposal.freelancer.profilePicture} alt={proposal.freelancer.fullName} />
+                            <AvatarFallback>{proposal.freelancer.fullName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="ml-3">
+                            <h4 className="text-md font-bold text-slate-100">{proposal.freelancer.fullName}</h4>
+                            <p className="text-xs text-slate-400">Ready to Hire</p>
+                        </div>
+                    </div>
+                    <p className="text-sm text-slate-300 flex-grow leading-relaxed">{proposal.job.title}</p>
+                    <p className="text-lg font-bold text-green-400 mt-3">
+                        {formatNatively(parseFloat(proposal.proposedRate), getCurrencyFromPaymentType(proposal.paymentType))}
+                    </p>
+                    <Button size="sm" className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold" onClick={() => handleOpenCreateDialog(proposal)}>
+                        <FileSignature className="w-4 h-4 mr-2" />
+                        Create Contract
+                    </Button>
+                </CardContent>
+            </Card>
+        </motion.div>
+    ))}
+</div>
             </div>
         )}
         
@@ -276,30 +298,72 @@ export default function UnifiedContract({ userRole }: ContractProps) {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredContracts.map((contract) => (
-                <Card key={contract._id} className="bg-gray-800 border-gray-700">
-                    <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-lg font-semibold text-white">{contract.job?.title || 'Job Title Missing'}</h3>
-                                <p className="text-sm text-gray-400">
-                                    {role === 'client' ? `Freelancer: ${contract.freelancer?.fullName}` : `Client: ${contract.client?.fullName}`}
-                                </p>
+                <motion.div
+                    key={contract._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <Card 
+                        className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-blue-500/50 transition-all duration-300 rounded-lg shadow-lg overflow-hidden"
+                        onClick={() => viewContractDetails(contract)}
+                    >
+                        <CardContent className="p-6">
+                            <div className="flex justify-between items-start">
+                                <h3 className="text-lg font-bold text-slate-100 tracking-tight leading-tight">
+                                    {contract.job?.title || 'Job Title Missing'}
+                                </h3>
+                                <Badge className={`${getStatusColor(contract.status)} border-none text-xs px-2.5 py-1 rounded-full font-semibold`}>
+                                    <span className="mr-1.5">{getStatusIcon(contract.status)}</span>
+                                    {contract.status}
+                                </Badge>
                             </div>
-                            <Badge className={`${getStatusColor(contract.status)}`}>{contract.status}</Badge>
-                        </div>
-                        <div className="mt-4">
-                            <p className="text-white font-semibold text-lg">{formatNatively(parseFloat(contract.totalAmount), getCurrencyFromPaymentType(contract.paymentType))}</p>
-                        </div>
-                        <div className="flex justify-end mt-4">
-                            <Button size="sm" onClick={() => viewContractDetails(contract)}>View Details</Button>
-                        </div>
-                    </CardContent>
-                </Card>
+
+                            <p className="text-sm text-slate-400 mt-1.5">
+                                {role === 'client' ? `With: ${contract.freelancer?.fullName}` : `With: ${contract.client?.fullName}`}
+                            </p>
+
+                            <div className="mt-6 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs text-slate-400 uppercase font-semibold">Total Value</p>
+                                    <p className="text-xl font-bold text-slate-100 mt-1">
+                                        {formatNatively(parseFloat(contract.totalAmount), getCurrencyFromPaymentType(contract.paymentType))}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-slate-400 uppercase font-semibold">Due Date</p>
+                                    <p className="text-base text-slate-100 mt-1.5">
+                                        {new Date(contract.endDate || contract.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 pt-4 border-t border-slate-700/50 flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <Avatar className="h-8 w-8 text-black bg-white">
+                                        <AvatarImage src={role === 'client' ? contract.freelancer?.profilePicture : contract.client?.profilePicture} alt="participant" />
+                                        <AvatarFallback>
+                                            {role === 'client' ? contract.freelancer?.fullName?.[0] : contract.client?.fullName?.[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="ml-3">
+                                        <p className="text-sm font-semibold text-slate-200">{role === 'client' ? contract.freelancer?.fullName : contract.client?.fullName}</p>
+                                        <p className="text-xs text-slate-400">{role === 'client' ? 'Freelancer' : 'Client'}</p>
+                                    </div>
+                                </div>
+                                <Button size="sm" variant="outline" className="bg-transparent border-slate-600 hover:bg-slate-700/50 hover:text-white text-white">
+                                    View Details
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
             ))}
             {filteredContracts.length === 0 && (
-                <div className="text-center py-12 text-white">No contracts found.</div>
+                <div className="text-center py-12 text-white col-span-full">No contracts found.</div>
             )}
         </div>
 
@@ -355,6 +419,7 @@ export default function UnifiedContract({ userRole }: ContractProps) {
                                 <h4 className="text-white font-semibold mb-4">Summary</h4>
                                 <div className="space-y-2">
                                     <p><span className="font-semibold">Client:</span> {selectedContract.client.fullName}</p>
+
                                     <p><span className="font-semibold">Freelancer:</span> {selectedContract.freelancer.fullName}</p>
                                     <p><span className="font-semibold">Total Amount:</span> {formatNatively(parseFloat(selectedContract.totalAmount), getCurrencyFromPaymentType(selectedContract.paymentType))}</p>
                                 </div>

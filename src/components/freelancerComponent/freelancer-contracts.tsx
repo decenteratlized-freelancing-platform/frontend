@@ -1,6 +1,6 @@
 "use client"
-import UnifiedContract from "@/components/shared/unified-contract"
+import UnifiedContractV2 from "@/components/shared/unified-contract-v2"
 
 export default function FreelancerContracts() {
-  return <UnifiedContract userRole="freelancer" />
+  return <UnifiedContractV2 userRole="freelancer" />
 }

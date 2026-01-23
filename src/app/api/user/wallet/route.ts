@@ -71,3 +71,40 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  const body = await req.json().catch(() => ({})); // Allow empty body
+  const { email: manualEmail } = body;
+
+  // Support both NextAuth session and manual login
+  const userEmail = session?.user?.email || manualEmail;
+
+  if (!userEmail) {
+    return NextResponse.json({ error: "Unauthorized - Email required" }, { status: 401 });
+  }
+
+  try {
+    await connectDB();
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email: userEmail },
+      {
+        $set: {
+          walletAddress: null,
+          walletLinkedAt: null,
+          walletMessage: null,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Wallet unlinked successfully" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

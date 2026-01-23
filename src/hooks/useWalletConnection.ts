@@ -20,18 +20,8 @@ export function useWalletConnection() {
 
   const address = useMemo(() => {
     if (isDisconnected) return null;
-    if (localAddress) return localAddress;
-    if (session?.user) return (session.user as any)?.walletAddress ?? null;
-
-    if (typeof window !== "undefined") {
-      try {
-        const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-        return currentUser?.walletAddress ?? null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    // Prefer local address state, then fall back to session
+    return localAddress ?? (session?.user as any)?.walletAddress ?? null;
   }, [localAddress, session?.user, isDisconnected]);
 
   const walletLinkedAt = useMemo(() => {
@@ -185,32 +175,72 @@ export function useWalletConnection() {
   }, [session, update, toast]);
 
   const disconnectWallet = useCallback(async () => {
-    if (typeof window !== "undefined") {
-      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      if (currentUser.walletAddress) {
-        const { walletAddress, walletLinkedAt, ...rest } = currentUser;
-        localStorage.setItem("currentUser", JSON.stringify(rest));
-      }
+    const userEmail = session?.user?.email || (typeof window !== "undefined" ? localStorage.getItem("email") : null);
+
+    if (!userEmail) {
+      toast({
+        title: "Not signed in",
+        description: "You must be signed in to disconnect a wallet.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    if (session?.user && update) {
-      await update({
-        user: {
-          ...(session.user as any),
-          walletAddress: null,
-          walletLinkedAt: null,
+    try {
+      const response = await fetch('/api/user/wallet', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to disconnect wallet on the server.");
+      }
+
+      // Clear local storage regardless of session type
+      if (typeof window !== "undefined") {
+        const currentUserStr = localStorage.getItem("currentUser");
+        if (currentUserStr) {
+          const currentUser = JSON.parse(currentUserStr);
+          delete currentUser.walletAddress;
+          delete currentUser.walletLinkedAt;
+          localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        }
+      }
+
+      // If using NextAuth session, update it
+      if (session?.user && update) {
+        await update({
+          user: {
+            ...(session.user as any),
+            walletAddress: null,
+            walletLinkedAt: null,
+          },
+        });
+      }
+
+      // Reset local hook state
+      setLocalAddress(null);
+      setLinkedAt(null);
+      setIsDisconnected(true); // Explicitly set disconnected flag
+
+      toast({
+        title: "Wallet disconnected",
+        description: "Your wallet has been unlinked from your account.",
+      });
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unknown error occurred.";
+      setError(message);
+      toast({
+        title: "Disconnection Failed",
+        description: message,
+        variant: "destructive",
       });
     }
-
-    setLocalAddress(null);
-    setLinkedAt(null);
-    setIsDisconnected(true);
-
-    toast({
-      title: "Wallet disconnected",
-      description: "Your wallet has been disconnected.",
-    });
   }, [session, update, toast]);
 
   return {
