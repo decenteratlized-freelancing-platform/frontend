@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCurrency } from "@/context/CurrencyContext";
 import { CheckCircle, XCircle, Clock, Mail } from "lucide-react"
@@ -142,12 +142,10 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-4">
-                                                <Avatar className="h-12 w-12 border border-white/10">
-                                                    <AvatarImage src={proposal.freelancer.image} />
-                                                    <AvatarFallback className="bg-blue-600 text-white font-bold">
-                                                        {proposal.freelancer.fullName.charAt(0)}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                                <UserAvatar 
+                                                    user={proposal.freelancer} 
+                                                    className="h-12 w-12 border border-white/10"
+                                                />
                                                 <div>
                                                     <h3 className="font-semibold text-lg">{proposal.freelancer.fullName}</h3>
                                                     <div className="flex items-center gap-2 text-sm text-gray-400">

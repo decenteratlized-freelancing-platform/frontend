@@ -63,11 +63,17 @@ const FreelancerCard = ({
   return (
     <div className="bg-white rounded-2xl p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200/80">
       <div className="flex items-center space-x-4 mb-4">
+        {freelancer.image ? (
         <img
-          src={freelancer.image || "https://i.pravatar.cc/150"}
+          src={freelancer.image}
           alt={freelancer.fullName}
-          className="w-20 h-20 rounded-full border-4 border-white shadow-sm"
+          className="w-20 h-20 rounded-full border-4 border-white shadow-sm object-cover"
         />
+        ) : (
+          <div className="w-20 h-20 rounded-full border-4 border-white shadow-sm bg-gray-200 flex items-center justify-center">
+            <Users className="w-10 h-10 text-gray-500" />
+          </div>
+        )}
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <div>
@@ -204,11 +210,17 @@ const FreelancerProfileModal = ({
         <div className="overflow-y-auto p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1 flex flex-col items-center text-center">
+              {freelancer.image ? (
               <img
-                src={freelancer.image || "https://i.pravatar.cc/150"}
+                src={freelancer.image}
                 alt={freelancer.fullName}
-                className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4"
+                className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 object-cover"
               />
+              ) : (
+                <div className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 bg-gray-200 flex items-center justify-center">
+                  <Users className="w-16 h-16 text-gray-500" />
+                </div>
+              )}
               <h3 className="text-2xl font-bold text-gray-900">{freelancer.fullName}</h3>
               <p className="text-gray-500 mb-4 capitalize">{freelancer.role}</p>
               <button className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
@@ -446,7 +458,7 @@ export default function DiscoverFreelancersPage() {
             location: settings.location || "Remote",
             responseTime: f.responseTime || "24 hours",
             isFavorite: false,
-            image: f.image || "https://i.pravatar.cc/150",
+            image: f.image || "",
             portfolio: settings.portfolioWebsite ? [{ id: 1, title: 'Portfolio Website', imageUrl: settings.portfolioWebsite }] : [],
             languages: f.languages || [],
             projectsCompleted: settings.projectsCompleted || 0,

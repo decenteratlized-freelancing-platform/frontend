@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Send, Paperclip, MoreVertical, Phone, Video, Smile } from "lucide-react"
@@ -285,15 +285,13 @@ export default function ClientMessages() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={conversation.participant?.image || "/placeholder.svg"} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            {conversation.participant?.fullName
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("") || "?"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar 
+                          user={{
+                            name: conversation.participant?.fullName,
+                            image: conversation.participant?.image || "/placeholder.svg"
+                          }}
+                          className="w-12 h-12"
+                        />
                         {conversation.participant && isUserOnline(conversation.participant._id) && (
                           <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900" />
                         )}
@@ -331,15 +329,13 @@ export default function ClientMessages() {
               <CardHeader className="border-b border-white/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={selectedConversation.participant.image || "/placeholder.svg"} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {selectedConversation.participant.fullName
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("") || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      user={{
+                        name: selectedConversation.participant.fullName,
+                        image: selectedConversation.participant.image || "/placeholder.svg"
+                      }}
+                      className="w-10 h-10"
+                    />
                     <div>
                       <h3 className="font-semibold text-white">
                         {selectedConversation.participant.fullName || "Unknown User"}

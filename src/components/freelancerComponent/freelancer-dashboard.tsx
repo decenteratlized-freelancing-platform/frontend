@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEffect, useState } from "react"
 import { useCurrency } from "@/context/CurrencyContext";
@@ -272,14 +272,13 @@ export default function FreelancerDashboard() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10 border border-white/20">
-                            <AvatarImage src={"/placeholder.svg"} />
-                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white font-bold text-xs">
-                              {proposal.job?.client?.fullName
-                                ? proposal.job.client.fullName.split(" ").map((n: string) => n[0]).join("")
-                                : "C"}
-                            </AvatarFallback>
-                          </Avatar>
+                        <UserAvatar 
+                            user={{
+                                name: proposal.job?.client?.fullName || "C",
+                                image: "/placeholder.svg"
+                            }} 
+                            className="w-10 h-10 border border-white/20 bg-white/90"
+                        />
                           <div>
                             <h4 className="font-semibold text-white text-sm">{proposal.job?.title || "Unknown Job"}</h4>
                             <p className="text-xs text-gray-400">{proposal.job?.client?.fullName || "Unknown Client"}</p>
@@ -320,18 +319,18 @@ export default function FreelancerDashboard() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="sm"
                           className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
-                        </Button>
+                        </Button> */}
                         {proposal.status === "accepted" && (
                           <Button
                             size="sm"
-                            className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-4 text-sm font-semibold rounded-xl shadow-xl hover:shadow-blue-500/25 transition-all duration-300 group"
+                            className="bg-white/90 hover:bg-white/80 text-black-500 rounded-xl p-4 hover:text-black-600 transition-all duration-300 group"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Start Project

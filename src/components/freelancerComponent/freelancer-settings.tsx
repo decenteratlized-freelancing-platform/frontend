@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   Eye,
   EyeOff,
@@ -627,12 +627,10 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-center">
                     <div className="relative">
-                      <Avatar className="w-32 h-32 border-4 border-gray-600">
-                        <AvatarImage src={settings.image} />
-                        <AvatarFallback className="bg-gray-700 text-gray-300 text-2xl">
-                          {settings.fullName?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar 
+                        user={{name: settings.fullName, image: settings.image}} 
+                        className="w-32 h-32 border-4 border-gray-600"
+                      />
                       <Button
                         size="sm"
                         className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-green-500 hover:bg-green-600 border-2 border-gray-800"

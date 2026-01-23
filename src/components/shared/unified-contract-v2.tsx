@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoadingButton } from "@/components/shared/loading-button"
@@ -245,10 +245,10 @@ export default function UnifiedContractV2({ userRole }: ContractProps) {
             <Card className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-green-500/50 transition-all duration-300 rounded-lg shadow-lg overflow-hidden h-full flex flex-col">
                 <CardContent className="p-5 flex flex-col flex-grow">
                     <div className="flex items-center mb-3">
-                        <Avatar className="h-10 w-10 text-black bg-white">
-                            <AvatarImage src={proposal.freelancer.profilePicture} alt={proposal.freelancer.fullName} />
-                            <AvatarFallback>{proposal.freelancer.fullName?.[0]}</AvatarFallback>
-                        </Avatar>
+                        <UserAvatar 
+                            user={{name: proposal.freelancer.fullName, image: proposal.freelancer.profilePicture}} 
+                            className="h-10 w-10 text-black bg-white"
+                        />
                         <div className="ml-3">
                             <h4 className="text-md font-bold text-slate-100">{proposal.freelancer.fullName}</h4>
                             <p className="text-xs text-slate-400">Ready to Hire</p>
@@ -343,12 +343,10 @@ export default function UnifiedContractV2({ userRole }: ContractProps) {
 
                             <div className="mt-6 pt-4 border-t border-slate-700/50 flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <Avatar className="h-8 w-8 text-black bg-white">
-                                        <AvatarImage src={role === 'client' ? contract.freelancer?.profilePicture : contract.client?.profilePicture} alt="participant" />
-                                        <AvatarFallback>
-                                            {role === 'client' ? contract.freelancer?.fullName?.[0] : contract.client?.fullName?.[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <UserAvatar
+                                        user={role === 'client' ? contract.freelancer : contract.client}
+                                        className="h-8 w-8 text-black bg-white"
+                                    />
                                     <div className="ml-3">
                                         <p className="text-sm font-semibold text-slate-200">{role === 'client' ? contract.freelancer?.fullName : contract.client?.fullName}</p>
                                         <p className="text-xs text-slate-400">{role === 'client' ? 'Freelancer' : 'Client'}</p>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -72,7 +72,7 @@ export default function ClientSettings() {
     "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
   ]
 
-  const { data: session } = useSession()
+  const { data: session, update } = useSession()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -145,6 +145,7 @@ export default function ClientSettings() {
 
           const data = await response.json()
           if (response.ok) {
+            await update({ image: data.image });
             setProfile(prev => ({ ...prev, image: data.image }))
             toast({ title: "Success", description: "Profile image updated successfully" })
             router.refresh()
@@ -176,6 +177,7 @@ export default function ClientSettings() {
       })
 
       if (response.ok) {
+        await update({ image: "" });
         setProfile(prev => ({ ...prev, image: "" }))
         toast({ title: "Success", description: "Profile image removed" })
         router.refresh()
@@ -375,12 +377,10 @@ export default function ClientSettings() {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Avatar className="w-24 h-24 border-2 border-white/20">
-                      <AvatarImage src={profile.image || "/placeholder.svg?height=96&width=96&text=Client"} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl">
-                        {profile.fullName?.[0] || "C"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar 
+                      user={profile} 
+                      className="w-24 h-24 border-2 border-white/20 bg-gray-700"
+                    />
                     <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
                       <Camera className="w-4 h-4" />
                     </Button>

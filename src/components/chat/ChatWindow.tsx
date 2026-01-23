@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useSocket } from "@/context/SocketContext"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -105,12 +105,10 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
             {/* Header */}
             <div className="p-4 bg-white/5 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-white/10">
-                        <AvatarImage src={receiverImage} />
-                        <AvatarFallback className="bg-blue-600 text-white">
-                            {receiverName.charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar 
+                        user={{ name: receiverName, image: receiverImage }} 
+                        className="h-10 w-10 border border-white/10"
+                    />
                     <div>
                         <h3 className="font-semibold text-white text-sm">{receiverName}</h3>
                         <span className="text-xs text-green-400 flex items-center gap-1">

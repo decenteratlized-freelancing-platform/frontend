@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,12 +270,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   className={`flex items-center gap-3 p-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer ${isCollapsed ? "justify-center" : ""
                     }`}
                 >
-                  <Avatar className="w-8 h-8 border border-white/20">
-                    <AvatarImage src={user.image || "/placeholder.svg"} />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xs">
-                      {user.name ? user.name.charAt(0) : "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar user={user} className="w-8 h-8 border border-white/20 bg-gray-700"/>
                   {!isCollapsed && (
                     <div className="flex-1">
                       <h4 className="font-medium text-white text-sm truncate">{user.name || "User"}</h4>
