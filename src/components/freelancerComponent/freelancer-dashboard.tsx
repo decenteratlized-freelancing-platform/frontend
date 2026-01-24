@@ -274,10 +274,10 @@ export default function FreelancerDashboard() {
                         <div className="flex items-center gap-3">
                         <UserAvatar 
                             user={{
-                                name: proposal.job?.client?.fullName || "C",
-                                image: "/placeholder.svg"
+                                name: proposal.job?.client?.fullName || "Client",
+                                image: proposal.job?.client?.image
                             }} 
-                            className="w-10 h-10 border border-white/20 bg-white/90"
+                            className="w-10 h-10 border border-white/20"
                         />
                           <div>
                             <h4 className="font-semibold text-white text-sm">{proposal.job?.title || "Unknown Job"}</h4>

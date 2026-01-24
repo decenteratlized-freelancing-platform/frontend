@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { Scene } from "@/components/ui/hero-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Globe, ShieldCheck, FileText, Bot } from "lucide-react";
@@ -30,11 +29,11 @@ const platformFeatures = [
 
 const DemoOne = () => {
   return (
-    <div className="min-h-screen w-full bg-black text-white flex flex-col items-center justify-center p-8 overflow-hidden">
+    <div className="min-h-screen w-full bg-zinc-950 text-white flex flex-col items-center justify-center p-8 overflow-hidden">
       <div className="w-full max-w-6xl space-y-16 relative z-10">
         <div className="flex flex-col items-center text-center space-y-8">
           <Badge variant="secondary" className="backdrop-blur-sm bg-white/10 border border-white/20 text-white hover:bg-white/20 px-4 py-2 rounded-full">
-            ✨ The Future of Freelance is Here
+            ✨ Where freelancing is safe by design.
           </Badge>
           
           <div className="space-y-6 flex items-center justify-center flex-col">
@@ -46,12 +45,12 @@ const DemoOne = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <Link href="/client/discover" passHref>
-                <Button className="text-base px-8 py-6 rounded-xl bg-white text-black border border-white/10 shadow-lg hover:bg-white/90 transition-transform hover:scale-105">
+                <Button className="text-base px-8 py-4 rounded-xl bg-white text-black border border-white/10 shadow-lg hover:bg-white/90 transition-transform hover:scale-105 text-sm">
                   Find Talent
                 </Button>
               </Link>
               <Link href="/freelancer/browse-jobs" passHref>
-                <Button variant="outline" className="text-base px-8 py-6 rounded-xl bg-transparent text-white border-white/20 shadow-lg hover:bg-white/10 hover:scale-105 transition-transform">
+                <Button variant="outline" className="text-base px-8 py-4 rounded-xl bg-transparent text-white border-white/20 shadow-lg hover:bg-white/10 hover:scale-105 transition-transform text-sm">
                   Find Work
                 </Button>
               </Link>
@@ -71,9 +70,6 @@ const DemoOne = () => {
             </div>
           ))}
         </div>
-      </div>
-      <div className='absolute inset-0 opacity-50'>
-        <Scene />
       </div>
     </div>
   );

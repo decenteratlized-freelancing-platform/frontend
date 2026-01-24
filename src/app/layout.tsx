@@ -14,7 +14,7 @@ import { CurrencyProvider } from '../context/CurrencyContext';
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning={true}>
-      <body className={`${inter.className} bg-slate-900`}>
+      <body className={`${inter.className} bg-zinc-950`}>
         <CurrencyProvider>
           <SessionWrapper>
             <LoaderProvider>

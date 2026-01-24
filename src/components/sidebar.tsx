@@ -31,14 +31,12 @@ import {
   Bell,
   Shield,
   Palette,
-  ChevronDown,
-  Wallet,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { WalletSidebarButton } from "./WalletSidebarButton";
+
 interface SidebarProps {
   userType: "client" | "freelancer";
   currentPath?: string;
@@ -81,7 +79,6 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
   const menuItems = userType === "client" ? clientMenuItems : freelancerMenuItems;
   const { data: session } = useSession();
   const router = useRouter();
-  const { address, connectWallet, disconnectWallet, isConnecting } = useWalletConnection();
 
 
   useEffect(() => {
@@ -113,17 +110,6 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
       router.push("/login");
     }
   };
-
-  const handleWalletClick = useCallback(async () => {
-    await connectWallet();
-  }, [connectWallet]);
-
-  const walletLabel = useMemo(() => {
-    if (address) {
-      return `${address.slice(0, 6)}...${address.slice(-4)}`;
-    }
-    return isConnecting ? "Connecting..." : "Connect Wallet";
-  }, [address, isConnecting]);
 
   return (
     <motion.div
@@ -222,47 +208,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
             className="mx-3 space-y-3"
           >
             {/* Wallet connect button */}
-            {/* Wallet connect button */}
-            {address ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Wallet className="w-4 h-4" />
-                      {!isCollapsed && <span className="text-xs font-medium">{walletLabel}</span>}
-                    </span>
-                    <ChevronDown className="w-3 h-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl hover:text-red-800">
-                      <DropdownMenuItem onClick={disconnectWallet} className="text-red-400 hover:bg-red-500 cursor-pointer hover:text-red-800">
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Disconnect Wallet</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
-                    onClick={handleWalletClick}
-                    disabled={isConnecting}
-                  >
-                    <span className="flex items-center gap-2">
-                      {isConnecting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Wallet className="w-4 h-4" />
-                      )}
-                      <span className="text-xs font-medium">{walletLabel}</span>
-                    </span>
-                  </Button>
-                )}
+            <WalletSidebarButton isCollapsed={isCollapsed} />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

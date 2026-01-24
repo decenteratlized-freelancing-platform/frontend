@@ -164,9 +164,15 @@ export function useWalletConnection() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred.";
       setError(message);
+
+      let description = message;
+      if (message.includes("Failed to connect")) {
+        description = "Could not connect to MetaMask. Please check your extension and ensure it's unlocked. For help, visit metamask.io.";
+      }
+
       toast({
         title: "Wallet connection failed",
-        description: message,
+        description: description,
         variant: "destructive",
       });
     } finally {

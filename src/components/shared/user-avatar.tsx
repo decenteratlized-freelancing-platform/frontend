@@ -1,5 +1,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User as UserIcon } from "lucide-react";
 import { User } from "next-auth";
 
 interface UserAvatarProps {
@@ -8,20 +9,11 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar = ({ user, className }: UserAvatarProps) => {
-  const getInitials = (name?: string | null) => {
-    if (!name) return "";
-    const nameParts = name.split(" ");
-    if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-    }
-    return name[0].toUpperCase();
-  };
-
   return (
     <Avatar className={className}>
       <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
-      <AvatarFallback>
-        {getInitials(user.name)}
+      <AvatarFallback className="bg-gray-700">
+        <UserIcon className="text-gray-400" />
       </AvatarFallback>
     </Avatar>
   );
