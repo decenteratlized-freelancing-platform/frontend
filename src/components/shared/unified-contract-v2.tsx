@@ -30,104 +30,104 @@ const fetchData = async (userRole: string, userEmail: string | undefined) => {
     const hirableRes = await fetch(`http://localhost:5000/api/proposals/hirable?clientEmail=${userEmail}`);
     const hirableData = await hirableRes.json();
     if (hirableRes.ok) { // Only assign if fetch was successful
-        hirableProposalsData = hirableData;
+      hirableProposalsData = hirableData;
     } else {
-        console.error("Failed to fetch hirable proposals:", hirableData.error);
+      console.error("Failed to fetch hirable proposals:", hirableData.error);
     }
   }
-  
+
   return { contracts: contractsData, hirableProposals: hirableProposalsData };
 };
 
-const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreated } : any) => {
-    const [isCreating, setIsCreating] = useState(false);
-    const [milestones, setMilestones] = useState([{ description: "", amount: "" }]);
-    const totalAmount = useMemo(() => {
-        return milestones.reduce((sum, m) => sum + parseFloat(m.amount || '0'), 0);
-    }, [milestones]);
+const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreated }: any) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [milestones, setMilestones] = useState([{ description: "", amount: "" }]);
+  const totalAmount = useMemo(() => {
+    return milestones.reduce((sum, m) => sum + parseFloat(m.amount || '0'), 0);
+  }, [milestones]);
 
-    useEffect(() => {
-        if (proposal) {
-            setMilestones([{ description: "Initial milestone", amount: proposal.proposedRate.toString() }])
-        }
-    }, [proposal]);
+  useEffect(() => {
+    if (proposal) {
+      setMilestones([{ description: "Initial milestone", amount: proposal.proposedRate.toString() }])
+    }
+  }, [proposal]);
 
-    const handleAddMilestone = () => {
-        setMilestones([...milestones, { description: "", amount: "" }]);
-    };
+  const handleAddMilestone = () => {
+    setMilestones([...milestones, { description: "", amount: "" }]);
+  };
 
-    const handleCreate = async () => {
-        const validMilestones = milestones.filter(m => m.description.trim() && m.amount.trim());
-        if (!proposal?._id || validMilestones.length === 0) {
-            alert("Please define at least one valid milestone.");
-            return;
-        }
+  const handleCreate = async () => {
+    const validMilestones = milestones.filter(m => m.description.trim() && m.amount.trim());
+    if (!proposal?._id || validMilestones.length === 0) {
+      alert("Please define at least one valid milestone.");
+      return;
+    }
 
-        setIsCreating(true);
-        try {
-            const response = await fetch("http://localhost:5000/api/contracts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    proposalId: proposal._id,
-                    milestones: validMilestones,
-                    totalAmount: totalAmount,
-                    paymentType: proposal.paymentType,
-                }),
-            });
-            if (!response.ok) throw new Error((await response.json()).error || "Failed to create contract");
-            
-            const result = await response.json();
-            onContractCreated(result.contract);
-        } catch (error: any) {
-            alert(`Failed to create contract: ${error.message}`);
-        } finally {
-            setIsCreating(false);
-        }
-    };
+    setIsCreating(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proposalId: proposal._id,
+          milestones: validMilestones,
+          totalAmount: totalAmount,
+          paymentType: proposal.paymentType,
+        }),
+      });
+      if (!response.ok) throw new Error((await response.json()).error || "Failed to create contract");
 
-    if (!proposal) return null;
+      const result = await response.json();
+      onContractCreated(result.contract);
+    } catch (error: any) {
+      alert(`Failed to create contract: ${error.message}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-gray-900/90 backdrop-blur-xl border-white/10 text-white max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-3xl font-bold">Create Contract</DialogTitle>
-                    <DialogDescription className="text-neutral-400">
-                        Finalize the terms for your project with <span className="font-semibold text-white">{proposal.freelancer.fullName}</span>.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-6 py-6">
-                    <div>
-                        <h3 className="text-lg font-semibold text-white mb-3">Milestones</h3>
-                        <div className="space-y-3">
-                            {milestones.map((milestone, index) => (
-                                <div key={index} className="flex gap-3">
-                                    <Input placeholder={`Milestone ${index + 1} description`} value={milestone.description} onChange={e => {
-                                        const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
-                                    }} className="bg-white/10 border-white/20 h-12"/>
-                                    <Input type="number" placeholder="Amount" value={milestone.amount} onChange={e => {
-                                        const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
-                                    }} className="bg-white/10 border-white/20 h-12 w-32"/>
-                                </div>
-                            ))}
-                        </div>
-                        <Button size="sm" variant="outline" className="mt-4 bg-transparent border-dashed border-white/30 hover:border-solid hover:bg-white/10" onClick={handleAddMilestone}>
-                            <Plus className="w-4 h-4 mr-2"/> Add Milestone
-                        </Button>
-                    </div>
-                     <div className="p-4 rounded-lg bg-white/10 flex justify-between items-center">
-                        <span className="text-lg font-semibold">Total Contract Value</span>
-                        <span className="text-2xl font-bold text-green-400">{formatCurrency(totalAmount, (proposal.paymentType || '').toLowerCase().includes('crypto') ? 'ETH' : 'INR')}</span>
-                    </div>
+  if (!proposal) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-gray-900/90 backdrop-blur-xl border-white/10 text-white max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-3xl font-bold">Create Contract</DialogTitle>
+          <DialogDescription className="text-neutral-400">
+            Finalize the terms for your project with <span className="font-semibold text-white">{proposal.freelancer.fullName}</span>.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 py-6">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-3">Milestones</h3>
+            <div className="space-y-3">
+              {milestones.map((milestone, index) => (
+                <div key={index} className="flex gap-3">
+                  <Input placeholder={`Milestone ${index + 1} description`} value={milestone.description} onChange={e => {
+                    const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
+                  }} className="bg-white/10 border-white/20 h-12" />
+                  <Input type="number" placeholder="Amount" value={milestone.amount} onChange={e => {
+                    const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
+                  }} className="bg-white/10 border-white/20 h-12 w-32" />
                 </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <LoadingButton loading={isCreating} onClick={handleCreate} className="px-8 py-6 text-base">Create Contract</LoadingButton>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
+              ))}
+            </div>
+            <Button size="sm" variant="outline" className="mt-4 bg-transparent border-dashed border-white/30 hover:border-solid hover:bg-white/10" onClick={handleAddMilestone}>
+              <Plus className="w-4 h-4 mr-2" /> Add Milestone
+            </Button>
+          </div>
+          <div className="p-4 rounded-lg bg-white/10 flex justify-between items-center">
+            <span className="text-lg font-semibold">Total Contract Value</span>
+            <span className="text-2xl font-bold text-green-400">{formatCurrency(totalAmount, (proposal.paymentType || '').toLowerCase().includes('crypto') ? 'ETH' : 'INR')}</span>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <LoadingButton loading={isCreating} onClick={handleCreate} className="px-8 py-6 text-base">Create Contract</LoadingButton>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 
@@ -140,7 +140,7 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedContract, setSelectedContract] = useState<any>(null);
-  
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [proposalToHire, setProposalToHire] = useState<any>(null);
 
@@ -164,12 +164,12 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
     setProposalToHire(proposal);
     setShowCreateDialog(true);
   };
-  
+
   const handleContractCreated = (newContract: any) => {
-      setContracts(prev => [newContract, ...prev]);
-      setHirableProposals(prev => prev.filter(p => p._id !== proposalToHire?._id));
-      setShowCreateDialog(false);
-      setProposalToHire(null);
+    setContracts(prev => [newContract, ...prev]);
+    setHirableProposals(prev => prev.filter(p => p._id !== proposalToHire?._id));
+    setShowCreateDialog(false);
+    setProposalToHire(null);
   };
 
   const filteredContracts = useMemo(() => {
@@ -196,10 +196,10 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
   if (error) {
     return <div className="flex w-full h-screen items-center justify-center bg-black text-red-400">{error}</div>;
   }
-  
+
   return (
     <div className="bg-black min-h-screen text-white">
-      <CreateContractDialog 
+      <CreateContractDialog
         isOpen={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         proposal={proposalToHire}
@@ -217,6 +217,7 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
             <ContractDetailView
               contract={selectedContract}
               userRole={userRole}
+              userId={currentUser?._id || ""}
               onBack={() => setSelectedContract(null)}
             />
           </motion.div>
@@ -231,10 +232,10 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
           >
             <header className="mb-12">
               <div className="flex justify-between items-center">
-                  <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-6 py-3">
-                      <FileText className="w-5 h-5 text-blue-400" />
-                      <span className="text-lg font-medium text-white">Contract Management</span>
-                  </div>
+                <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-6 py-3">
+                  <FileText className="w-5 h-5 text-blue-400" />
+                  <span className="text-lg font-medium text-white">Contract Management</span>
+                </div>
               </div>
               <h1 className="text-5xl md:text-6xl font-bold text-white mt-6">Your Contracts</h1>
               <p className="mt-4 max-w-2xl text-lg text-neutral-400">
@@ -243,18 +244,18 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
             </header>
 
             {userRole === 'client' && hirableProposals.length > 0 && (
-                <section className="mb-16">
-                    <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3"><FileSignature className="text-green-400"/> Ready to Hire</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {hirableProposals.map(proposal => (
-                            <HirableProposalCard 
-                                key={proposal._id}
-                                proposal={proposal}
-                                onHire={() => handleOpenCreateDialog(proposal)}
-                            />
-                        ))}
-                    </div>
-                </section>
+              <section className="mb-16">
+                <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3"><FileSignature className="text-green-400" /> Ready to Hire</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {hirableProposals.map(proposal => (
+                    <HirableProposalCard
+                      key={proposal._id}
+                      proposal={proposal}
+                      onHire={() => handleOpenCreateDialog(proposal)}
+                    />
+                  ))}
+                </div>
+              </section>
             )}
 
             <main>
@@ -285,22 +286,22 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredContracts.map((contract) => (
-                  <ContractCard 
-                    key={contract._id} 
-                    contract={contract} 
+                  <ContractCard
+                    key={contract._id}
+                    contract={contract}
                     userRole={userRole}
-                    onClick={() => setSelectedContract(contract)} 
+                    onClick={() => setSelectedContract(contract)}
                   />
                 ))}
               </div>
               {filteredContracts.length === 0 && (
-                  <div className="col-span-full text-center py-20">
-                      <FileText className="mx-auto h-12 w-12 text-gray-500"/>
-                      <h3 className="mt-2 text-xl font-semibold text-white">No contracts found</h3>
-                      <p className="mt-1 text-base text-gray-400">
-                          {searchQuery || statusFilter !== 'all' ? 'Try adjusting your search or filters.' : 'Your active contracts will appear here.'}
-                      </p>
-                  </div>
+                <div className="col-span-full text-center py-20">
+                  <FileText className="mx-auto h-12 w-12 text-gray-500" />
+                  <h3 className="mt-2 text-xl font-semibold text-white">No contracts found</h3>
+                  <p className="mt-1 text-base text-gray-400">
+                    {searchQuery || statusFilter !== 'all' ? 'Try adjusting your search or filters.' : 'Your active contracts will appear here.'}
+                  </p>
+                </div>
               )}
             </main>
           </motion.div>

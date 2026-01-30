@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 interface UserData {
+  _id?: string;
   name: string;
   email: string;
   image?: string;
@@ -18,6 +19,7 @@ export function useCurrentUser(): UserData | null {
 
     if (loginType === "manual") {
       const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
       const nameRaw = localStorage.getItem("fullName");
       const emailRaw = localStorage.getItem("email");
       const roleRaw = localStorage.getItem("role");
@@ -27,6 +29,7 @@ export function useCurrentUser(): UserData | null {
 
       if (token && email) {
         setUser({
+          _id: userId || "",
           name: name || "User",
           email,
           role: role || "",
@@ -37,6 +40,7 @@ export function useCurrentUser(): UserData | null {
 
     if (session?.user) {
       setUser({
+        _id: (session.user as any).id || "",
         name: session.user.name || "User",
         email: session.user.email || "",
         image: session.user.image || "",

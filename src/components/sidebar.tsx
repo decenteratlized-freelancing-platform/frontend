@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { ProfileDialog } from "@/components/shared/profile-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ import {
   Bell,
   Shield,
   Palette,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -50,6 +52,7 @@ const clientMenuItems = [
   { name: "Transactions", href: "/client/transactions", icon: CreditCard, color: "from-green-400 to-emerald-400" },
   { name: "Post Job", href: "/client/post-job", icon: Calendar, color: "from-blue-400 to-cyan-400" },
   { name: "Goals", href: "/client/goals", icon: Target, color: "from-pink-400 to-rose-400" },
+  { name: "Disputes", href: "/client/disputes", icon: AlertTriangle, color: "from-red-400 to-orange-400" },
   { name: "Settings", href: "/client/settings", icon: Settings, color: "from-gray-400 to-slate-400" },
   { name: "Messages", href: "/client/messages", icon: MessageSquare, color: "from-purple-400 to-violet-400" },
   { name: "Analytics", href: "/client/analytics", icon: TrendingUp, color: "from-indigo-400 to-blue-400" },
@@ -61,6 +64,7 @@ const freelancerMenuItems = [
   { name: "Transactions", href: "/freelancer/transactions", icon: CreditCard, color: "from-green-400 to-emerald-400" },
   { name: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Calendar, color: "from-blue-400 to-cyan-400" },
   { name: "Goals", href: "/freelancer/goals", icon: Target, color: "from-pink-400 to-rose-400" },
+  { name: "Disputes", href: "/freelancer/disputes", icon: AlertTriangle, color: "from-orange-400 to-red-400" },
   { name: "Settings", href: "/freelancer/settings", icon: Settings, color: "from-gray-400 to-slate-400" },
   { name: "Messages", href: "/freelancer/messages", icon: MessageSquare, color: "from-purple-400 to-violet-400" },
   { name: "Portfolio", href: "/freelancer/portfolio", icon: TrendingUp, color: "from-indigo-400 to-blue-400" },
@@ -75,29 +79,59 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
       image: "",
     }
   );
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const menuItems = userType === "client" ? clientMenuItems : freelancerMenuItems;
   const { data: session } = useSession();
   const router = useRouter();
 
 
+  // Sync with session, but respect local overrides for image
   useEffect(() => {
     if (session?.user) {
-      // If logged in via OAuth
-      setUser({
-        name: session.user.name || "",
-        email: session.user.email || "",
-        image: session.user.image || "",
+      setUser(prev => {
+        // Only update image from session if we don't have a local override
+        const localImage = localStorage.getItem("userImage");
+        return {
+          ...prev,
+          name: session.user.name || prev.name,
+          email: session.user.email || prev.email,
+          image: localImage || session.user.image || prev.image,
+        };
       });
     } else {
-      // If logged in manually
+      // Manual login fallback
       const fullNameRaw = localStorage.getItem("fullName") || "";
       const emailRaw = localStorage.getItem("email") || "";
-      const fullName = fullNameRaw === "undefined" ? "" : fullNameRaw;
-      const email = emailRaw === "undefined" ? "" : emailRaw;
-      setUser({ name: fullName, email });
+      const localImage = localStorage.getItem("userImage") || "";
+
+      setUser({
+        name: fullNameRaw === "undefined" ? "" : fullNameRaw,
+        email: emailRaw === "undefined" ? "" : emailRaw,
+        image: localImage
+      });
     }
   }, [session]);
+
+  // Listen for local image updates (uploads/removals)
+  useEffect(() => {
+    const handleImageUpdate = () => {
+      const storedImage = localStorage.getItem("userImage");
+      setUser(prev => ({
+        ...prev,
+        image: storedImage || session?.user?.image || ""
+      }));
+    };
+
+    window.addEventListener("userImageUpdated", handleImageUpdate);
+
+    // Check once on mount to ensure we are in sync
+    handleImageUpdate();
+
+    return () => {
+      window.removeEventListener("userImageUpdated", handleImageUpdate);
+    };
+  }, [session]); // Depend on session so fallback works if session loads later
 
   const handleLogout = () => {
     if (session) {
@@ -170,11 +204,10 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                 >
                   <Link href={item.href}>
                     <div
-                      className={`group relative flex items-center p-2.5 rounded-xl transition-all duration-200 ${
-                        isActive
-                          ? "bg-white/15 text-white shadow-sm"
-                          : "text-white/70 hover:text-white hover:bg-white/8"
-                      } ${isCollapsed ? "justify-center" : "gap-3"}`}
+                      className={`group relative flex items-center p-2.5 rounded-xl transition-all duration-200 ${isActive
+                        ? "bg-white/15 text-white shadow-sm"
+                        : "text-white/70 hover:text-white hover:bg-white/8"
+                        } ${isCollapsed ? "justify-center" : "gap-3"}`}
                     >
                       <div
                         className={`relative w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center flex-shrink-0`}
@@ -216,7 +249,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   className={`flex items-center gap-3 p-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer ${isCollapsed ? "justify-center" : ""
                     }`}
                 >
-                  <UserAvatar user={user} className="w-8 h-8 border border-white/20 bg-gray-700"/>
+                  <UserAvatar user={user} className="w-8 h-8 border border-white/20 bg-gray-700" />
                   {!isCollapsed && (
                     <div className="flex-1">
                       <h4 className="font-medium text-white text-sm truncate">{user.name || "User"}</h4>
@@ -234,12 +267,13 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
 
                 <DropdownMenuSeparator className="bg-white/10" />
 
-                <Link href="/settings" className="block">
-                  <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>View Profile</span>
-                  </DropdownMenuItem>
-                </Link>
+                <DropdownMenuItem
+                  className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white"
+                  onClick={() => setIsProfileOpen(true)}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>View Profile</span>
+                </DropdownMenuItem>
 
                 <Link href="/notifications" className="block">
                   <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
@@ -258,14 +292,21 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                 <DropdownMenuSeparator className="bg-white/10 hover:text-red-600" />
 
                 <DropdownMenuItem onClick={handleLogout} className="text-red-400 cursor-pointer data-[highlighted]:bg-red-500/20 data-[highlighted]:text-red-300">
-                  <LogOut className="mr-2 h-4 w-4"/>
+                  <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </motion.div>
-        </div>
-      </div>
-    </motion.div>
+          </motion.div >
+        </div >
+      </div >
+
+      <ProfileDialog
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        email={user.email}
+        userType={userType}
+      />
+    </motion.div >
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
 import { useSocket } from "@/context/SocketContext"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -47,6 +48,10 @@ export default function ClientMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // URL params with Next.js hook for reactivity
+  const searchParams = useSearchParams()
+  const receiverId = searchParams?.get('receiverId')
+
   // Get user ID from session OR localStorage (for manual login)
   const sessionUserId = (session?.user as any)?.id || (session?.user as any)?._id
 
@@ -75,7 +80,7 @@ export default function ClientMessages() {
     scrollToBottom()
   }, [messages])
 
-  // Fetch conversations on mount
+  // Initial Fetch of Conversations
   useEffect(() => {
     if (currentUserId) {
       fetchConversations()
@@ -83,6 +88,63 @@ export default function ClientMessages() {
       setLoading(false)
     }
   }, [currentUserId])
+
+  // Handle Receiver ID Changes (URL Navigation)
+  useEffect(() => {
+    async function handleReceiverChange() {
+      if (!receiverId || !currentUserId) return;
+
+      console.log("Receiver ID changed to:", receiverId);
+
+      // 1. Check if we already have this conversation loaded
+      const existingConv = conversations.find(c => c.participant?._id === receiverId);
+
+      if (existingConv) {
+        console.log("Found existing conversation for receiver:", receiverId);
+        setSelectedConversation(existingConv);
+      } else {
+        // 2. If not, fetch the user details and create a temp conversation
+        console.log("No existing conversation found. Fetching user details for:", receiverId);
+        try {
+          const userRes = await fetch(`http://localhost:5000/api/user/${receiverId}`);
+          const userData = await userRes.json();
+
+          if (!userData.error) {
+            const newConv: Conversation = {
+              _id: "new", // Temporary ID
+              participant: {
+                _id: userData._id,
+                fullName: userData.fullName,
+                email: userData.email,
+                image: userData.image
+              },
+              lastMessage: "",
+              lastMessageTime: new Date().toISOString(),
+              unreadCount: 0
+            };
+
+            // Set as selected
+            setSelectedConversation(newConv);
+
+            // Add to list if not present (prevents duplicates in UI)
+            setConversations(prev => {
+              if (prev.some(c => c.participant?._id === userData._id)) return prev;
+              return [newConv, ...prev];
+            });
+          } else {
+            console.error("User fetch error:", userData.error);
+          }
+        } catch (e) {
+          console.error("Error fetching receiver details:", e);
+        }
+      }
+    }
+
+    // Only run this if conversations have been fetched at least once OR if we are just starting up
+    if (!loading) {
+      handleReceiverChange();
+    }
+  }, [receiverId, currentUserId, loading, conversations.length])
 
   // Fetch messages when conversation selected
   useEffect(() => {
@@ -120,7 +182,8 @@ export default function ClientMessages() {
 
       if (!data.error && Array.isArray(data)) {
         setConversations(data)
-        if (data.length > 0 && !selectedConversation) {
+
+        if (!receiverId && data.length > 0 && !selectedConversation) {
           setSelectedConversation(data[0])
         }
       }
@@ -130,6 +193,7 @@ export default function ClientMessages() {
       setLoading(false)
     }
   }
+
 
   const fetchMessages = async (otherUserId: string) => {
     try {
@@ -279,13 +343,13 @@ export default function ClientMessages() {
                     whileHover={{ scale: 1.02 }}
                     onClick={() => setSelectedConversation(conversation)}
                     className={`p-4 cursor-pointer transition-all duration-200 rounded-xl ${selectedConversation?._id === conversation._id
-                        ? "bg-white/15 border-l-4 border-blue-500"
-                        : "hover:bg-white/8"
+                      ? "bg-white/15 border-l-4 border-blue-500"
+                      : "hover:bg-white/8"
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <UserAvatar 
+                        <UserAvatar
                           user={{
                             name: conversation.participant?.fullName,
                             image: conversation.participant?.image || "/placeholder.svg"
@@ -373,8 +437,8 @@ export default function ClientMessages() {
                     >
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${message.senderId === currentUserId
-                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                            : "bg-white/10 text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                          : "bg-white/10 text-white"
                           }`}
                       >
                         <p className="text-sm">{message.message}</p>

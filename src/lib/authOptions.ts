@@ -9,41 +9,97 @@ import { connectDB } from "@/lib/connectDB";
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60,
   },
+  jwt: {
+    maxAge: 24 * 60 * 60,
+  },
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    callbackUrl: {
+      name: "next-auth.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 900, // 15 minutes - for the OAuth flow
+      },
+    },
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 900, // 15 minutes
+      },
+    },
+    state: {
+      name: "next-auth.state",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 900, // 15 minutes
+      },
+    },
+  },
+
 
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          prompt: "select_account",
+          // Removed access_type: "offline" - was requesting refresh tokens unnecessarily
+        },
+      },
     }),
 
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
-    }),
+    } as any),
   ],
 
   adapter: MongoDBAdapter(clientPromise, {
     databaseName: "smarthire_db",
   }),
 
-  /**
-   * EVENTS run AFTER OAuth is successful
-   * This avoids invalid_grant issues
-   */
   events: {
     async createUser({ user }) {
       try {
         await connectDB();
-
         await User.updateOne(
           { email: user.email },
           {
             $setOnInsert: {
               email: user.email,
-              fullName: user.name,
+              fullName: user.name || user.email?.split("@")[0],
               image: user.image,
               role: "pending",
             },
@@ -51,46 +107,87 @@ export const authOptions: NextAuthOptions = {
           { upsert: true }
         );
       } catch (err) {
-        console.error("Error creating user:", err);
       }
     },
   },
 
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      await connectDB();
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" || account?.provider === "github") {
+        try {
+          await connectDB();
+          const existingUser = await User.findOne({ email: user.email });
 
-      // Handles client-side session updates (wallet, role, etc.)
+          if (existingUser) {
+            return true;
+          }
+        } catch (error) {
+          console.error("Error in signIn callback:", error);
+          return true;
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, trigger, session, account }) {
+      console.log("JWT Callback - trigger:", trigger, "user:", user?.email);
+
+      // CRITICAL: Return a MINIMAL token to prevent chunking
+      // NextAuth adds OAuth tokens (access_token, id_token, etc.) which bloat the cookie
+
+      // Handle session updates (e.g., after role selection)
       if (trigger === "update" && session?.user) {
         const userData = session.user as any;
-
-        token.name = userData.name ?? token.name;
-        token.role = userData.role ?? token.role;
-        token.image = userData.image ?? token.image;
-        (token as any).walletAddress = userData.walletAddress ?? null;
-        (token as any).walletLinkedAt = userData.walletLinkedAt ?? null;
-
-        return token;
+        return {
+          email: token.email,
+          name: userData.name?.substring(0, 50) ?? token.name,
+          sub: (token as any).sub,
+          id: (token as any).id,
+          role: userData.role ?? (token as any).role,
+          walletAddress: userData.walletAddress ?? (token as any).walletAddress,
+          walletLinkedAt: userData.walletLinkedAt ?? (token as any).walletLinkedAt,
+        };
       }
 
       const email = user?.email || token?.email;
-      if (!email) return token;
-
-      const dbUser = await User.findOne({ email });
-
-      if (dbUser) {
-        token.name = dbUser.fullName;
-        token.email = dbUser.email;
-        (token as any).id = dbUser._id.toString();
-        (token as any).role = dbUser.role ?? "pending";
-        token.image = dbUser.image ?? "";
-        (token as any).walletAddress = dbUser.walletAddress ?? null;
-        (token as any).walletLinkedAt =
-          dbUser.walletLinkedAt?.toISOString?.() ?? null;
-        (token as any).bankAccount = dbUser.bankAccount ?? null;
+      if (!email) {
+        // Return minimal token
+        return {
+          email: token.email,
+          name: token.name,
+          sub: (token as any).sub,
+        };
       }
 
-      return token;
+      await connectDB();
+      const dbUser = await User.findOne({ email })
+        .select('_id email fullName role walletAddress walletLinkedAt')
+        .lean();
+
+      if (dbUser) {
+        const userDoc = dbUser as any;
+        // Return a CLEAN minimal token - no OAuth data
+        return {
+          email: userDoc.email,
+          name: (userDoc.fullName || userDoc.email.split("@")[0]).substring(0, 50),
+          sub: (token as any).sub || userDoc._id.toString(),
+          id: userDoc._id.toString(),
+          role: userDoc.role ?? "pending",
+          walletAddress: userDoc.walletAddress ?? null,
+          walletLinkedAt: userDoc.walletLinkedAt?.toISOString?.() ?? null,
+          // NOTE: image is NOT stored - fetch from DB when needed
+          // NOTE: No OAuth tokens (access_token, id_token, etc.)
+        };
+      }
+
+      // Fallback - return minimal token
+      return {
+        email: token.email,
+        name: token.name,
+        sub: (token as any).sub,
+        id: (token as any).id,
+        role: (token as any).role ?? "pending",
+      };
     },
 
     async session({ session, token }) {
@@ -102,12 +199,9 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = (token as any).id;
         (session.user as any)._id = (token as any).id;
         (session.user as any).role = (token as any).role;
-        (session.user as any).walletAddress =
-          (token as any).walletAddress ?? null;
-        (session.user as any).walletLinkedAt =
-          (token as any).walletLinkedAt ?? null;
-        (session.user as any).bankAccount =
-          (token as any).bankAccount ?? null;
+        (session.user as any).walletAddress = (token as any).walletAddress ?? null;
+        (session.user as any).walletLinkedAt = (token as any).walletLinkedAt ?? null;
+        // Note: bankAccount is NOT included - fetch from database when needed
       }
 
       return session;

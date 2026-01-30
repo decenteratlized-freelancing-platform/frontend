@@ -32,14 +32,14 @@ export async function POST(req: Request) {
     // First, let's check if the user exists
     const existingUser = await User.findOne({ email });
     console.log("Existing user found:", existingUser ? "Yes" : "No"); // Debug log
-    
+
     if (!existingUser) {
       console.log("No user found with email:", email); // Debug log
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     const update: any = {};
-    
+
     // Update basic user fields
     if (fullName !== undefined) update.fullName = fullName;
     if (role !== undefined) update.role = role;
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
     if (privacy) update["settings.privacy"] = privacy;
     if (notifications) update["settings.notifications"] = notifications;
-    
+
     // Convert skills array to string for the model
     if (skills !== undefined) {
       if (Array.isArray(skills)) {
@@ -69,17 +69,17 @@ export async function POST(req: Request) {
     console.log("Updating user with:", { email, update }); // Debug log
 
     const user = await User.findOneAndUpdate(
-      { email }, 
-      { $set: update }, 
+      { email },
+      { $set: update },
       { new: true, upsert: false }
     );
-    
+
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ 
-      message: "Settings updated successfully", 
+    return NextResponse.json({
+      message: "Settings updated successfully",
       user: {
         fullName: user.fullName,
         email: user.email,
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     });
   } catch (err: any) {
     console.error("Settings update error:", err);
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: err?.message || "Server error",
       error: err.toString()
     }, { status: 500 });
@@ -114,7 +114,7 @@ export async function GET(req: Request) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
-    
+
     if (!email) {
       return NextResponse.json({ message: "Email required" }, { status: 400 });
     }
@@ -122,23 +122,24 @@ export async function GET(req: Request) {
     const user = (await User.findOne({ email })
       .select("fullName email image settings role")
       .lean()) as UserLean | null;
-      
+
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    
+
     // Convert skills string back to array for the frontend
     const skillsArray = user.settings?.skills ? (typeof user.settings.skills === "string" ? user.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : user.settings.skills) : [];
-    
+
     return NextResponse.json({
-      profile: { 
-        fullName: user.fullName, 
-        email: user.email, 
+      profile: {
+        fullName: user.fullName,
+        email: user.email,
         image: user.image,
         phone: user.settings?.phone || "",
         location: user.settings?.location || "",
         portfolioWebsite: user.settings?.portfolioWebsite || "",
         professionalBio: user.settings?.bio || "",
+        skills: skillsArray,
       },
       settings: {
         ...user.settings,
@@ -148,7 +149,7 @@ export async function GET(req: Request) {
     });
   } catch (err: any) {
     console.error("Settings fetch error:", err);
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: err?.message || "Server error",
       error: err.toString()
     }, { status: 500 });

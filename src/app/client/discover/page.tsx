@@ -64,11 +64,11 @@ const FreelancerCard = ({
     <div className="bg-white rounded-2xl p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200/80">
       <div className="flex items-center space-x-4 mb-4">
         {freelancer.image ? (
-        <img
-          src={freelancer.image}
-          alt={freelancer.fullName}
-          className="w-20 h-20 rounded-full border-4 border-white shadow-sm object-cover"
-        />
+          <img
+            src={freelancer.image}
+            alt={freelancer.fullName}
+            className="w-20 h-20 rounded-full border-4 border-white shadow-sm object-cover"
+          />
         ) : (
           <div className="w-20 h-20 rounded-full border-4 border-white shadow-sm bg-gray-200 flex items-center justify-center">
             <Users className="w-10 h-10 text-gray-500" />
@@ -82,17 +82,16 @@ const FreelancerCard = ({
             </div>
             <button onClick={() => onToggleFavorite(freelancer._id)}>
               <Heart
-                className={`w-6 h-6 transition-colors ${
-                  freelancer.isFavorite
+                className={`w-6 h-6 transition-colors ${freelancer.isFavorite
                     ? "text-red-500 fill-current"
                     : "text-gray-400 hover:text-red-500"
-                }`}
+                  }`}
               />
             </button>
           </div>
         </div>
       </div>
-      
+
       <p className="text-gray-600 text-sm mb-4 leading-relaxed">
         {freelancer.bio.substring(0, 100)}{freelancer.bio.length > 100 && "..."}
       </p>
@@ -105,11 +104,11 @@ const FreelancerCard = ({
 
       <div className="space-y-3 text-sm text-gray-600">
         <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-1">
-                <Users className="w-4 h-4 text-gray-500" />
-                <span className="font-bold text-gray-800">{freelancer.projectsCompleted}</span>
-                <span className="text-gray-500">Projects Completed</span>
-            </div>
+          <div className="flex items-center space-x-1">
+            <Users className="w-4 h-4 text-gray-500" />
+            <span className="font-bold text-gray-800">{freelancer.projectsCompleted}</span>
+            <span className="text-gray-500">Projects Completed</span>
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
@@ -122,7 +121,7 @@ const FreelancerCard = ({
           </div>
         </div>
       </div>
-      
+
       <div className="mt-6 flex space-x-3 text-sm">
         <button
           onClick={() => onViewProfile(freelancer)}
@@ -130,7 +129,7 @@ const FreelancerCard = ({
         >
           View Profile
         </button>
-        <Link href={`/messages?receiverId=${freelancer._id}`} className="flex-1">
+        <Link href={`/client/messages?receiverId=${freelancer._id}`} className="flex-1">
           <button className="w-full flex items-center justify-center border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold py-3 px-4 rounded-lg transition-colors">
             <MessageSquare className="w-4 h-4 mr-2" />
             Chat
@@ -211,11 +210,11 @@ const FreelancerProfileModal = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1 flex flex-col items-center text-center">
               {freelancer.image ? (
-              <img
-                src={freelancer.image}
-                alt={freelancer.fullName}
-                className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 object-cover"
-              />
+                <img
+                  src={freelancer.image}
+                  alt={freelancer.fullName}
+                  className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 object-cover"
+                />
               ) : (
                 <div className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 bg-gray-200 flex items-center justify-center">
                   <Users className="w-16 h-16 text-gray-500" />
@@ -431,10 +430,10 @@ export default function DiscoverFreelancersPage() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: any[] = await response.json();
-        
+
         const processedData: Freelancer[] = data.map((f) => {
           const settings = f.settings || {};
-          
+
           let totalEarnedInINR = 0;
           if (typeof f.totalEarned === 'string') {
             const numericValue = parseFloat(f.totalEarned.replace(/[^0-9.-]+/g, ""));
@@ -442,7 +441,7 @@ export default function DiscoverFreelancersPage() {
               totalEarnedInINR = numericValue;
             }
           } else if (typeof f.totalEarned === 'number') {
-              totalEarnedInINR = f.totalEarned;
+            totalEarnedInINR = f.totalEarned;
           }
 
           return {
@@ -562,9 +561,9 @@ export default function DiscoverFreelancersPage() {
           onSearchChange={setSearchTerm}
         />
         {filteredFreelancers.length === 0 && !loading ? (
-           <p className="text-gray-400 text-center text-lg mt-8">
-             {searchTerm ? "No freelancers match your search." : "No freelancers found."}
-           </p>
+          <p className="text-gray-400 text-center text-lg mt-8">
+            {searchTerm ? "No freelancers match your search." : "No freelancers found."}
+          </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredFreelancers.map((freelancer) => (
@@ -582,16 +581,16 @@ export default function DiscoverFreelancersPage() {
 
       <AnimatePresence>
         {isProfileModalOpen && (
-            <FreelancerProfileModal
-                freelancer={selectedFreelancer}
-                onClose={closeModal}
-            />
+          <FreelancerProfileModal
+            freelancer={selectedFreelancer}
+            onClose={closeModal}
+          />
         )}
         {isHireModalOpen && (
-            <HireFreelancerModal
-                freelancer={selectedFreelancer}
-                onClose={closeModal}
-            />
+          <HireFreelancerModal
+            freelancer={selectedFreelancer}
+            onClose={closeModal}
+          />
         )}
       </AnimatePresence>
     </div>

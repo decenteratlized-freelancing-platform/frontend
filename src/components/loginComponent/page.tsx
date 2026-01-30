@@ -139,6 +139,9 @@ const LoginPage = () => {
 
   // Handle URL error parameters
   useEffect(() => {
+    // NOTE: Removed signOut({ redirect: false }) that was here - it was causing
+    // cookie conflicts during OAuth flow, potentially contributing to 431 errors
+
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (error === "RoleMismatch") {

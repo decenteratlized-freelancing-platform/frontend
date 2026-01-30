@@ -22,13 +22,11 @@ export async function GET(req: Request) {
         const data = await response.json();
 
         if (Array.isArray(data)) {
-            // Map Nominatim response to the format expected by the frontend
-            // Nominatim format: [ { place_id: 123, display_name: "..." } ]
-            // Frontend expects: { predictions: [ { place_id: "...", description: "..." } ] }
-
             const predictions = data.map((item: any) => ({
                 place_id: String(item.place_id),
                 description: item.display_name,
+                lat: item.lat,
+                lon: item.lon,
             }));
 
             return NextResponse.json({ predictions });

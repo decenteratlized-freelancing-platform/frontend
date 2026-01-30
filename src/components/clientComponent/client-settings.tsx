@@ -9,13 +9,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon } from "lucide-react"
+import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon, X } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import PaymentMethods from "@/components/shared/payment-methods"
+import dynamic from "next/dynamic"
+
+const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
+  ssr: false,
+  loading: () => <div className="h-[250px] w-full bg-gray-800 animate-pulse rounded-lg" />
+})
 
 export default function ClientSettings() {
   const [profile, setProfile] = useState({
@@ -29,6 +35,7 @@ export default function ClientSettings() {
     email: "",
   })
 
+  // Notifications state kept for now to avoid breaking saves, but tab will be hidden
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -56,8 +63,11 @@ export default function ClientSettings() {
   const [phoneError, setPhoneError] = useState("")
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [skillInput, setSkillInput] = useState("")
+  const [showSkillSuggestions, setShowSkillSuggestions] = useState(false)
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([])
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+  const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lon: number } | null>(null)
 
   // Common skills list
   const availableSkills = [
@@ -145,7 +155,11 @@ export default function ClientSettings() {
 
           const data = await response.json()
           if (response.ok) {
-            await update({ image: data.image });
+            // await update({ image: data.image })
+            localStorage.setItem("userImage", data.image)
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("userImageUpdated"))
+            }
             setProfile(prev => ({ ...prev, image: data.image }))
             toast({ title: "Success", description: "Profile image updated successfully" })
             router.refresh()
@@ -177,7 +191,11 @@ export default function ClientSettings() {
       })
 
       if (response.ok) {
-        await update({ image: "" });
+        // await update({ image: "" })
+        localStorage.removeItem("userImage")
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("userImageUpdated"))
+        }
         setProfile(prev => ({ ...prev, image: "" }))
         toast({ title: "Success", description: "Profile image removed" })
         router.refresh()
@@ -226,8 +244,11 @@ export default function ClientSettings() {
     }
   }
 
-  const selectLocation = (location: string) => {
-    setProfile(prev => ({ ...prev, location }))
+  const selectLocation = (prediction: any) => {
+    setProfile(prev => ({ ...prev, location: prediction.description }))
+    if (prediction.lat && prediction.lon) {
+      setMapCoordinates({ lat: parseFloat(prediction.lat), lon: parseFloat(prediction.lon) })
+    }
     setLocationSuggestions([])
     setShowLocationSuggestions(false)
   }
@@ -360,9 +381,8 @@ export default function ClientSettings() {
       {/* Settings Tabs */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
             <TabsTrigger value="profile" className="data-[state=active]:bg-white text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
             <TabsTrigger value="billing" className="data-[state=active]:bg-white text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
             <TabsTrigger value="preferences" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
@@ -377,8 +397,8 @@ export default function ClientSettings() {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <UserAvatar 
-                      user={profile} 
+                    <UserAvatar
+                      user={profile}
                       className="w-24 h-24 border-2 border-white/20 bg-gray-700"
                     />
                     <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
@@ -392,7 +412,7 @@ export default function ClientSettings() {
                       <label htmlFor="client-image-upload" className="flex-1">
                         <Button
                           variant="outline"
-                          className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 cursor-pointer hover:text-white"
+                          className="w-full bg-white border-white/10 text-black hover:bg-gray-200 cursor-pointer hover:text-black"
                           disabled={uploadingImage}
                           asChild
                         >
@@ -411,7 +431,7 @@ export default function ClientSettings() {
                       </label>
                       <Button
                         variant="outline"
-                        className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                        className="bg-white border-white/10 text-black hover:bg-gray-200 hover:text-black"
                         onClick={handleRemoveImage}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
@@ -432,7 +452,7 @@ export default function ClientSettings() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Email</label>
-                    <Input value={profile.email || (session?.user?.email ?? "")} onChange={e => setProfile(prev => ({ ...prev, email: e.target.value }))} type="email" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
+                    <Input value={profile.email || (session?.user?.email ?? "")} disabled type="email" className="bg-white/5 border-white/10 text-gray-400 placeholder:text-gray-400 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Phone (10 digits)</label>
@@ -473,7 +493,7 @@ export default function ClientSettings() {
                           <div
                             key={prediction.place_id}
                             className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
-                            onClick={() => selectLocation(prediction.description)}
+                            onClick={() => selectLocation(prediction)}
                           >
                             {prediction.description}
                           </div>
@@ -481,23 +501,21 @@ export default function ClientSettings() {
                       </div>
                     )}
                   </div>
-                  {profile.location && (
-                    <div className="mt-2">
-                      <iframe
-                        width="100%"
-                        height="150"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=${encodeURIComponent(profile.location)}`}
-                        className="rounded-lg"
-                      />
-                      <div className="text-xs text-gray-400 mt-1">
-                        <a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(profile.location)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                          View larger map
-                        </a>
-                      </div>
+                  {/* Map Display */}
+                  {(mapCoordinates || profile.location) && (
+                    <div className="mt-2 h-[250px] w-full relative z-0">
+                      {mapCoordinates ? (
+                        <LeafletMap
+                          lat={mapCoordinates.lat}
+                          lon={mapCoordinates.lon}
+                          zoom={13}
+                          popupText={profile.location}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-white/5 rounded-lg flex items-center justify-center text-gray-400 border border-white/10">
+                          Search and select a location to view map
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -534,111 +552,84 @@ export default function ClientSettings() {
 
                 <div>
                   <label className="text-sm font-medium text-gray-300 mb-2 block">Skills & Expertise</label>
-                  <Select
-                    value=""
-                    onValueChange={(value) => {
-                      if (!selectedSkills.includes(value)) {
-                        const newSkills = [...selectedSkills, value]
-                        setSelectedSkills(newSkills)
-                        setProfile(prev => ({ ...prev, skills: newSkills }))
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white placeholder:text-gray-400">
-                      <SelectValue placeholder="Select a skill to add" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700 max-h-[200px]">
-                      {availableSkills
-                        .filter(skill => !selectedSkills.includes(skill))
-                        .map((skill) => (
-                          <SelectItem key={skill} value={skill} className="text-gray-100 hover:bg-gray-700">
-                            {skill}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      value={skillInput}
+                      onChange={(e) => {
+                        setSkillInput(e.target.value)
+                        setShowSkillSuggestions(true)
+                      }}
+                      onFocus={() => setShowSkillSuggestions(true)}
+                      placeholder="Type a skill (e.g. React, Python)..."
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
+                    />
+                    {showSkillSuggestions && skillInput && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {availableSkills
+                          .filter(
+                            (skill) =>
+                              !selectedSkills.includes(skill) &&
+                              skill.toLowerCase().includes(skillInput.toLowerCase())
+                          )
+                          .map((skill) => (
+                            <div
+                              key={skill}
+                              className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
+                              onClick={() => {
+                                if (!selectedSkills.includes(skill)) {
+                                  const newSkills = [...selectedSkills, skill]
+                                  setSelectedSkills(newSkills)
+                                  setProfile((prev) => ({
+                                    ...prev,
+                                    skills: newSkills,
+                                  }))
+                                  setSkillInput("")
+                                  setShowSkillSuggestions(false)
+                                }
+                              }}
+                            >
+                              {skill}
+                            </div>
+                          ))}
+                        {availableSkills.filter(
+                          (skill) =>
+                            !selectedSkills.includes(skill) &&
+                            skill.toLowerCase().includes(skillInput.toLowerCase())
+                        ).length === 0 && (
+                            <div className="px-4 py-2 text-sm text-gray-400">
+                              No matching skills found
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {selectedSkills.length > 0 ? selectedSkills.map((skill, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-white/10 text-white cursor-pointer hover:bg-white/20"
-                        onClick={() => {
-                          const newSkills = selectedSkills.filter((_, i) => i !== index)
-                          setSelectedSkills(newSkills)
-                          setProfile(prev => ({ ...prev, skills: newSkills }))
-                        }}
-                      >
-                        {skill} ×
-                      </Badge>
-                    )) : (Array.isArray(profile.skills) ? profile.skills : []).map((skill, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-white/10 text-white cursor-pointer hover:bg-white/20"
-                        onClick={() => {
-                          const newSkills = (profile.skills || []).filter((_, i) => i !== index)
-                          setProfile(prev => ({ ...prev, skills: newSkills }))
-                        }}
-                      >
-                        {skill} ×
-                      </Badge>
-                    ))}
-                    {selectedSkills.length === 0 && (!profile.skills || profile.skills.length === 0) && (
-                      <p className="text-gray-400 text-sm">No skills selected. Use the dropdown above to add skills.</p>
+                    {selectedSkills.length > 0 ? (
+                      selectedSkills.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-white/10 text-white cursor-pointer hover:bg-white/20 flex items-center gap-1"
+                          onClick={() => {
+                            const newSkills = selectedSkills.filter((_, i) => i !== index)
+                            setSelectedSkills(newSkills)
+                            setProfile((prev) => ({ ...prev, skills: newSkills }))
+                          }}
+                        >
+                          {skill} <X className="w-3 h-3" />
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 text-sm">
+                        No skills selected. Type above to add skills.
+                      </p>
                     )}
                   </div>
                 </div>
 
-                <Button onClick={handleSaveProfile} disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button onClick={handleSaveProfile} disabled={loading} className="bg-white hover:bg-gray-200 text-black">
                   <Save className="w-4 h-4 mr-2" />
                   {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications">
-            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">Notification Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">Email Notifications</h3>
-                      <p className="text-sm text-gray-400">Receive updates via email</p>
-                    </div>
-                    <Switch checked={notifications.email} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, email: v }))} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">Push Notifications</h3>
-                      <p className="text-sm text-gray-400">Receive push notifications on your device</p>
-                    </div>
-                    <Switch checked={notifications.push} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, push: v }))} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">SMS Notifications</h3>
-                      <p className="text-sm text-gray-400">Receive important updates via SMS</p>
-                    </div>
-                    <Switch checked={notifications.sms} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, sms: v }))} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-white">Marketing Communications</h3>
-                      <p className="text-sm text-gray-400">Receive promotional emails and updates</p>
-                    </div>
-                    <Switch checked={notifications.marketing} onCheckedChange={(v: boolean) => setNotifications(prev => ({ ...prev, marketing: v }))} />
-                  </div>
-                </div>
-
-                <Button onClick={() => { /* optionally persist notifications locally */ }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Preferences
                 </Button>
               </CardContent>
             </Card>
@@ -667,7 +658,7 @@ export default function ClientSettings() {
                     </div>
                   </div>
 
-                  <Button onClick={handlePasswordUpdate} disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button onClick={handlePasswordUpdate} disabled={loading} className="bg-white hover:bg-gray-200 text-black">
                     {loading ? "Updating..." : "Update Password"}
                   </Button>
                 </CardContent>
@@ -736,11 +727,12 @@ export default function ClientSettings() {
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
                     <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.currency} onChange={e => setPreferences(prev => ({ ...prev, currency: e.target.value }))}>
-                                            <option value="inr">INR (₹)</option>
-                                            <option value="usd">USD ($)</option>
-                                            <option value="eur">EUR (€)</option>
-                                            <option value="gbp">GBP (£)</option>
-                                          </select>                  </div>
+                      <option value="inr">INR (₹)</option>
+                      <option value="usd">USD ($)</option>
+                      <option value="eur">EUR (€)</option>
+                      <option value="gbp">GBP (£)</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Theme</label>
                     <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.theme} onChange={e => setPreferences(prev => ({ ...prev, theme: e.target.value }))}>
@@ -751,7 +743,7 @@ export default function ClientSettings() {
                   </div>
                 </div>
 
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button className="bg-white hover:bg-gray-200 text-black">
                   <Save className="w-4 h-4 mr-2" />
                   Save Preferences
                 </Button>

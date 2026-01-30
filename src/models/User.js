@@ -20,14 +20,19 @@ const SettingsSchema = new mongoose.Schema({
     allowMessages: { type: Boolean, default: true },
   },
   preferences: {
-  language: { type: String, default: "en" },
-  timezone: { type: String, default: "utc" },
-  currency: { type: String, default: "inr" },
-  theme: { type: String, default: "dark" },
-  },  professionalTitle: { type: String, default: "" },
+    language: { type: String, default: "en" },
+    timezone: { type: String, default: "utc" },
+    currency: { type: String, default: "inr" },
+    theme: { type: String, default: "dark" },
+  },
+  professionalTitle: { type: String, default: "" },
   titleLocked: { type: Boolean, default: false },
   hourlyRate: { type: Number, default: 0 },
   availableForJobs: { type: Boolean, default: true },
+
+  // Backend Fields Added to Frontend
+  rating: { type: Number, default: 0 },
+  projectsCompleted: { type: Number, default: 0 },
 });
 
 const BankSchema = new mongoose.Schema({
@@ -45,11 +50,16 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["freelancer", "client", "pending"], default: "pending" },
     image: { type: String, default: null },
     settings: { type: SettingsSchema, default: () => ({}) },
-    bankAccount: { type: BankSchema, default: null }, // Added
-    paymentMode: { type: String, enum: ["crypto", "bank", "upi", "card", "both"], default: "bank" }, // Added
+    bankAccount: { type: BankSchema, default: null },
+    paymentMode: { type: String, enum: ["crypto", "bank", "upi", "card", "both"], default: "bank" },
     walletAddress: { type: String, default: null },
     walletLinkedAt: { type: Date },
     walletMessage: { type: String, default: null },
+
+    // Backend Fields Added to Frontend
+    isVerified: { type: Boolean, default: false },
+    verifyToken: { type: String },
+    verifyTokenExpires: { type: Date },
   },
   { timestamps: true }
 );
