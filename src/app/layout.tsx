@@ -5,11 +5,10 @@ import { Toaster } from '@/components/ui/toaster';
 import ClientLayout from './ClientLayout';
 import { SocketContextProvider } from '../context/SocketContext';
 import { LoaderProvider } from '../context/LoaderContext';
+import { CurrencyProvider } from '../context/CurrencyContext';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
-
-import { CurrencyProvider } from '../context/CurrencyContext';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

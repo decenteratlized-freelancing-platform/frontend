@@ -23,8 +23,8 @@ import AnimatedCounter from "@/components/homepageComponents/animated-counter"
 import { ProposalReviewModal } from "./proposal-review-modal"
 import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
-import { useCurrency } from "@/context/CurrencyContext"
-import CurrencyToggle from "@/components/shared/currency-toggle"
+// import { useCurrency } from "@/context/CurrencyContext"
+// import CurrencyToggle from "@/components/shared/currency-toggle"
 import { JobDetailsModal } from "@/components/shared/job-details-modal"
 
 const recentActivity = [
@@ -52,84 +52,118 @@ const recentActivity = [
 ]
 
 export default function ClientDashboard() {
-  const { data: session } = useSession()
-  const user = useCurrentUser()
-  const { currency, getFormattedAmount, getConvertedAmount } = useCurrency()
-  const [displayName, setDisplayName] = useState("Client")
-  const [jobs, setJobs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
-  const [activeChat, setActiveChat] = useState<{ id: string, name: string, image?: string } | null>(null)
+  const { data: session } = useSession();
+  const user = useCurrentUser();
+  // const { currency, getFormattedAmount, getConvertedAmount } = useCurrency();
+  const [displayName, setDisplayName] = useState("Client");
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true); // Specific loading for jobs list
+  const [dashboardSummary, setDashboardSummary] = useState({
+    activeJobsCount: 0,
+    totalSpent: 0,
+    freelancersHiredCount: 0,
+    averageResponseTimeHours: 0,
+  });
+  const [dashboardLoading, setDashboardLoading] = useState(true); // Specific loading for dashboard summary
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [activeChat, setActiveChat] = useState<{ id: string; name: string; image?: string } | null>(null);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
-    const nameFromSession = session?.user?.name
-    const nameFromHook = user?.name
+    const nameFromSession = session?.user?.name;
+    const nameFromHook = user?.name;
     const nameFromLocal =
-      typeof window !== "undefined" ? localStorage.getItem("fullName") : null
+      typeof window !== "undefined" ? localStorage.getItem("fullName") : null;
 
-    setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client")
-  }, [session, user])
+    setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client");
+  }, [session, user]);
 
+  // Effect for fetching dashboard summary
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchSummary = async () => {
       if (session?.user?.email) {
         try {
-          const res = await fetch(`http://localhost:5000/api/jobs/my-jobs?email=${session.user.email}`)
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/summary?email=${session.user.email}`
+          );
           if (res.ok) {
-            const data = await res.json()
-            setJobs(data)
+            const data = await res.json();
+            setDashboardSummary(data);
+          } else {
+            console.error("Error fetching dashboard summary:", res.statusText);
           }
         } catch (error) {
-          console.error("Error fetching jobs:", error)
+          console.error("Error fetching dashboard summary:", error);
         } finally {
-          setLoading(false)
+          setDashboardLoading(false);
         }
       }
-    }
+    };
 
     if (session?.user?.email) {
-      fetchJobs()
+      fetchSummary();
     }
-  }, [session])
+  }, [session]);
 
-  const activeJobsCount = jobs.filter(job => job.status === 'open' || job.status === 'in_progress').length
-  const totalSpent = 24500;
+  // Effect for fetching client's jobs list
+  useEffect(() => {
+    const fetchJobsList = async () => {
+      if (session?.user?.email) {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/my-jobs?email=${session.user.email}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setJobs(data);
+          } else {
+            console.error("Error fetching jobs list:", res.statusText);
+          }
+        } catch (error) {
+          console.error("Error fetching jobs list:", error);
+        } finally {
+          setJobsLoading(false);
+        }
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchJobsList();
+    }
+  }, [session]);
+
+  // Removed client-side activeJobsCount and totalSpent calculations as they are now from dashboardSummary
 
   const stats = [
     {
       title: "Active Jobs",
-      value: activeJobsCount,
-      change: "Updated just now",
+      value: jobs.length,
       icon: Eye,
       color: "from-blue-500 to-cyan-500",
     },
     {
       title: "Total Spent",
-      value: totalSpent,
-      displayValue: getConvertedAmount(totalSpent, 'INR'),
-      change: "+1,200 this month",
-      icon: IndianRupeeIcon,
+      value: dashboardSummary.totalSpent,
+      displayValue: `${dashboardSummary.totalSpent} ETH`,
+      icon: TrendingUp, // Using a more generic icon
       color: "from-green-500 to-emerald-500",
     },
     {
       title: "Freelancers Hired",
-      value: 48, // Placeholder
-      change: "+5 this month",
+      value: dashboardSummary.freelancersHiredCount,
       icon: Users,
       color: "from-purple-500 to-pink-500",
     },
     {
       title: "Response Time",
-      value: 2.4,
-      change: "-0.3h improved",
+      value: dashboardSummary.averageResponseTimeHours,
       icon: Clock,
       color: "from-orange-500 to-red-500",
       suffix: "h",
     },
-  ]
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -164,7 +198,7 @@ export default function ClientDashboard() {
           <Sparkles className="w-4 h-4 text-blue-400" />
           <span className="text-sm font-medium text-white">Client Dashboard</span>
         </div>
-        <CurrencyToggle />
+        {/* <CurrencyToggle /> */}
       </div>
 
       <motion.div
@@ -202,19 +236,22 @@ export default function ClientDashboard() {
             transition={{ duration: 0.5, delay: index * 0.1 }}
             whileHover={{ y: -5, scale: 1.02 }}
           >
-            <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
+            <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10 hover:bg-zinc-700/50 transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-300">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white mt-2">
-                      {stat.displayValue ? (
-                        <span>{stat.displayValue}</span>
-                      ) : (
-                        <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
-                      )}
-                    </p>
-                    <p className="text-sm text-green-400 mt-1">{stat.change}</p>
+                    {dashboardLoading ? (
+                      <div className="h-6 bg-gray-700 rounded w-2/3 mt-2 animate-pulse"></div>
+                    ) : (
+                      <p className="text-2xl font-bold text-white mt-2">
+                        {stat.displayValue ? (
+                          <span>{stat.displayValue}</span>
+                        ) : (
+                          <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
+                        )}
+                      </p>
+                    )}
                   </div>
                   <div
                     className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
@@ -234,13 +271,13 @@ export default function ClientDashboard() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="lg:col-span-2"
         >
-          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
+          <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-white">Recent Projects</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {loading ? (
+                {jobsLoading ? (
                   <p className="text-gray-400">Loading projects...</p>
                 ) : jobs.length === 0 ? (
                   <p className="text-gray-400">No projects found. Post a job to get started!</p>
@@ -251,7 +288,7 @@ export default function ClientDashboard() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
+                      className="bg-zinc-800/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-zinc-700/50 transition-all duration-300"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
@@ -262,7 +299,7 @@ export default function ClientDashboard() {
                         </div>
                         <div className="text-right">
                           <span className="text-lg font-bold text-white">
-                            {job.paymentCurrency === 'INR' ? `₹${job.budget}` : `${job.budget} ETH`}
+                            {`${job.budget} ETH`}
                           </span>
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="w-3 h-3 text-gray-400" />
@@ -335,7 +372,7 @@ export default function ClientDashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
+          <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-white">Recent Activity</CardTitle>
             </CardHeader>
@@ -347,7 +384,7 @@ export default function ClientDashboard() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors duration-200"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-colors duration-200"
                   >
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.type === "completion"
@@ -380,4 +417,3 @@ export default function ClientDashboard() {
     </div>
   )
 }
-

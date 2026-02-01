@@ -1,113 +1,145 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../../components/chatComponents/Sidebar";
 import ChatList from "../../components/chatComponents/ChatList";
 import ChatWindow from "../../components/chatComponents/ChatWindow";
-
-const DUMMY_USERS = [
-  { id: "1", name: "Wade Warren", avatar: "https://randomuser.me/api/portraits/men/1.jpg" },
-  { id: "2", name: "Esther Howard", avatar: "https://randomuser.me/api/portraits/women/2.jpg" },
-  { id: "3", name: "Jacob Jones", avatar: "https://randomuser.me/api/portraits/men/3.jpg" },
-  { id: "4", name: "Kristin Watson", avatar: "https://randomuser.me/api/portraits/women/4.jpg" },
-];
-
-const CURRENT_USER = "user123";
-const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt", ".zip"];
+import { useSession } from "next-auth/react";
+import { useSocket } from "@/context/SocketContext";
 
 export default function ChatPage() {
-  const [selectedUserId, setSelectedUserId] = useState<string>(DUMMY_USERS[0].id);
+  const { data: session } = useSession();
+  const { socket } = useSocket();
+  const [conversations, setConversations] = useState<any[]>([]);
   const [messagesMap, setMessagesMap] = useState<Record<string, any[]>>({});
-  const [conversations, setConversations] = useState<Record<string, { userId: string; lastMessage: string; time: string; unread: boolean }>>({
-    "1": { userId: "1", lastMessage: "", time: "", unread: false },
-    "2": { userId: "2", lastMessage: "", time: "", unread: false },
-    "3": { userId: "3", lastMessage: "", time: "", unread: false },
-    "4": { userId: "4", lastMessage: "", time: "", unread: false },
-  });
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Filter users by search
-  const filteredUsers = DUMMY_USERS.filter((user) =>
-    user.name.toLowerCase().includes(search.toLowerCase())
+  const userId = session?.user?.id || (typeof window !== "undefined" ? localStorage.getItem("userId") : null);
+
+  useEffect(() => {
+    if (userId) {
+      fetchConversations();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (message: any) => {
+      setMessagesMap((prev) => ({
+        ...prev,
+        [message.senderId]: [...(prev[message.senderId] || []), message],
+      }));
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [socket]);
+
+  const fetchConversations = async () => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:5000/api/messages/conversations?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data);
+        if (data.length > 0) {
+          setSelectedUserId(data[0].participant._id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (receiverId: string) => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/messages/${receiverId}?senderId=${userId}`);
+      const data = await res.json();
+      if (!data.error) {
+        setMessagesMap((prev) => ({
+          ...prev,
+          [receiverId]: data,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
+  const handleSelectUser = (receiverId: string) => {
+    setSelectedUserId(receiverId);
+    fetchMessages(receiverId);
+  };
+
+  const handleSend = async (receiverId: string, message: string) => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/messages/send/${receiverId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          senderId: userId,
+        }),
+      });
+      const data = await res.json();
+      if (!data.error) {
+        setMessagesMap((prev) => ({
+          ...prev,
+          [receiverId]: [...(prev[receiverId] || []), data],
+        }));
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const filteredConversations = conversations.filter((conversation) =>
+    conversation.participant.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSelectUser = (userId: string) => {
-    setSelectedUserId(userId);
-    // Mark as read
-    setConversations((prev) => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        unread: false,
-      },
-    }));
-  };
-
-  const handleSend = (userId: string, msg: any) => {
-    setMessagesMap((prev) => ({
-      ...prev,
-      [userId]: [...(prev[userId] || []), msg],
-    }));
-    // Mark as unread for receiver (simulate)
-    setConversations((prev) => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        lastMessage: msg.text || msg.fileName || "File shared",
-        time: new Date(msg.timestamp).toLocaleTimeString(),
-        unread: userId !== selectedUserId, // Only mark as unread if not currently open
-      },
-    }));
-  };
-
-  const handleFileSend = (userId: string, file: File, fileUrl: string) => {
-    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      alert("File type not allowed. Allowed: " + ALLOWED_EXTENSIONS.join(", "));
-      return;
-    }
-    const msg = {
-      senderId: CURRENT_USER,
-      roomId: userId,
-      fileUrl,
-      fileName: file.name,
-      timestamp: Date.now(),
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setMessagesMap((prev) => ({
-      ...prev,
-      [userId]: [...(prev[userId] || []), msg],
-    }));
-    setConversations((prev) => ({
-      ...prev,
-      [userId]: {
-        ...prev[userId],
-        lastMessage: msg.fileName,
-        time: new Date(msg.timestamp).toLocaleTimeString(),
-        unread: userId !== selectedUserId,
-      },
-    }));
-  };
+  if (loading) {
+    return <div className="flex h-screen bg-[#F8FAFC] gap-4 p-4">Loading...</div>;
+  }
+  
+  if (conversations.length === 0) {
+    return <div className="flex h-screen bg-[#F8FAFC] gap-4 p-4">No conversations found.</div>;
+  }
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] gap-4 p-4">
       <Sidebar />
       <ChatList
-        users={filteredUsers}
+        users={filteredConversations.map(c => c.participant)}
         conversations={conversations}
         onSelect={handleSelectUser}
         selectedId={selectedUserId}
         search={search}
         setSearch={setSearch}
       />
-      <div className="flex-1 h-full rounded-2xl bg-white shadow border border-gray-100 flex flex-col">
-        <ChatWindow
-          roomId={selectedUserId}
-          currentUser={CURRENT_USER}
-          messages={messagesMap[selectedUserId] || []}
-          onSendMessage={(msg) => handleSend(selectedUserId, msg)}
-          onSendFileMessage={(file, fileUrl) => handleFileSend(selectedUserId, file, fileUrl)}
-        />
-      </div>
+      {selectedUserId && (
+        <div className="flex-1 h-full rounded-2xl bg-white shadow border border-gray-100 flex flex-col">
+          <ChatWindow
+            roomId={selectedUserId}
+            currentUser={userId}
+            messages={messagesMap[selectedUserId] || []}
+            onSendMessage={(msg) => handleSend(selectedUserId, msg.text)}
+            onSendFileMessage={(file, fileUrl) => {
+              // This is a placeholder, as the backend does not support file sending yet
+            }}
+          />
+        </div>
+      )}
     </div>
   );
-} 
+}
+ 

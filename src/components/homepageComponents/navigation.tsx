@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Zap } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -27,9 +28,12 @@ export default function Navigation() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
+          <Image
+              src="/smarthire-logo-preview.png"
+              alt="SmartHire Logo"
+              width={70}
+              height={60}
+            />
           <span className="text-white font-bold text-lg">SmartHire</span>
         </Link>
 

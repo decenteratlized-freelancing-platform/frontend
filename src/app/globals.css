@@ -392,3 +392,46 @@ a:hover,
 .text-white\/80 {
   color: rgba(255, 255, 255, 0.8);
 }
+
+@keyframes border-ray {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-border-ray {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem; /* 12px */
+}
+
+.animate-border-ray::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: conic-gradient(
+    transparent,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent,
+    transparent,
+    transparent,
+    transparent,
+    transparent,
+    transparent
+  );
+  animation: border-ray 4s linear infinite;
+  z-index: 1;
+}
+
+.animate-border-ray > * {
+  position: relative;
+  z-index: 2;
+}
+

@@ -8,9 +8,10 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEffect, useState } from "react"
 import { useCurrency } from "@/context/CurrencyContext";
+import { useRouter } from "next/navigation";
 import CurrencyToggle from "@/components/shared/currency-toggle";
 import {
-  IndianRupee,
+  CoinsIcon,
   Clock,
   Star,
   Briefcase,
@@ -83,6 +84,10 @@ export default function FreelancerDashboard() {
   const [saveMessage, setSaveMessage] = useState("");
   const [proposals, setProposals] = useState<any[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
+  const router = useRouter();
+  const handleJobsRedirect = () => { router.push('/freelancer/browse-jobs') }
+  const handleGoalssRedirect = () => { router.push('/freelancer/goals') }
+  const handleMessagesRedirect = () => { router.push('/freelancer/messages') }
 
   useEffect(() => {
     const loginType = localStorage.getItem("loginType");
@@ -190,7 +195,7 @@ export default function FreelancerDashboard() {
             title: "Total Earnings",
             value: getFormattedAmount(12450, 'INR'), // Placeholder
             change: "+18%",
-            icon: IndianRupee,
+            icon: CoinsIcon,
             color: "from-green-500 to-emerald-500",
           },
           {
@@ -358,15 +363,20 @@ export default function FreelancerDashboard() {
                 <CardTitle className="text-lg font-bold text-white">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start"
+                  onClick={handleJobsRedirect}
+                >
                   <Briefcase className="w-4 h-4 mr-2" />
                   Browse New Jobs
                 </Button>
-                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start"
+                  onClick={handleGoalssRedirect}>
                   <Target className="w-4 h-4 mr-2" />
                   Update Goals
                 </Button>
-                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start">
+                <Button className="w-full bg-white/90 hover:bg-white/80 text-black-500 hover:text-black-600 justify-start"
+                  onClick={handleMessagesRedirect}
+                >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Check Messages
                 </Button>

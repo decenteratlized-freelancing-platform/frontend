@@ -16,6 +16,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { CheckCircle, XCircle, Clock, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { useSocket } from "@/context/SocketContext"
 
 interface Proposal {
     _id: string
@@ -45,6 +46,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
     const [loading, setLoading] = useState(false)
     const [jobCurrency, setJobCurrency] = useState<'INR' | 'ETH'>('INR');
     const currentUser = useCurrentUser();
+    const { socket } = useSocket();
 
     useEffect(() => {
         if (isOpen && jobId) {
@@ -52,6 +54,23 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
             fetchJobDetails()
         }
     }, [isOpen, jobId])
+
+    useEffect(() => {
+        if (socket) {
+            socket.on("proposal_accepted", (data: any) => {
+                toast.info("A proposal has been accepted.");
+                setProposals(prevProposals =>
+                    prevProposals.map(p =>
+                        p._id === data.proposal._id ? { ...p, status: data.proposal.status } : p
+                    )
+                );
+            });
+
+            return () => {
+                socket.off("proposal_accepted");
+            };
+        }
+    }, [socket]);
 
     const fetchJobDetails = async () => {
         try {
@@ -160,6 +179,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                           ${proposal.status === 'accepted' ? 'bg-green-500/20 text-green-400 border-green-500/50' : ''}
                           ${proposal.status === 'rejected' ? 'bg-red-500/20 text-red-400 border-red-500/50' : ''}
                           ${proposal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : ''}
+                          ${proposal.status === 'contract_pending' ? 'bg-blue-500/20 text-blue-400 border-blue-500/50' : ''}
                         `}
                                             >
                                                 {proposal.status.toUpperCase()}

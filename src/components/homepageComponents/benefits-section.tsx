@@ -61,7 +61,7 @@ export default function BenefitsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: idx * 0.1 }}
-              className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-6 h-auto flex flex-col justify-start items-start space-y-4 hover:-translate-y-2 transition-transform"
+              className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-6 h-auto flex flex-col justify-start items-start space-y-4 hover:scale-105 transition-transform duration-200"
             >
               <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
                 <benefit.icon size={24} className="text-white/80" />

@@ -112,7 +112,7 @@ export default function FreelancerTransactions() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl font-bold text-white">Recent Earnings</CardTitle>
-              <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+              <Button className="bg-white/90 text-black hover:bg-white/10 hover:text-black">
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
