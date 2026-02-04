@@ -263,11 +263,7 @@ export default function AdminJobs() {
                                         <div className="flex items-center gap-6 text-sm">
                                             <div className="flex items-center gap-1 text-gray-400">
                                                 <Wallet className="w-4 h-4" />
-<<<<<<< Updated upstream
                                                 <span>{job.budget} ETH</span>
-=======
-                                                <span>{job.paymentCurrency === "ETH" ? `${job.budget} ETH` : `₹${job.budget}`}</span>
->>>>>>> Stashed changes
                                             </div>
                                             {job.deadline && (
                                                 <div className="flex items-center gap-1 text-gray-400">

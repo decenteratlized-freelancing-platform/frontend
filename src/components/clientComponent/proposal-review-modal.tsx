@@ -113,9 +113,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                body: JSON.stringify({
                     status,
-                    clientEmail: currentUser.email
                     clientEmail: currentUser.email
                 }),
             })

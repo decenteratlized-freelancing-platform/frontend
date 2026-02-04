@@ -18,11 +18,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-<<<<<<< Updated upstream
 import { MessageSquare, Wallet, Calendar, MoreVertical } from "lucide-react"
-=======
-import { MessageSquare, Calendar, MoreVertical, Wallet } from "lucide-react"
->>>>>>> Stashed changes
 import { UserAvatar } from "@/components/shared/user-avatar"
 
 interface Proposal {
@@ -225,11 +221,7 @@ export default function AdminProposals() {
                                         <div className="flex items-center gap-6 text-sm">
                                             <div className="flex items-center gap-1 text-gray-400">
                                                 <Wallet className="w-4 h-4" />
-<<<<<<< Updated upstream
                                                 <span>Rate: {proposal.proposedRate} ETH</span>
-=======
-                                                <span>Rate: ₹{proposal.proposedRate}</span>
->>>>>>> Stashed changes
                                             </div>
                                             <div className="text-gray-400">
                                                 Delivery: {proposal.deliveryTime}
