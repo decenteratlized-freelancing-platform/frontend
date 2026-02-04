@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-    FileText, Calendar, DollarSign, Clock, User,
+    FileText, Calendar, Clock, User,
     ArrowLeft, CheckCircle, XCircle, AlertCircle, Loader2,
     Briefcase, MessageSquare
 } from "lucide-react";
@@ -200,12 +200,10 @@ export function ProposalDetail({ proposalId, userRole, userEmail }: ProposalDeta
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white/5 rounded-lg p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <DollarSign className="w-4 h-4" /> Proposed Rate
+                                <Target className="w-4 h-4" /> Proposed Rate
                             </div>
                             <p className="text-white font-semibold text-lg">
-                                {proposal.job.paymentCurrency === "ETH"
-                                    ? `${proposal.proposedRate} ETH`
-                                    : `₹${proposal.proposedRate?.toLocaleString()}`}
+                                {proposal.proposedRate} ETH
                             </p>
                         </div>
                         <div className="bg-white/5 rounded-lg p-4">

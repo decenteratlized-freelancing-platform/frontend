@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useCurrency } from "@/context/CurrencyContext";
-import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy } from 'lucide-react'
+import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy, Sparkles } from 'lucide-react'
 
 interface Goal {
   id: number
@@ -29,11 +29,11 @@ interface Goal {
 const initialGoals: Goal[] = [
   {
     id: 1,
-    title: "Earn 50 ETH This Year",
-    description: "Reach annual income target through quality freelance projects",
+    title: "Earn 10 ETH This Year",
+    description: "Reach annual income target through high-value blockchain projects",
     progress: 75,
-    target: 4000000,
-    current: 3000000,
+    target: 10,
+    current: 7.5,
     deadline: "2024-12-31",
     status: "in-progress",
     category: "Financial",
@@ -41,7 +41,7 @@ const initialGoals: Goal[] = [
   {
     id: 2,
     title: "Complete 25 Projects",
-    description: "Successfully deliver 25 high-quality projects to build portfolio",
+    description: "Deliver high-quality results to build a verified reputation",
     progress: 68,
     target: 25,
     current: 17,
@@ -51,25 +51,14 @@ const initialGoals: Goal[] = [
   },
   {
     id: 3,
-    title: "Learn React Native",
-    description: "Master React Native development to expand service offerings",
+    title: "Master Smart Contracts",
+    description: "Learn advanced Solidity patterns and security audits",
     progress: 40,
     target: 100,
     current: 40,
     deadline: "2024-06-30",
     status: "in-progress",
     category: "Skill Development",
-  },
-  {
-    id: 4,
-    title: "Build Personal Website",
-    description: "Create a professional portfolio website to showcase work",
-    progress: 100,
-    target: 100,
-    current: 100,
-    deadline: "2024-01-15",
-    status: "completed",
-    category: "Marketing",
   },
 ]
 
@@ -87,16 +76,23 @@ export default function FreelancerGoals() {
     deadline: "",
     category: "",
   })
-  const { getFormattedAmount } = useCurrency();
+  const { getConvertedAmount } = useCurrency();
 
   const handleAddGoal = () => {
     if (newGoal.title && newGoal.description && newGoal.target && newGoal.deadline && newGoal.category) {
+      const targetValue = Number.parseFloat(newGoal.target);
+      if (targetValue <= 0) {
+        // You might want to add a toast here if available, or just return
+        alert("Target value must be greater than 0"); 
+        return;
+      }
+
       const goal: Goal = {
         id: Date.now(),
         title: newGoal.title,
         description: newGoal.description,
         progress: 0,
-        target: Number.parseInt(newGoal.target),
+        target: targetValue,
         current: 0,
         deadline: newGoal.deadline,
         status: "in-progress",
@@ -123,7 +119,7 @@ export default function FreelancerGoals() {
           ? {
             ...goal,
             progress: newProgress,
-            current: Math.round((newProgress / 100) * goal.target),
+            current: parseFloat(((newProgress / 100) * goal.target).toFixed(4)),
             status: newProgress === 100 ? "completed" : "in-progress",
           }
           : goal,
@@ -148,101 +144,81 @@ export default function FreelancerGoals() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500/20 text-green-300 border border-green-500/30"
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
       case "in-progress":
-        return "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+        return "bg-blue-500/10 text-blue-400 border-blue-500/20"
       case "overdue":
-        return "bg-red-500/20 text-red-300 border border-red-500/30"
+        return "bg-red-500/10 text-red-400 border-red-500/20"
       default:
-        return "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+        return "bg-zinc-800 text-zinc-400 border-zinc-700"
     }
   }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return CheckCircle
-      case "in-progress":
-        return Clock
-      case "overdue":
-        return AlertCircle
-      default:
-        return Target
-    }
-  }
-
-
-
 
   const completedGoals = goals.filter((g) => g.status === "completed").length
   const averageProgress = goals.length === 0 ? 0 : Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-zinc-950 min-h-screen text-zinc-100">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-8"
+        className="mb-12"
       >
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-          <Target className="w-4 h-4 text-blue-400" />
-          <span className="text-sm font-medium text-white">Goal Tracking</span>
+        <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2.5 mb-6">
+          <Sparkles className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-medium text-zinc-300">Milestone Tracker</span>
         </div>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Your Goals</h1>
-            <p className="text-gray-400">Track and manage your freelance career objectives</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+              Strategic <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-500">Goals</span>
+            </h1>
+            <p className="text-zinc-400 max-w-xl">Architect your career path and track progress towards your professional milestones.</p>
           </div>
           <Dialog open={showAddGoal} onOpenChange={setShowAddGoal}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30">
+              <Button className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-8 py-6 rounded-2xl transition-all shadow-xl shadow-white/5">
                 <Plus className="w-5 h-5 mr-2" />
-                Add Goal
+                Define New Goal
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-900 border-white/10 text-white max-w-2xl">
+            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl shadow-2xl">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold">Add New Goal</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">New Objective</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="title" className="text-white mb-2 block">
-                    Goal Title *
-                  </Label>
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Goal Title</Label>
                   <Input
                     id="title"
-                    placeholder="Enter your goal title..."
+                    placeholder="e.g., Reach 100 Verified Reviews"
                     value={newGoal.title}
                     onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
+                    className="bg-zinc-900 border-zinc-800 text-white focus:ring-blue-500/20 h-12"
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="description" className="text-white mb-2 block">
-                    Description *
-                  </Label>
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Brief Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your goal..."
+                    placeholder="What does success look like for this goal?"
                     value={newGoal.description}
                     onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
+                    className="bg-zinc-900 border-zinc-800 text-white focus:ring-blue-500/20 min-h-[100px]"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category" className="text-white mb-2 block">
-                      Category *
-                    </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Category</Label>
                     <Select value={newGoal.category} onValueChange={(value) => setNewGoal({ ...newGoal, category: value })}>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors">
-                        <SelectValue placeholder="Select category" />
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white h-12">
+                        <SelectValue placeholder="Select path" />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-white/10">
+                      <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                         <SelectItem value="Financial">Financial</SelectItem>
                         <SelectItem value="Professional">Professional</SelectItem>
                         <SelectItem value="Skill Development">Skill Development</SelectItem>
@@ -252,57 +228,44 @@ export default function FreelancerGoals() {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="target" className="text-white mb-2 block">
-                      Target Value *
-                    </Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="target" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Target Value</Label>
                     <Input
                       id="target"
                       type="number"
-                      min="0"
-                      step="1"
-                      placeholder="e.g., 50000"
+                      placeholder="Numerical target..."
                       value={newGoal.target}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        if (value === "" || (Number(value) >= 0 && !isNaN(Number(value)))) {
-                          setNewGoal({ ...newGoal, target: value })
-                        }
-                      }}
-                      className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
+                      onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
+                      className="bg-zinc-900 border-zinc-800 text-white h-12"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="deadline" className="text-white mb-2 block">
-                    Deadline *
-                  </Label>
+                <div className="space-y-2">
+                  <Label htmlFor="deadline" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Target Date</Label>
                   <Input
                     id="deadline"
                     type="date"
                     value={newGoal.deadline}
                     onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
+                    className="bg-zinc-900 border-zinc-800 text-white h-12"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 pt-4">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => setShowAddGoal(false)}
-                    className="border-white/20 text-white hover:bg-white/10"
+                    className="text-zinc-500 hover:text-white hover:bg-zinc-900"
                   >
-                    Cancel
+                    Discard
                   </Button>
                   <Button
                     onClick={handleAddGoal}
-                    className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                    disabled={
-                      !newGoal.title || !newGoal.description || !newGoal.target || !newGoal.deadline || !newGoal.category
-                    }
+                    className="bg-white text-zinc-950 font-bold px-8 hover:bg-zinc-200"
+                    disabled={!newGoal.title || !newGoal.target || !newGoal.deadline}
                   >
-                    Add Goal
+                    Activate Goal
                   </Button>
                 </div>
               </div>
@@ -311,46 +274,30 @@ export default function FreelancerGoals() {
         </div>
       </motion.div>
 
-      {/* Stats Overview Section */}
+      {/* Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
       >
-        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+        {[
+          { label: "Completed", value: completedGoals, icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/5" },
+          { label: "In Progress", value: goals.length - completedGoals, icon: Target, color: "text-blue-400", bg: "bg-blue-500/5" },
+          { label: "Avg. Progress", value: `${averageProgress}%`, icon: TrendingUp, color: "text-cyan-400", bg: "bg-cyan-500/5" },
+        ].map((stat, i) => (
+          <Card key={i} className="bg-zinc-900/40 border-zinc-800 hover:bg-zinc-900/60 transition-all duration-300">
+            <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Completed Goals</p>
-                <p className="text-3xl font-bold text-green-400 mt-2">{completedGoals}</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-1">{stat.label}</p>
+                <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
               </div>
-              <Trophy className="w-10 h-10 text-green-400 opacity-20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Active Goals</p>
-                <p className="text-3xl font-bold text-blue-400 mt-2">{goals.length - completedGoals}</p>
+              <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
-              <Target className="w-10 h-10 text-blue-400 opacity-20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Overall Progress</p>
-                <p className="text-3xl font-bold text-cyan-400 mt-2">{averageProgress}%</p>
-              </div>
-              <TrendingUp className="w-10 h-10 text-cyan-400 opacity-20" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </motion.div>
 
       {/* Goals Grid */}
@@ -358,226 +305,112 @@ export default function FreelancerGoals() {
         <AnimatePresence>
           {goals.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="lg:col-span-2 flex flex-col items-center justify-center p-10 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="lg:col-span-2 flex flex-col items-center justify-center p-20 bg-zinc-900/20 border border-dashed border-zinc-800 rounded-3xl text-center"
             >
-              <Target className="w-12 h-12 text-gray-400 mb-4" />
-              <p className="text-xl font-semibold text-white mb-2">No Goals Yet!</p>
-              <p className="text-gray-400">Start by adding a new goal to track your progress.</p>
+              <Target className="w-12 h-12 text-zinc-700 mb-4" />
+              <p className="text-zinc-400 font-medium">Your goal board is currently empty.</p>
             </motion.div>
           ) : (
-            goals.map((goal, index) => {
-              const StatusIcon = getStatusIcon(goal.status)
-              return (
-                <motion.div
-                  key={goal.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -30 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  whileHover={{ y: -2 }}
-                >
-                  <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/8 transition-all duration-300 h-full group">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                            <StatusIcon className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors duration-300 line-clamp-2">
-                              {goal.title}
-                            </CardTitle>
-                            <p className="text-sm text-gray-400 mt-1">{goal.category}</p>
-                          </div>
+            goals.map((goal, index) => (
+              <motion.div
+                key={goal.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card className="bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 transition-all duration-300 h-full group relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1.5 flex-1 pr-4">
+                        <div className="flex items-center gap-2">
+                          <Badge className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 border-none ${getStatusColor(goal.status)}`}>
+                            {goal.status}
+                          </Badge>
+                          <span className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">{goal.category}</span>
                         </div>
-                        <Badge className={getStatusColor(goal.status)}>{goal.status}</Badge>
+                        <CardTitle className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                          {goal.title}
+                        </CardTitle>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-gray-400">{goal.description}</p>
-
-                      {/* Progress */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Progress</span>
-                          <span className="text-white font-semibold">{goal.progress}%</span>
-                        </div>
-                        <Progress value={goal.progress} className="h-2 bg-white/10" />
-                        {goal.category === "Financial" && (
-                          <div className="flex justify-between text-sm text-gray-400 text-xs">
-                            <span>{getFormattedAmount(goal.current, 'INR')}</span>
-                            <span>{getFormattedAmount(goal.target, 'INR')}</span>
-                          </div>
-                        )}
-                        {goal.category !== "Financial" && (
-                          <div className="flex justify-between text-sm text-gray-400 text-xs">
-                            <span>{goal.current}</span>
-                            <span>{goal.target}</span>
-                          </div>
-                        )}
+                      <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-800 shadow-inner">
+                        {goal.category === 'Financial' ? <TrendingUp className="w-5 h-5 text-emerald-500" /> : <Target className="w-5 h-5 text-blue-500" />}
                       </div>
+                    </div>
+                  </CardHeader>
 
-                      {/* Deadline */}
-                      <div className="flex items-center gap-2 text-sm text-gray-400 bg-white/5 rounded-lg px-3 py-2">
-                        <Calendar className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-xs">{goal.deadline}</span>
+                  <CardContent className="space-y-6">
+                    <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">{goal.description}</p>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-end">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Progress</span>
+                        <span className="text-sm font-bold text-white">{goal.progress}%</span>
                       </div>
+                      <Progress value={goal.progress} className="h-1.5 bg-zinc-950" />
+                      <div className="flex justify-between text-[11px] font-mono text-zinc-500 pt-1">
+                        <span>{goal.category === "Financial" ? getConvertedAmount(goal.current) : goal.current}</span>
+                        <span>{goal.category === "Financial" ? getConvertedAmount(goal.target) : goal.target}</span>
+                      </div>
+                    </div>
 
-                      <div className="flex gap-2 pt-2">
+                    <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
+                      <div className="flex items-center gap-2 text-zinc-500 text-xs">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Ends {new Date(goal.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                      
+                      <div className="flex gap-2">
                         <Button
                           size="sm"
+                          variant="ghost"
                           onClick={() => openProgressDialog(goal)}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm"
+                          className="h-8 w-8 p-0 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10"
                         >
-                          Update
+                          <TrendingUp className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => openEditDialog(goal)}
-                          className="border-white/20 text-white hover:bg-white/10 bg-transparent"
+                          className="h-8 w-8 p-0 text-zinc-500 hover:text-white hover:bg-zinc-800"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleDeleteGoal(goal.id)}
-                          className="border-white/20 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 bg-transparent transition-colors"
+                          className="h-8 w-8 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            }))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))
+          )}
         </AnimatePresence>
       </div>
 
-      {/* Edit Goal Dialog */}
-      <Dialog open={showEditGoal} onOpenChange={setShowEditGoal}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Edit Goal</DialogTitle>
-          </DialogHeader>
-          {editingGoal && (
-            <div className="space-y-6">
-              <div>
-                <Label htmlFor="edit-title" className="text-white mb-2 block">
-                  Goal Title *
-                </Label>
-                <Input
-                  id="edit-title"
-                  value={editingGoal.title}
-                  onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit-description" className="text-white mb-2 block">
-                  Description *
-                </Label>
-                <Textarea
-                  id="edit-description"
-                  value={editingGoal.description}
-                  onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-category" className="text-white mb-2 block">
-                    Category *
-                  </Label>
-                  <Select
-                    value={editingGoal.category}
-                    onValueChange={(value) => setEditingGoal({ ...editingGoal, category: value })}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-white/10">
-                      <SelectItem value="Financial">Financial</SelectItem>
-                      <SelectItem value="Professional">Professional</SelectItem>
-                      <SelectItem value="Skill Development">Skill Development</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Personal">Personal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-target" className="text-white mb-2 block">
-                    Target Value *
-                  </Label>
-                  <Input
-                    id="edit-target"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={editingGoal.target}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      if (value === "" || (Number(value) >= 0 && !isNaN(Number(value)))) {
-                        setEditingGoal({ ...editingGoal, target: Number.parseInt(value) || 0 })
-                      }
-                    }}
-                    className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="edit-deadline" className="text-white mb-2 block">
-                  Deadline *
-                </Label>
-                <Input
-                  id="edit-deadline"
-                  type="date"
-                  value={editingGoal.deadline}
-                  onChange={(e) => setEditingGoal({ ...editingGoal, deadline: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white focus:border-blue-400 focus:ring-blue-400/20 transition-colors"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowEditGoal(false)}
-                  className="border-white/20 text-white hover:bg-white/10"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleEditGoal}
-                  className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Progress Update Dialog */}
+      {/* Progress Dialog */}
       <Dialog open={showProgressDialog} onOpenChange={setShowProgressDialog}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white">
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Progress: {selectedGoalForProgress?.title}</DialogTitle>
+            <DialogTitle>Track Progress</DialogTitle>
           </DialogHeader>
           {selectedGoalForProgress && (
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <Label className="text-white">Progress: {selectedGoalForProgress.progress}%</Label>
-                  <span className="text-blue-400 font-semibold">{selectedGoalForProgress.progress}%</span>
+            <div className="space-y-8 py-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Completion Status</Label>
+                  <span className="text-blue-400 font-bold text-lg">{selectedGoalForProgress.progress}%</span>
                 </div>
                 <input
                   type="range"
@@ -589,34 +422,27 @@ export default function FreelancerGoals() {
                     setSelectedGoalForProgress({ ...selectedGoalForProgress, progress: newProgress })
                     handleUpdateProgress(selectedGoalForProgress.id, newProgress)
                   }}
-                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  className="w-full h-1.5 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
               </div>
-              <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="text-sm text-gray-400">
-                  <p>
-                    Current: <span className="text-white font-semibold">{selectedGoalForProgress.current}</span>
-                  </p>
-                  <p>
-                    Target: <span className="text-white font-semibold">{selectedGoalForProgress.target}</span>
-                  </p>
+              
+              <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800 space-y-3">
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500 font-medium">Current Achievement</span>
+                  <span className="text-white font-bold">{selectedGoalForProgress.category === 'Financial' ? getConvertedAmount(selectedGoalForProgress.current) : selectedGoalForProgress.current}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500 font-medium">Target Milestone</span>
+                  <span className="text-zinc-400">{selectedGoalForProgress.category === 'Financial' ? getConvertedAmount(selectedGoalForProgress.target) : selectedGoalForProgress.target}</span>
                 </div>
               </div>
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowProgressDialog(false)}
-                  className="border-white/20 text-white hover:bg-white/10"
-                >
-                  Close
-                </Button>
-                <Button
-                  onClick={() => setShowProgressDialog(false)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                >
-                  Done
-                </Button>
-              </div>
+
+              <Button
+                onClick={() => setShowProgressDialog(false)}
+                className="w-full bg-white text-zinc-950 font-bold py-6 rounded-2xl hover:bg-zinc-200"
+              >
+                Confirm Update
+              </Button>
             </div>
           )}
         </DialogContent>

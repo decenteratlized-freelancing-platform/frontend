@@ -547,29 +547,29 @@ export default function FreelancerDashboard() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
 
-                        <div>
+                                                  <div>
 
-                          <p className="text-xs text-gray-400">Client Budget</p>
+                                                    <p className="text-xs text-gray-400">Client Budget</p>
 
-                          <p className="text-sm font-medium text-white">
+                                                    <p className="text-sm font-medium text-white">
 
-                            {proposal.job?.budget} ETH
+                                                      {`${proposal.job?.budget} ETH`}
 
-                          </p>
+                                                    </p>
 
-                        </div>
+                                                  </div>
 
-                        <div>
+                                                  <div>
 
-                          <p className="text-xs text-gray-400">Your Rate</p>
+                                                    <p className="text-xs text-gray-400">Your Rate</p>
 
-                          <p className="text-sm font-medium text-green-400">
+                                                    <p className="text-sm font-medium text-green-400">
 
-                            {proposal.proposedRate} ETH
+                                                      {`${proposal.proposedRate} ETH`}
 
-                          </p>
+                                                    </p>
 
-                        </div>
+                                                  </div>
 
                         <div>
 

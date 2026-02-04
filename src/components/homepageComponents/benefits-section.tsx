@@ -1,10 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
-import { DollarSign, Zap, Clock, TrendingUp, Shield, Award } from "lucide-react";
+import { Target, Zap, Clock, TrendingUp, Shield, Award } from "lucide-react";
 
 const benefits = [
   {
-    icon: DollarSign,
+    icon: Target,
     title: "Competitive Rates",
     description: "Find top-tier talent at rates that fit your budget. Our platform minimizes overhead, passing the savings to you.",
   },

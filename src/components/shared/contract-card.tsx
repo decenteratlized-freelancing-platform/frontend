@@ -6,9 +6,15 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { getStatusStyles, getStatusIcon } from "@/lib/contract-utils";
 import { formatCurrency } from "@/lib/utils";
 
-export function ContractCard({ contract, userRole, onClick }: { contract: any; userRole: string; onClick: () => void; }) {
-    const otherParty = userRole === 'client' ? contract.freelancer : contract.client;
-    const currency = (contract.paymentType || '').toLowerCase().includes('crypto') ? 'ETH' : 'INR';
+interface ContractCardProps {
+    contract: any;
+    userRole: "client" | "freelancer";
+    onClick: () => void;
+}
+
+export function ContractCard({ contract, userRole, onClick }: ContractCardProps) {
+    const currency = 'ETH';
+    const otherParty = userRole === "client" ? contract.freelancer : contract.client;
 
     return (
         <motion.div

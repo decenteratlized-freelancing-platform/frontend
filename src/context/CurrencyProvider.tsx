@@ -1,67 +1,34 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { CurrencyContext } from "./CurrencyContext"
+import React, { ReactNode } from "react";
+import CurrencyContext from "./CurrencyContext";
 
-// Constants
-const ETH_SYMBOL = "Ξ"
-const ETH_CODE = "ETH"
+interface CurrencyProviderProps {
+  children: ReactNode;
+}
 
-export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  // Fixed to 'eth' as per requirement
-  const currency = "eth"
+export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   
-  // No-op setter
-  const setCurrency = () => {}
-  
-  // Fixed rate (1:1 for ETH-to-ETH)
-  const ethToInrRate = 1 
+  const getFormattedAmount = (amount: number | string) => {
+    const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    if (isNaN(numericAmount)) return "0 ETH";
+    return `${numericAmount.toLocaleString()} ETH`;
+  };
 
-  // Memoized conversion functions
-  const conversions = useMemo(() => {
-    // Identity functions since we only use ETH
-    const convertToEth = (amount: number) => amount
-    const convertToInr = (amount: number) => amount
-
-    const getFormattedAmount = (
-      amount: number,
-      _fromCurrency: "inr" | "eth" // Ignored
-    ) => {
-      return `${ETH_SYMBOL}${amount.toLocaleString("en-US", {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      })}`
-    }
-
-    const formatSimple = (amount: number) => {
-      return `${ETH_SYMBOL}${amount.toLocaleString("en-US", {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      })}`
-    }
-
-    // Alias for backward compatibility - behaves same as getFormattedAmount for ETH only
-    const getConvertedAmount = getFormattedAmount
-
-    return {
-      convertToEth,
-      convertToInr,
-      getFormattedAmount,
-      formatSimple,
-      getConvertedAmount,
-    }
-  }, [])
-
-  const value = {
-    currency,
-    setCurrency,
-    ethToInrRate,
-    ...conversions,
-  }
+  const getConvertedAmount = (amount: number | string) => {
+    const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    if (isNaN(numericAmount)) return "Ξ0";
+    return `Ξ${numericAmount.toLocaleString()}`;
+  };
 
   return (
-    <CurrencyContext.Provider value={value}>
+    <CurrencyContext.Provider
+      value={{
+        getFormattedAmount,
+        getConvertedAmount,
+      }}
+    >
       {children}
     </CurrencyContext.Provider>
-  )
-}
+  );
+};

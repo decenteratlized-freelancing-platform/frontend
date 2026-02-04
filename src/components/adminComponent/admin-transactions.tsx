@@ -177,9 +177,21 @@ export default function AdminTransactions() {
                                                 <Badge className={STATUS_COLORS[tx.status] || "bg-gray-500/20 text-gray-400"}>
                                                     {tx.status}
                                                 </Badge>
+<<<<<<< Updated upstream
                                                 <p className="text-lg font-bold text-white flex items-center gap-1">
                                                     <Wallet className="w-4 h-4" />
                                                     <span>{tx.amount} ETH</span>
+=======
+                                                <p className="text-lg font-bold text-white flex items-center">
+                                                    {tx.mode === "crypto" ? (
+                                                        <span>{tx.amount} ETH</span>
+                                                    ) : (
+                                                        <>
+                                                            <Wallet className="w-4 h-4 mr-1" />
+                                                            {tx.amount}
+                                                        </>
+                                                    )}
+>>>>>>> Stashed changes
                                                 </p>
                                             </div>
                                         </div>

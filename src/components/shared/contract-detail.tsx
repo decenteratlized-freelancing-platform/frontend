@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-    FileText, Calendar, DollarSign, User,
+    FileText, Calendar, User,
     ArrowLeft, CheckCircle, AlertCircle, Loader2,
     Briefcase, Target, Clock, AlertTriangle,
     RefreshCw, Wallet, Send, Edit, Plus, Trash2, Save, X, ThumbsUp,
-    ExternalLink
+    ExternalLink, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { ethers } from "ethers";
 import { toast } from "@/hooks/use-toast";
+import { GeminiAssistant } from "./gemini-assistant";
 
 const ESCROW_ADDRESS = "0x41fE53C6963a87006Fb59177CE1136b86a9B7297"; // SmartHireEscrowV2
 const ESCROW_ABI = [
@@ -77,6 +78,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
@@ -511,12 +513,12 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-zinc-950/20 rounded-2xl p-5 border border-zinc-800/50">
                             <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">
-                                <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Contract Budget
+                                <Target className="w-3.5 h-3.5 text-emerald-500" /> Contract Budget
                             </div>
                             <p className="text-white font-bold text-2xl">
                                 {contract.paymentType === "crypto"
                                     ? `${isEditing ? editTotal.toFixed(4) : contract.totalAmount} ETH`
-                                    : `₹${contract.totalAmount?.toLocaleString()}`}
+                                    : `${contract.totalAmount?.toLocaleString()} ETH`}
                             </p>
                         </div>
                         <div className="bg-zinc-950/20 rounded-2xl p-5 border border-zinc-800/50">
@@ -582,6 +584,25 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* AI Assistant Section */}
+                    <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 mt-10">
+                        <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                <Bot className="w-8 h-8 text-blue-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-1">Contract AI Assistant</h3>
+                                <p className="text-zinc-400 text-sm max-w-md">Our AI is monitoring this contract to ensure fairness and clarity. Have a question about a term? Ask our assistant.</p>
+                            </div>
+                        </div>
+                        <Button 
+                            onClick={() => setIsAssistantOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-6 rounded-2xl transition-all shadow-xl shadow-blue-500/10"
+                        >
+                            Ask Assistant
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -677,7 +698,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                                 <p className="text-zinc-400 font-bold text-sm">
                                                     {contract.paymentType === "crypto"
                                                         ? `${milestone.amount} ETH`
-                                                        : `₹${parseFloat(milestone.amount).toLocaleString()}`}
+                                                        : `${parseFloat(milestone.amount).toLocaleString()} ETH`}
                                                 </p>
                                                 <div className="w-1 h-1 rounded-full bg-zinc-800" />
                                                 <span className={`text-[10px] font-bold uppercase tracking-widest ${getMilestoneStatusColor(milestone.status).split(' ')[1]}`}>
@@ -687,17 +708,28 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                                        {userRole === "client" && 
-                                         (contract.status === "Funded" || contract.status === "Completed") && 
-                                         milestone.status !== "completed" && (
+                                        {userRole === "client" && (contract.status === "Funded" || contract.status === "Completed") && (
                                             <Button
                                                 size="sm"
                                                 onClick={() => handleRelease(idx)}
-                                                disabled={isProcessing}
-                                                className="w-full sm:w-auto bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded-xl py-5 font-bold uppercase text-[10px] tracking-widest px-6"
+                                                disabled={isProcessing || milestone.status === "completed" || milestone.status === "approved"}
+                                                className={`w-full sm:w-auto rounded-xl py-5 font-bold uppercase text-[10px] tracking-widest px-6 transition-all ${
+                                                    milestone.status === "completed" || milestone.status === "approved"
+                                                        ? "bg-emerald-500/20 text-emerald-400/50 border border-emerald-500/10 cursor-not-allowed"
+                                                        : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
+                                                }`}
                                             >
-                                                <Send className="w-3 h-3 mr-2" />
-                                                Confirm Delivery
+                                                {milestone.status === "completed" || milestone.status === "approved" ? (
+                                                    <>
+                                                        <CheckCircle className="w-3 h-3 mr-2" />
+                                                        Released
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send className="w-3 h-3 mr-2" />
+                                                        Confirm Delivery
+                                                    </>
+                                                )}
                                             </Button>
                                         )}
                                     </div>
@@ -728,6 +760,23 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                     <ExternalLink className="w-3 h-3" />
                 </div> */}
             </div>
+
+            {/* Gemini Assistant */}
+            <AnimatePresence>
+                {isAssistantOpen && (
+                    <GeminiAssistant 
+                        isOpen={isAssistantOpen} 
+                        onClose={() => setIsAssistantOpen(false)} 
+                        context={{
+                            contractId: contract.contractId,
+                            jobTitle: contract.job?.title,
+                            totalAmount: contract.totalAmount,
+                            status: contract.status,
+                            milestones: contract.milestones
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

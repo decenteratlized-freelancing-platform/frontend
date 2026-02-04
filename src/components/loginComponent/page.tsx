@@ -45,6 +45,12 @@ const LoginPage = () => {
         return;
       }
 
+      if (!isLogin && formData.password.length < 6) {
+        setAuthState({ loading: false, successUser: null, error: "Password must be at least 6 characters long" });
+        setStatusMessage({ type: "error", text: "Password must be at least 6 characters long" });
+        return;
+      }
+
       if (isLogin) {
         // LOGIN
         const res = await fetch(`${apiUrl}/login`, {

@@ -89,7 +89,11 @@ export default function AdminAnalytics() {
         { title: "Total Users", value: platform.users?.total || 0, sub: `+${platform.users?.newThisMonth || 0} this month`, icon: Users, color: "from-blue-500 to-cyan-500" },
         { title: "Active Jobs", value: platform.jobs?.active || 0, sub: `${platform.jobs?.total || 0} total`, icon: Briefcase, color: "from-green-500 to-emerald-500" },
         { title: "Contracts", value: platform.contracts?.completed || 0, sub: `${platform.contracts?.total || 0} total`, icon: FileText, color: "from-purple-500 to-pink-500" },
+<<<<<<< Updated upstream
         { title: "Total Revenue", value: `${revenue.totalRevenue.toFixed(4)} ETH`, sub: "All time", icon: Wallet, color: "from-orange-500 to-red-500" },
+=======
+        { title: "Total Revenue", value: `${Math.round(revenue.totalRevenue)} ETH`, sub: "All time", icon: Wallet, color: "from-orange-500 to-red-500" },
+>>>>>>> Stashed changes
     ]
 
     if (loading) {
@@ -204,7 +208,11 @@ export default function AdminAnalytics() {
                                             outerRadius={100}
                                             paddingAngle={2}
                                             dataKey="value"
+<<<<<<< Updated upstream
                                             label={({ name, value }) => `${name}: ${Number(value).toFixed(4)} ETH`}
+=======
+                                            label={({ name, value }) => `${name}: ${Math.round(value)} ETH`}
+>>>>>>> Stashed changes
                                         >
                                             {revenue.revenueByMode.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -12,7 +12,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+<<<<<<< Updated upstream
 import { FileText, Wallet, Calendar, Users } from "lucide-react"
+=======
+import { FileText, Calendar, Users, Wallet } from "lucide-react"
+>>>>>>> Stashed changes
 import { UserAvatar } from "@/components/shared/user-avatar"
 
 interface Contract {

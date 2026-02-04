@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-    Briefcase, Calendar, DollarSign, Clock, MapPin, User,
+    Briefcase, Calendar, Clock, MapPin, User,
     ArrowLeft, Tag, Users, CheckCircle, AlertCircle, Loader2,
     FileText, Send
 } from "lucide-react";
@@ -196,10 +196,10 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-white/5 rounded-lg p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <DollarSign className="w-4 h-4" /> Budget
+                                <Target className="w-4 h-4" /> Budget
                             </div>
                             <p className="text-white font-semibold">
-                                {job.paymentCurrency === "ETH" ? `${job.budget} ETH` : `₹${job.budget.toLocaleString()}`}
+                                {job.budget} ETH
                             </p>
                             <p className="text-xs text-gray-500">{job.budgetType}</p>
                         </div>
@@ -289,7 +289,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
                                     <div>
                                         <span className="text-gray-400">Proposed Rate:</span>
                                         <span className="text-white ml-2 font-medium">
-                                            {job.paymentCurrency === "ETH" ? `${proposal.proposedRate} ETH` : `₹${proposal.proposedRate}`}
+                                            {proposal.proposedRate} ETH
                                         </span>
                                     </div>
                                     <div>

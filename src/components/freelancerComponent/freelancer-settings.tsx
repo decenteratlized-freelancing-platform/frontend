@@ -89,9 +89,9 @@ export default function SettingsPage() {
     professionalBio: "",
     skills: [],
     hourlyRate: 5000,
-    language: "English",
-    timezone: "UTC",
-    currency: "ETH (Sepolia)",
+    language: "en",
+    currency: "ETH (Ξ)",
+    timezone: "ist",
     availabilityStatus: "Available for Work",
     workSchedule: "Full-time",
     notifications: {
@@ -172,8 +172,8 @@ export default function SettingsPage() {
           skills: skillsArray,
           hourlyRate: data.settings?.hourlyRate || 5000,
           language: data.settings?.preferences?.language || "English",
-          timezone: data.settings?.preferences?.timezone || "UTC",
-          currency: data.settings?.preferences?.currency || "ETH (Sepolia)",
+        currency: data.settings?.preferences?.currency || "ETH (Ξ)",
+        timezone: data.settings?.preferences?.timezone || "ist",
           availabilityStatus: data.settings?.availableForJobs ? "Available for Work" : "Not Available",
           workSchedule: data.settings?.workSchedule || "Full-time",
           notifications: {
@@ -1045,12 +1045,9 @@ export default function SettingsPage() {
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="ETH (Sepolia)">ETH (Sepolia)</SelectItem>
-                        <SelectItem value="EUR (€)">EUR (€)</SelectItem>
-                        <SelectItem value="GBP (£)">GBP (£)</SelectItem>
-                        <SelectItem value="USD ($)">USD ($)</SelectItem>
-                      </SelectContent>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      <SelectItem value="ETH (Ξ)">ETH (Ξ)</SelectItem>
+                    </SelectContent>
                     </Select>
                   </div>
                 </CardContent>

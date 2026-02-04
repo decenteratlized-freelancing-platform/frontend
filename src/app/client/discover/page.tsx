@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 import Link from "next/link";
 import { useCurrency } from "@/context/CurrencyContext";
-import CurrencyToggle from "@/components/shared/currency-toggle";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -126,7 +125,7 @@ const FreelancerCard = ({
 
       <div className="flex items-center justify-between mb-6">
          <div className="text-zinc-100 font-bold text-xl">
-            {getConvertedAmount(freelancer.hourlyRate, 'INR')}<span className="text-xs text-zinc-500 font-medium ml-1">/hr</span>
+            {getConvertedAmount(freelancer.hourlyRate)}<span className="text-xs text-zinc-500 font-medium ml-1">/hr</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
@@ -258,9 +257,9 @@ const FreelancerProfileModal = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                   { label: "Rating", value: `${freelancer.averageRating || "N/A"}` },
-                  { label: "Rate", value: `${getConvertedAmount(freelancer.hourlyRate, "INR")}/h` },
+                  { label: "Rate", value: `${getConvertedAmount(freelancer.hourlyRate)}/h` },
                   { label: "Done", value: `${freelancer.projectsCompleted}` },
-                  { label: "Earned", value: getConvertedAmount(freelancer.totalEarned, "INR") },
+                  { label: "Earned", value: getConvertedAmount(freelancer.totalEarned) },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-4">
                     <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold mb-1">{stat.label}</p>
@@ -342,6 +341,7 @@ const HireFreelancerModal = ({
         const res = await fetch(`http://localhost:5000/api/jobs/my-jobs?email=${email}`);
         if (res.ok) {
           const data = await res.json();
+          // Filter only open jobs
           const openJobs = data.filter((job: any) => job.status === "open");
           setJobs(openJobs);
         }
@@ -501,10 +501,11 @@ export default function DiscoverFreelancersPage() {
         }
         const data: any[] = await response.json();
 
-        const processedData: Freelancer[] = data.map((f) => {
+        const processedData: Freelancer[] = data.map((f: any) => {
           const settings = f.settings || {};
 
           let totalEarnedInINR = 0;
+          // Clean up legacy INR data if any
           if (typeof f.totalEarned === 'string') {
             const numericValue = parseFloat(f.totalEarned.replace(/[^0-9.-]+/g, ""));
             if (!isNaN(numericValue)) {
@@ -515,12 +516,11 @@ export default function DiscoverFreelancersPage() {
           }
 
           return {
-            ...f,
             _id: f._id,
             fullName: f.fullName || "N/A",
             email: f.email || "N/A",
             role: f.role || "freelancer",
-            skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map(s => s.trim()) : [],
+            skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map((s: string) => s.trim()) : [],
             bio: settings.bio || "No bio provided.",
             hourlyRate: settings.hourlyRate || 0,
             status: settings.availableForJobs ? "Available" : "Busy",
@@ -576,7 +576,7 @@ export default function DiscoverFreelancersPage() {
 
   const handleHire = (freelancer: Freelancer) => {
     setSelectedFreelancer(freelancer);
-    setIsProfileModalOpen(false);
+    setIsProfileModalOpen(false); // Close profile first
     setIsHireModalOpen(true);
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MilestoneStepper } from "./milestone-stepper";
@@ -13,6 +13,7 @@ import RaiseDisputeModal from "./raise-dispute-modal";
 import { toast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { ethers } from "ethers";
+import { GeminiAssistant } from "./gemini-assistant";
 
 const ESCROW_ADDRESS = "0x41fE53C6963a87006Fb59177CE1136b86a9B7297";
 const ESCROW_ABI = [
@@ -43,11 +44,12 @@ interface ContractDetailViewProps {
 
 export function ContractDetailView({ contract: initialContract, userRole, userId, onBack, onDisputeCreated }: ContractDetailViewProps) {
     const [localContract, setLocalContract] = useState(initialContract);
-    const currency = (localContract.paymentType || '').toLowerCase().includes('crypto') ? 'ETH' : 'INR';
+    const currency = 'ETH';
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [hasAccepted, setHasAccepted] = useState(localContract.freelancerAccepted);
+    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     const { address: walletAddress, connectWallet } = useWalletConnection();
 
     useEffect(() => {
@@ -353,7 +355,11 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
                             <Bot className="mx-auto w-12 h-12 text-blue-400 mb-4" />
                             <p className="text-neutral-300">Our AI is monitoring this contract to ensure fairness and clarity. Have a question about a term? Ask our assistant.</p>
-                            <Button variant="outline" className="mt-6 bg-transparent border-white/20 text-white hover:bg-white/10">
+                            <Button 
+                                onClick={() => setIsAssistantOpen(true)}
+                                variant="outline" 
+                                className="mt-6 bg-transparent border-white/20 text-white hover:bg-white/10"
+                            >
                                 Ask Assistant
                             </Button>
                         </div>
@@ -393,6 +399,23 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                 againstUserId={againstUserId}
                 onSuccess={handleDisputeSuccess}
             />
+
+            {/* Gemini Assistant */}
+            <AnimatePresence>
+                {isAssistantOpen && (
+                    <GeminiAssistant 
+                        isOpen={isAssistantOpen} 
+                        onClose={() => setIsAssistantOpen(false)} 
+                        context={{
+                            contractId: localContract.contractId,
+                            jobTitle: localContract.job?.title,
+                            totalAmount: localContract.totalAmount,
+                            status: localContract.status,
+                            milestones: localContract.milestones
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

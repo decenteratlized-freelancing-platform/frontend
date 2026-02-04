@@ -30,7 +30,9 @@ export default function PostJobForm() {
     budgetAmount: "",
     duration: "",
     experienceLevel: "",
-    paymentCurrency: "INR", // Add paymentCurrency to formData
+    paymentMode: "hourly",
+    paymentCurrency: "ETH", // Add paymentCurrency to formData
+    experienceLevel: "intermediate",
   })
 
   const addSkill = () => {
@@ -207,13 +209,14 @@ export default function PostJobForm() {
                 onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}
                 value={formData.paymentCurrency}
                 defaultValue="ETH"
+                defaultValue="ETH"
               >
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/10">
-                  <SelectItem value="ETH">ETH (Sepolia)</SelectItem>
-                </SelectContent>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                    <SelectItem value="ETH">Ξ ETH</SelectItem>
+                  </SelectContent>
               </Select>
             </motion.div>
           </div>

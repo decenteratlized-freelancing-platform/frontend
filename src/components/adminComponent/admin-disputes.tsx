@@ -339,7 +339,11 @@ export default function AdminDisputes() {
                                                 {dispute.contract && (
                                                     <div className="flex items-center gap-1 text-xs text-gray-500">
                                                         <Wallet className="w-3 h-3" />
+<<<<<<< Updated upstream
                                                         {dispute.contract.totalAmount} ETH
+=======
+                                                        {dispute.contract.totalAmount}
+>>>>>>> Stashed changes
                                                     </div>
                                                 )}
                                             </div>

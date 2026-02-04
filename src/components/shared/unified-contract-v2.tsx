@@ -148,14 +148,11 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
               ))}
             </div>
           </div>
-
-          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex justify-between items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Total Value</p>
-              <p className="text-zinc-400 text-xs mt-1">Sum of all milestones</p>
-            </div>
-            <span className="text-2xl font-bold text-white">{formatCurrency(totalAmount, proposal.job?.paymentCurrency === 'INR' ? 'INR' : 'ETH')}</span>
-          </div>
+          
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-400">Total Contract Value</p>
+                                    <span className="text-2xl font-bold text-white">{totalAmount} ETH</span>
+                                </div>
         </div>
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900">Cancel</Button>

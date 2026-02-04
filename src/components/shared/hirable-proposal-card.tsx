@@ -7,8 +7,8 @@ import { FileSignature } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export function HirableProposalCard({ proposal, onHire }: { proposal: any; onHire: () => void; }) {
-    // console.log("Hirable Proposal:", proposal);
-    const currency = proposal.job?.paymentCurrency === 'INR' ? 'INR' : 'ETH';
+  const currency = 'ETH'; 
+
 
     return (
         <motion.div

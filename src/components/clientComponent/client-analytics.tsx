@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Users, Wallet, Clock, Target, Award, Zap } from "lucide-react"
+import { BarChart3, TrendingUp, Users, Wallet, Clock, Target, Award, Zap } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -172,7 +173,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
                     <Area
                       type="monotone"
                       dataKey="spending"
@@ -217,7 +218,7 @@ export default function ClientAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -248,7 +249,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
                     <Bar dataKey="projects" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -278,7 +279,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
                     <Line
                       type="monotone"
                       dataKey="satisfaction"

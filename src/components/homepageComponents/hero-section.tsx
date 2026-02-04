@@ -165,7 +165,7 @@ export default function HeroSection() {
 
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-            <AnimatedCounter end={1} prefix="₹" suffix="M+" />
+            <AnimatedCounter end={1} prefix="" suffix=" ETH+" />
             </div>            <p className="text-gray-400">Transactions</p>
           </div>
 

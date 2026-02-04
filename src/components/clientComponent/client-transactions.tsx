@@ -60,9 +60,10 @@ export default function ClientTransactions() {
   const [statusFilter, setStatusFilter] = useState("all")
 
   const stats = [
-    { title: "Total Spent", value: getConvertedAmount(1960000, 'INR'), change: "+12%", color: "from-red-500 to-pink-500" },
-    { title: "This Month", value: getConvertedAmount(256000, 'INR'), change: "+8%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getConvertedAmount(144000, 'INR'), change: "-5%", color: "from-orange-500 to-yellow-500" },
+        { title: "Total Spent", value: getConvertedAmount(1.96), change: "+12%", color: "from-red-500 to-pink-500" },
+        { title: "This Month", value: getConvertedAmount(0.25), change: "+8%", color: "from-blue-500 to-cyan-500" },
+        { title: "Pending", value: getConvertedAmount(0.14), change: "-5%", color: "from-orange-500 to-yellow-500" },
+      ].map((stat, index) => (
     { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
   ]
 
@@ -212,9 +213,9 @@ export default function ClientTransactions() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-xl font-bold ${transaction.amount > 0 ? "text-green-400" : "text-white"}`}>
-                        {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount), 'INR')}
-                      </p>
+                  <div className={`font-bold ${transaction.amount > 0 ? "text-green-400" : "text-white"}`}>
+                    {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount))}
+                  </div>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}
                         className={

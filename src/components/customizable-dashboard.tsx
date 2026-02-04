@@ -11,7 +11,7 @@ import ActivityWidget from "./widgets/activity-widget"
 import QuickActionsWidget from "@/components/widgets/quick-action-widget"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
-import { IndianRupee, Users, Clock, Eye, Star, CheckCircle } from "lucide-react"
+import { Wallet, Users, Clock, Eye, Star, CheckCircle } from "lucide-react"
 
 interface CustomizableDashboardProps {
   userType: "client" | "freelancer"
@@ -41,8 +41,8 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       position: { x: 1, y: 0 },
       data: {
         value: getConvertedAmount(userType === "client" ? 24500 : 18750, 'INR'),
-        change: userType === "client" ? "+₹96,000 this month" : "+₹1,92,000 this month",
-        icon: IndianRupee,
+        change: userType === "client" ? "+1.2 ETH this month" : "+2.4 ETH this month",
+        icon: Wallet,
         color: "from-green-500 to-emerald-500",
       },
     },

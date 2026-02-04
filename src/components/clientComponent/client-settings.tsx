@@ -52,8 +52,8 @@ export default function ClientSettings() {
 
   const [preferences, setPreferences] = useState({
     language: "en",
-    timezone: "utc",
-    currency: "inr",
+    currency: "eth",
+    timezone: "ist",
     hourlyRate: "",
     theme: "dark",
   })
@@ -726,11 +726,12 @@ export default function ClientSettings() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.currency} onChange={e => setPreferences(prev => ({ ...prev, currency: e.target.value }))}>
-                      <option value="eth">ETH (Sepolia)</option>
-                      <option value="usd">USD ($)</option>
-                      <option value="eur">EUR (€)</option>
-                      <option value="gbp">GBP (£)</option>
+                    <select
+                      value={preferences.currency}
+                      onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
+                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
+                    >
+                      <option value="eth">ETH (Ξ)</option>
                     </select>
                   </div>
                   <div>
