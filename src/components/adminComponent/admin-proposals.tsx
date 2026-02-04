@@ -18,7 +18,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MessageSquare, IndianRupee, Calendar, MoreVertical } from "lucide-react"
+import { MessageSquare, Wallet, Calendar, MoreVertical } from "lucide-react"
 import { UserAvatar } from "@/components/shared/user-avatar"
 
 interface Proposal {
@@ -220,8 +220,8 @@ export default function AdminProposals() {
 
                                         <div className="flex items-center gap-6 text-sm">
                                             <div className="flex items-center gap-1 text-gray-400">
-                                                <IndianRupee className="w-4 h-4" />
-                                                <span>Rate: ₹{proposal.proposedRate}</span>
+                                                <Wallet className="w-4 h-4" />
+                                                <span>Rate: {proposal.proposedRate} ETH</span>
                                             </div>
                                             <div className="text-gray-400">
                                                 Delivery: {proposal.deliveryTime}

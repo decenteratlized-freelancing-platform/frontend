@@ -206,14 +206,13 @@ export default function PostJobForm() {
               <Select
                 onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}
                 value={formData.paymentCurrency}
-                defaultValue="INR"
+                defaultValue="ETH"
               >
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-white/10">
-                  <SelectItem value="INR">₹ INR</SelectItem>
-                  <SelectItem value="ETH">ETH</SelectItem>
+                  <SelectItem value="ETH">ETH (Sepolia)</SelectItem>
                 </SelectContent>
               </Select>
             </motion.div>

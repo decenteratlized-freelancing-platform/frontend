@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                                             <Badge className={STATUS_COLORS[contract.status.toLowerCase()] || "bg-gray-500/20 text-gray-400"}>
                                                 {contract.status}
                                             </Badge>
-                                            <p className="text-xs text-gray-400 mt-1">₹{contract.totalAmount}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{contract.totalAmount} ETH</p>
                                         </div>
                                     </div>
                                 ))

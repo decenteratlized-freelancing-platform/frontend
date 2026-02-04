@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { CreditCard, IndianRupee, Calendar, ArrowRight, Wallet } from "lucide-react"
+import { CreditCard, Calendar, ArrowRight, Wallet } from "lucide-react"
 
 interface Transaction {
     _id: string
@@ -177,15 +177,9 @@ export default function AdminTransactions() {
                                                 <Badge className={STATUS_COLORS[tx.status] || "bg-gray-500/20 text-gray-400"}>
                                                     {tx.status}
                                                 </Badge>
-                                                <p className="text-lg font-bold text-white flex items-center">
-                                                    {tx.mode === "crypto" ? (
-                                                        <span>{tx.amount} ETH</span>
-                                                    ) : (
-                                                        <>
-                                                            <IndianRupee className="w-4 h-4" />
-                                                            {tx.amount}
-                                                        </>
-                                                    )}
+                                                <p className="text-lg font-bold text-white flex items-center gap-1">
+                                                    <Wallet className="w-4 h-4" />
+                                                    <span>{tx.amount} ETH</span>
                                                 </p>
                                             </div>
                                         </div>

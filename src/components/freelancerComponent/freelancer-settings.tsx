@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import PaymentMethods from "@/components/shared/payment-methods";
+import WalletManagement from "@/components/shared/wallet-management";
 import dynamic from "next/dynamic";
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
@@ -91,7 +91,7 @@ export default function SettingsPage() {
     hourlyRate: 5000,
     language: "English",
     timezone: "UTC",
-    currency: "INR (₹)",
+    currency: "ETH (Sepolia)",
     availabilityStatus: "Available for Work",
     workSchedule: "Full-time",
     notifications: {
@@ -173,7 +173,7 @@ export default function SettingsPage() {
           hourlyRate: data.settings?.hourlyRate || 5000,
           language: data.settings?.preferences?.language || "English",
           timezone: data.settings?.preferences?.timezone || "UTC",
-          currency: data.settings?.preferences?.currency || "INR (₹)",
+          currency: data.settings?.preferences?.currency || "ETH (Sepolia)",
           availabilityStatus: data.settings?.availableForJobs ? "Available for Work" : "Not Available",
           workSchedule: data.settings?.workSchedule || "Full-time",
           notifications: {
@@ -1046,7 +1046,7 @@ export default function SettingsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="INR (₹)">INR (₹)</SelectItem>
+                        <SelectItem value="ETH (Sepolia)">ETH (Sepolia)</SelectItem>
                         <SelectItem value="EUR (€)">EUR (€)</SelectItem>
                         <SelectItem value="GBP (£)">GBP (£)</SelectItem>
                         <SelectItem value="USD ($)">USD ($)</SelectItem>
@@ -1062,9 +1062,9 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate (₹)</Label>
+                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate (ETH)</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-gray-400">₹</span>
+                      <span className="absolute left-3 top-3 text-gray-400">ETH</span>
                       <Input
                         id="hourlyRate"
                         type="number"
@@ -1121,7 +1121,7 @@ export default function SettingsPage() {
 
           {/* Billing Tab */}
           < TabsContent value="billing" className="mt-6" >
-            <PaymentMethods />
+            <WalletManagement />
           </TabsContent >
 
 

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
-import PaymentMethods from "@/components/shared/payment-methods"
+import WalletManagement from "@/components/shared/wallet-management"
 import dynamic from "next/dynamic"
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
@@ -697,7 +697,7 @@ export default function ClientSettings() {
 
           {/* Billing Tab */}
           <TabsContent value="billing">
-            <PaymentMethods />
+            <WalletManagement />
           </TabsContent>
 
           {/* Preferences Tab */}
@@ -727,7 +727,7 @@ export default function ClientSettings() {
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
                     <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.currency} onChange={e => setPreferences(prev => ({ ...prev, currency: e.target.value }))}>
-                      <option value="inr">INR (₹)</option>
+                      <option value="eth">ETH (Sepolia)</option>
                       <option value="usd">USD ($)</option>
                       <option value="eur">EUR (€)</option>
                       <option value="gbp">GBP (£)</option>

@@ -30,12 +30,11 @@ interface RaiseDisputeModalProps {
 }
 
 const DISPUTE_REASONS = [
-    { value: "payment_not_released", label: "Payment Not Released" },
-    { value: "quality_issues", label: "Quality Issues" },
-    { value: "scope_disagreement", label: "Scope Disagreement" },
-    { value: "non_delivery", label: "Non-Delivery" },
-    { value: "communication_issues", label: "Communication Issues" },
-    { value: "contract_violation", label: "Contract Violation" },
+    { value: "payment_issue", label: "Payment Issue" },
+    { value: "quality_issue", label: "Quality Issues" },
+    { value: "deadline_missed", label: "Deadline Missed" },
+    { value: "scope_creep", label: "Scope Creep" },
+    { value: "communication_issue", label: "Communication Issues" },
     { value: "fraud", label: "Suspected Fraud" },
     { value: "other", label: "Other" },
 ]

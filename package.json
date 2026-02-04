@@ -34,6 +34,7 @@
     "express": "^5.1.0",
     "framer-motion": "^10.16.4",
     "jsonwebtoken": "^9.0.2",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.533.0",
     "mongodb": "^5.9.2",
     "mongoose": "^8.17.0",

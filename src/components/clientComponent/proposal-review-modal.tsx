@@ -111,9 +111,9 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
             const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/status`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     status,
-                    clientEmail: currentUser.email 
+                    clientEmail: currentUser.email
                 }),
             })
 
@@ -161,8 +161,8 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-4">
-                                                <UserAvatar 
-                                                    user={proposal.freelancer} 
+                                                <UserAvatar
+                                                    user={proposal.freelancer}
                                                     className="h-12 w-12 border border-white/10"
                                                 />
                                                 <div>
@@ -189,7 +189,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                         <div className="grid grid-cols-2 gap-4 py-2 border-y border-white/10">
                                             <div className="flex items-center gap-2 text-gray-300">
                                                 <span className="font-medium">
-                                                    {jobCurrency === 'INR' ? `₹${proposal.proposedRate}` : `${proposal.proposedRate} ETH`}
+                                                    {proposal.proposedRate} ETH
                                                 </span>
                                                 <span className="text-xs text-gray-500">Proposed Rate</span>
                                             </div>
@@ -207,40 +207,42 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                             </p>
                                         </div>
 
-                                        {proposal.status === 'pending' && (
-                                            <div className="flex gap-3 pt-2">
-                                                <Button
-                                                    onClick={() => handleStatusUpdate(proposal._id, 'accepted')}
-                                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                                >
-                                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                                    Accept Proposal
-                                                </Button>
-                                                <Button
-                                                    onClick={() => handleStatusUpdate(proposal._id, 'rejected')}
-                                                    variant="destructive"
-                                                    className="flex-1 bg-red-600 hover:bg-red-700"
-                                                >
-                                                    <XCircle className="w-4 h-4 mr-2" />
-                                                    Reject
-                                                </Button>
-                                                <Button
-                                                    onClick={() => onMessage?.(proposal.freelancer._id, proposal.freelancer.fullName, proposal.freelancer.image)}
-                                                    variant="outline"
-                                                    className="border-white/20 text-white hover:bg-white/10"
-                                                >
-                                                    <Mail className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        )}
+                                        {
+                                            proposal.status === 'pending' && (
+                                                <div className="flex gap-3 pt-2">
+                                                    <Button
+                                                        onClick={() => handleStatusUpdate(proposal._id, 'accepted')}
+                                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                                        Accept Proposal
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => handleStatusUpdate(proposal._id, 'rejected')}
+                                                        variant="destructive"
+                                                        className="flex-1 bg-red-600 hover:bg-red-700"
+                                                    >
+                                                        <XCircle className="w-4 h-4 mr-2" />
+                                                        Reject
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => onMessage?.(proposal.freelancer._id, proposal.freelancer.fullName, proposal.freelancer.image)}
+                                                        variant="outline"
+                                                        className="border-white/20 text-white hover:bg-white/10"
+                                                    >
+                                                        <Mail className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            )
+                                        }
                                     </div>
                                 ))
-                            }
+                                }
                             </div>
                         </ScrollArea>
                     )}
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

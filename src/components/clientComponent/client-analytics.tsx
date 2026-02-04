@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, TrendingUp, Users, IndianRupee, Clock, Target, Award, Zap } from "lucide-react"
+import { BarChart3, TrendingUp, Users, Wallet, Clock, Target, Award, Zap } from "lucide-react"
 import {
   LineChart,
   Line,
   XAxis,
-YAxis,
+  YAxis,
   CartesianGrid,
   ResponsiveContainer,
   BarChart,
@@ -62,7 +62,7 @@ const CustomTooltip = ({ active, payload, label, getConvertedAmount, fromCurrenc
 }
 
 export default function ClientAnalytics() {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
       {/* Header */}
@@ -73,10 +73,10 @@ export default function ClientAnalytics() {
         className="mb-8"
       >
         <div className="flex justify-between items-center">
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-          <BarChart3 className="w-4 h-4 text-indigo-400" />
-          <span className="text-sm font-medium text-white">Analytics Dashboard</span>
-        </div>
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+            <BarChart3 className="w-4 h-4 text-indigo-400" />
+            <span className="text-sm font-medium text-white">Analytics Dashboard</span>
+          </div>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
@@ -90,9 +90,9 @@ export default function ClientAnalytics() {
         {[
           {
             title: "Total Spending",
-            value: getConvertedAmount(2600000, 'INR'),
+            value: getFormattedAmount(26, 'eth'),
             change: "+12%",
-            icon: IndianRupee,
+            icon: Wallet,
             color: "from-blue-500 to-indigo-500",
           },
           {
@@ -172,7 +172,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
                     <Area
                       type="monotone"
                       dataKey="spending"
@@ -217,7 +217,7 @@ export default function ClientAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -248,7 +248,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
                     <Bar dataKey="projects" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -278,7 +278,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} fromCurrency='INR' />} />
+                    <Tooltip content={<CustomTooltip getConvertedAmount={getFormattedAmount} fromCurrency='eth' />} />
                     <Line
                       type="monotone"
                       dataKey="satisfaction"

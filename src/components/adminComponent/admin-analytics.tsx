@@ -17,7 +17,7 @@ import {
     Users,
     Briefcase,
     FileText,
-    IndianRupee,
+    Wallet,
     Calendar,
     Download,
 } from "lucide-react"
@@ -89,7 +89,7 @@ export default function AdminAnalytics() {
         { title: "Total Users", value: platform.users?.total || 0, sub: `+${platform.users?.newThisMonth || 0} this month`, icon: Users, color: "from-blue-500 to-cyan-500" },
         { title: "Active Jobs", value: platform.jobs?.active || 0, sub: `${platform.jobs?.total || 0} total`, icon: Briefcase, color: "from-green-500 to-emerald-500" },
         { title: "Contracts", value: platform.contracts?.completed || 0, sub: `${platform.contracts?.total || 0} total`, icon: FileText, color: "from-purple-500 to-pink-500" },
-        { title: "Total Revenue", value: `₹${Math.round(revenue.totalRevenue).toLocaleString()}`, sub: "All time", icon: IndianRupee, color: "from-orange-500 to-red-500" },
+        { title: "Total Revenue", value: `${revenue.totalRevenue.toFixed(4)} ETH`, sub: "All time", icon: Wallet, color: "from-orange-500 to-red-500" },
     ]
 
     if (loading) {
@@ -188,7 +188,7 @@ export default function AdminAnalytics() {
                     <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
                         <CardHeader>
                             <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-                                <IndianRupee className="w-5 h-5 text-orange-400" />
+                                <Wallet className="w-5 h-5 text-orange-400" />
                                 Revenue by Payment Mode
                             </CardTitle>
                         </CardHeader>
@@ -204,7 +204,7 @@ export default function AdminAnalytics() {
                                             outerRadius={100}
                                             paddingAngle={2}
                                             dataKey="value"
-                                            label={({ name, value }) => `${name}: ₹${Math.round(value).toLocaleString()}`}
+                                            label={({ name, value }) => `${name}: ${Number(value).toFixed(4)} ETH`}
                                         >
                                             {revenue.revenueByMode.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

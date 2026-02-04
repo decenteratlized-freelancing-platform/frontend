@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { FileText, IndianRupee, Calendar, Users } from "lucide-react"
+import { FileText, Wallet, Calendar, Users } from "lucide-react"
 import { UserAvatar } from "@/components/shared/user-avatar"
 
 interface Contract {
@@ -160,7 +160,7 @@ export default function AdminContracts() {
                                                 </Badge>
                                                 <div className="text-right">
                                                     <p className="text-lg font-bold text-white flex items-center gap-1">
-                                                        <IndianRupee className="w-4 h-4" />
+                                                        <Wallet className="w-4 h-4" />
                                                         {contract.totalAmount}
                                                     </p>
                                                     <p className="text-xs text-gray-400">{contract.paymentType}</p>
@@ -202,7 +202,7 @@ export default function AdminContracts() {
                                                             variant="outline"
                                                             className="border-white/20 text-gray-300"
                                                         >
-                                                            {milestone.description.slice(0, 20)}... - ₹{milestone.amount} ({milestone.status})
+                                                            {milestone.description.slice(0, 20)}... - {milestone.amount} ETH ({milestone.status})
                                                         </Badge>
                                                     ))}
                                                 </div>

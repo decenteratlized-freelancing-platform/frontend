@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
-import { Search, Filter, Download, CreditCard, ArrowUpRight, ArrowDownLeft, Calendar, IndianRupeeIcon } from "lucide-react"
+import { Search, Filter, Download, CreditCard, ArrowUpRight, ArrowDownLeft, Calendar, Wallet } from "lucide-react"
 
 const transactions = [
   {
@@ -111,7 +111,7 @@ export default function ClientTransactions() {
                   <div
                     className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
                   >
-                    <IndianRupeeIcon className="w-6 h-6 text-white" />
+                    <Wallet className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -186,11 +186,10 @@ export default function ClientTransactions() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                          transaction.amount > 0
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${transaction.amount > 0
                             ? "bg-gradient-to-br from-green-500 to-emerald-500"
                             : "bg-gradient-to-br from-red-500 to-pink-500"
-                        }`}
+                          }`}
                       >
                         {transaction.amount > 0 ? (
                           <ArrowDownLeft className="w-6 h-6 text-white" />

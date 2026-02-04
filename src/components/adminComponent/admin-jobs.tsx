@@ -19,7 +19,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Briefcase, Search, MoreVertical, Eye, Trash2, Calendar, IndianRupee } from "lucide-react"
+import { Briefcase, Search, MoreVertical, Eye, Trash2, Calendar, Wallet } from "lucide-react"
 
 interface Job {
     _id: string
@@ -262,8 +262,8 @@ export default function AdminJobs() {
 
                                         <div className="flex items-center gap-6 text-sm">
                                             <div className="flex items-center gap-1 text-gray-400">
-                                                <IndianRupee className="w-4 h-4" />
-                                                <span>{job.paymentCurrency === "ETH" ? `${job.budget} ETH` : `₹${job.budget}`}</span>
+                                                <Wallet className="w-4 h-4" />
+                                                <span>{job.budget} ETH</span>
                                             </div>
                                             {job.deadline && (
                                                 <div className="flex items-center gap-1 text-gray-400">

@@ -28,7 +28,7 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    IndianRupee,
+    Wallet,
     Calendar,
     User,
     FileText,
@@ -338,8 +338,8 @@ export default function AdminDisputes() {
                                                 </div>
                                                 {dispute.contract && (
                                                     <div className="flex items-center gap-1 text-xs text-gray-500">
-                                                        <IndianRupee className="w-3 h-3" />
-                                                        {dispute.contract.totalAmount}
+                                                        <Wallet className="w-3 h-3" />
+                                                        {dispute.contract.totalAmount} ETH
                                                     </div>
                                                 )}
                                             </div>

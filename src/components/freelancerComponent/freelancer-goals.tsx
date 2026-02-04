@@ -29,7 +29,7 @@ interface Goal {
 const initialGoals: Goal[] = [
   {
     id: 1,
-    title: "Earn ₹4,000,000 This Year",
+    title: "Earn 50 ETH This Year",
     description: "Reach annual income target through quality freelance projects",
     progress: 75,
     target: 4000000,

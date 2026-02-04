@@ -3,7 +3,7 @@ import {
   Search,
   Filter,
   Clock,
-  IndianRupee,
+  Wallet,
   MapPin,
   Heart,
   Star,
@@ -84,20 +84,14 @@ export default function BrowseJobs() {
       return
     }
 
-    if (selectedJob?.paymentCurrency === 'ETH' && !session?.user?.walletAddress) {
+
+    if (!session?.user?.walletAddress) {
       toast({
         title: "Wallet Required",
-        description: "Please connect your wallet to apply for ETH-based jobs.",
+        description: "Please connect your wallet to apply for jobs.",
         variant: "destructive",
       });
       return;
-    } else if (selectedJob?.paymentCurrency === 'INR' && !session?.user?.bankAccount) {
-        toast({
-            title: "Bank Account Required",
-            description: "Please add your bank details to apply for INR-based jobs.",
-            variant: "destructive",
-        });
-        return;
     }
 
     if (selectedJob && proposalText && proposalBudget && proposalDelivery) {
@@ -273,14 +267,10 @@ export default function BrowseJobs() {
                       {/* Job Details */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-2">
-                          {job.paymentCurrency === 'INR' ? (
-                            <IndianRupee className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Tag className="w-4 h-4 text-purple-400" />
-                          )}
+                          <Wallet className="w-4 h-4 text-purple-400" />
                           <div>
                             <span className="font-semibold text-white">
-                              {job.paymentCurrency === 'INR' ? `₹${job.budget}` : `${job.budget} ETH`}
+                              {job.budget} ETH
                             </span>
                             <p className="text-xs text-gray-400">Budget</p>
                           </div>
@@ -326,16 +316,16 @@ export default function BrowseJobs() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            className="border-white/40 text-white hover:bg-white/10 bg-transparent hover:text-white"
-                            onClick={() => {
-                                setSelectedJob(job);
-                                setIsDetailsModalOpen(true);
-                            }}
-                        >
-                            View Job
-                        </Button>
+                      <Button
+                        variant="outline"
+                        className="border-white/40 text-white hover:bg-white/10 bg-transparent hover:text-white"
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setIsDetailsModalOpen(true);
+                        }}
+                      >
+                        View Job
+                      </Button>
                       {submittedProposals.includes(job._id) ? (
                         <Button disabled className="bg-green-600/50 text-white">
                           <CheckCircle className="w-4 h-4 mr-2" />
@@ -428,11 +418,11 @@ export default function BrowseJobs() {
         </AnimatePresence>
       </div>
 
-        <JobDetailsModal
-            job={selectedJob}
-            isOpen={isDetailsModalOpen}
-            onClose={() => setIsDetailsModalOpen(false)}
-        />
+      <JobDetailsModal
+        job={selectedJob}
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+      />
     </div>
   )
 }

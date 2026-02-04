@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
 import { Input } from "@/components/ui/input";
+import AnnouncementBanner from "@/components/shared/AnnouncementBanner";
 // removed server model import
 
 
@@ -91,519 +92,518 @@ export default function FreelancerDashboard() {
     clientRating: 0,
   });
 
-    const handleJobsRedirect = () => { router.push('/freelancer/browse-jobs') }
+  const handleJobsRedirect = () => { router.push('/freelancer/browse-jobs') }
 
-    const handleGoalsRedirect = () => { router.push('/freelancer/goals') }
+  const handleGoalsRedirect = () => { router.push('/freelancer/goals') }
 
-    const handleMessagesRedirect = () => { router.push('/freelancer/messages') }
+  const handleMessagesRedirect = () => { router.push('/freelancer/messages') }
 
-  
 
-    useEffect(() => {
 
-      const fetchDashboardStats = async () => {
+  useEffect(() => {
 
-        const email = session?.user?.email || localStorage.getItem("email");
+    const fetchDashboardStats = async () => {
 
-        if (email) {
+      const email = session?.user?.email || localStorage.getItem("email");
 
-          try {
+      if (email) {
 
-            const res = await fetch(`http://localhost:5000/api/dashboard/freelancer/summary?email=${email}`);
+        try {
 
-            if (res.ok) {
+          const res = await fetch(`http://localhost:5000/api/dashboard/freelancer/summary?email=${email}`);
 
-              const data = await res.json();
+          if (res.ok) {
 
-              setDashboardStats(data);
+            const data = await res.json();
 
-            }
-
-          } catch (error) {
-
-            console.error("Error fetching dashboard stats:", error);
+            setDashboardStats(data);
 
           }
 
-        }
+        } catch (error) {
 
-      };
-
-      fetchDashboardStats();
-
-    }, [session]);
-
-  
-
-    useEffect(() => {
-
-      const loginType = localStorage.getItem("loginType");
-
-  
-
-      if (loginType === "manual") {
-
-        const name = localStorage.getItem("fullName");
-
-        const email = localStorage.getItem("email");
-
-        const role = localStorage.getItem("role");
-
-        setDisplayName(name || email || "Guest");
-
-        setProfileData({ fullname: name || "", email: email || "", role: role || "" });
-
-      } else if (session?.user) {
-
-        setDisplayName(session.user.name || session.user.email || "Guest");
-
-        setProfileData({
-
-          fullname: session.user.name || "",
-
-          email: session.user.email || "",
-
-          role: session.user.role || "",
-
-        });
-
-      }
-
-    }, [session, user]);
-
-  
-
-    useEffect(() => {
-
-      const fetchProposals = async () => {
-
-        const email = session?.user?.email || localStorage.getItem("email");
-
-        if (email) {
-
-          try {
-
-            const res = await fetch(`http://localhost:5000/api/proposals/my-proposals?email=${email}`);
-
-            if (res.ok) {
-
-              const data = await res.json();
-
-              setProposals(data);
-
-            }
-
-          } catch (error) {
-
-            console.error("Error fetching proposals:", error);
-
-          } finally {
-
-            setLoadingProposals(false);
-
-          }
+          console.error("Error fetching dashboard stats:", error);
 
         }
-
-      };
-
-  
-
-      fetchProposals();
-
-    }, [session]);
-
-  
-
-    const handleSaveProfile = async () => {
-
-      setIsSaving(true);
-
-      setSaveMessage("");
-
-  
-
-      try {
-
-        const res = await fetch("/api/user/update-profile", {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type": "application/json",
-
-          },
-
-          body: JSON.stringify(profileData),
-
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-
-          setSaveMessage("Profile updated successfully!");
-
-          localStorage.setItem("fullName", profileData.fullname);
-
-          localStorage.setItem("email", profileData.email);
-
-          localStorage.setItem("role", profileData.role);
-
-          setDisplayName(profileData.fullname || profileData.email || "Guest");
-
-        } else {
-
-          setSaveMessage("Failed to update profile");
-
-        }
-
-      } catch (error) {
-
-        setSaveMessage("Error updating profile");
-
-        console.error("Error updating profile:", error);
-
-      }
-
-      finally {
-
-        setIsSaving(false);
 
       }
 
     };
 
-  
+    fetchDashboardStats();
 
-    if (status === "loading") {
+  }, [session]);
 
-      return <p className="text-white">Loading...</p>;
+
+
+  useEffect(() => {
+
+    const loginType = localStorage.getItem("loginType");
+
+
+
+    if (loginType === "manual") {
+
+      const name = localStorage.getItem("fullName");
+
+      const email = localStorage.getItem("email");
+
+      const role = localStorage.getItem("role");
+
+      setDisplayName(name || email || "Guest");
+
+      setProfileData({ fullname: name || "", email: email || "", role: role || "" });
+
+    } else if (session?.user) {
+
+      setDisplayName(session.user.name || session.user.email || "Guest");
+
+      setProfileData({
+
+        fullname: session.user.name || "",
+
+        email: session.user.email || "",
+
+        role: session.user.role || "",
+
+      });
 
     }
 
-  
+  }, [session, user]);
 
-    const activeProjectsCount = proposals.filter(p => p.status === 'accepted').length;
 
-  
 
-    return (
+  useEffect(() => {
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+    const fetchProposals = async () => {
 
-  
+      const email = session?.user?.email || localStorage.getItem("email");
 
-        <motion.div
+      if (email) {
 
-          initial={{ opacity: 0, y: 30 }}
+        try {
 
-          animate={{ opacity: 1, y: 0 }}
+          const res = await fetch(`http://localhost:5000/api/proposals/my-proposals?email=${email}`);
 
-          transition={{ duration: 0.8 }}
+          if (res.ok) {
 
-          className="mb-8"
+            const data = await res.json();
 
-        >
+            setProposals(data);
 
-          <div className="flex justify-between items-center">
+          }
 
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+        } catch (error) {
 
-              <Briefcase className="w-4 h-4 text-green-400" />
+          console.error("Error fetching proposals:", error);
 
-              <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
+        } finally {
 
-            </div>
+          setLoadingProposals(false);
+
+        }
+
+      }
+
+    };
+
+
+
+    fetchProposals();
+
+  }, [session]);
+
+
+
+  const handleSaveProfile = async () => {
+
+    setIsSaving(true);
+
+    setSaveMessage("");
+
+
+
+    try {
+
+      const res = await fetch("/api/user/update-profile", {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type": "application/json",
+
+        },
+
+        body: JSON.stringify(profileData),
+
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+
+        setSaveMessage("Profile updated successfully!");
+
+        localStorage.setItem("fullName", profileData.fullname);
+
+        localStorage.setItem("email", profileData.email);
+
+        localStorage.setItem("role", profileData.role);
+
+        setDisplayName(profileData.fullname || profileData.email || "Guest");
+
+      } else {
+
+        setSaveMessage("Failed to update profile");
+
+      }
+
+    } catch (error) {
+
+      setSaveMessage("Error updating profile");
+
+      console.error("Error updating profile:", error);
+
+    }
+
+    finally {
+
+      setIsSaving(false);
+
+    }
+
+  };
+
+
+
+  if (status === "loading") {
+
+    return <p className="text-white">Loading...</p>;
+
+  }
+
+
+
+  const activeProjectsCount = proposals.filter(p => p.status === 'accepted').length;
+
+
+
+  return (
+
+    <div className="max-w-7xl mx-auto px-8 py-8">
+      <AnnouncementBanner role="freelancer" />
+
+      <motion.div
+
+        initial={{ opacity: 0, y: 30 }}
+
+        animate={{ opacity: 1, y: 0 }}
+
+        transition={{ duration: 0.8 }}
+
+        className="mb-8"
+
+      >
+
+        <div className="flex justify-between items-center">
+
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+
+            <Briefcase className="w-4 h-4 text-green-400" />
+
+            <span className="text-sm font-medium text-white">Freelancer Dashboard</span>
 
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        </div>
 
-            Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
 
-          </h1>
+          Welcome back,<span className="text-green-400"> {user?.name || "Guest"}</span>
 
-  
+        </h1>
 
-          <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
 
-        </motion.div>
 
-  
+        <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
 
-  
+      </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-          {[{
 
-              title: "Total Earnings",
 
-              value: getFormattedAmount(dashboardStats.totalEarnings, 'INR'),
 
-              change: "+18%",
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-              icon: CoinsIcon,
+        {[{
 
-              color: "from-green-500 to-emerald-500",
+          title: "Total Earnings",
 
-            },
+          value: getFormattedAmount(dashboardStats.totalEarnings, 'eth'),
 
-            {
+          change: "+18%",
 
-              title: "Active Projects",
+          icon: CoinsIcon,
 
-              value: dashboardStats.activeProjectsCount.toString(),
+          color: "from-green-500 to-emerald-500",
 
-              change: "Updated just now",
+        },
 
-              icon: Briefcase,
+        {
 
-              color: "from-blue-500 to-cyan-500",
+          title: "Active Projects",
 
-            },
+          value: dashboardStats.activeProjectsCount.toString(),
 
-            {
+          change: "Updated just now",
 
-              title: "Completed Jobs",
+          icon: Briefcase,
 
-              value: dashboardStats.completedJobsCount.toString(),
+          color: "from-blue-500 to-cyan-500",
 
-              change: "+4",
+        },
 
-              icon: Award,
+        {
 
-              color: "from-purple-500 to-pink-500",
+          title: "Completed Jobs",
 
-            },
+          value: dashboardStats.completedJobsCount.toString(),
 
-            {
+          change: "+4",
 
-              title: "Client Rating",
+          icon: Award,
 
-              value: dashboardStats.clientRating ? dashboardStats.clientRating.toString() : "N/A",
+          color: "from-purple-500 to-pink-500",
 
-              change: "+0.1",
+        },
 
-              icon: Star,
+        {
 
-              color: "from-orange-500 to-red-500",
+          title: "Client Rating",
 
-            },
+          value: dashboardStats.clientRating ? dashboardStats.clientRating.toString() : "N/A",
 
-          ].map((stat, index) => (
+          change: "+0.1",
 
-            <motion.div
+          icon: Star,
 
-              key={stat.title}
+          color: "from-orange-500 to-red-500",
 
-              initial={{ opacity: 0, y: 50 }}
+        },
 
-              animate={{ opacity: 1, y: 0 }}
+        ].map((stat, index) => (
 
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+          <motion.div
 
-              whileHover={{ y: -5, scale: 1.02 }}
+            key={stat.title}
 
-            >
+            initial={{ opacity: 0, y: 50 }}
 
-              <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
+            animate={{ opacity: 1, y: 0 }}
 
-                <CardContent className="p-6">
+            transition={{ duration: 0.5, delay: index * 0.1 }}
 
-                  <div className="flex items-center justify-between">
+            whileHover={{ y: -5, scale: 1.02 }}
 
-                    <div>
+          >
 
-                      <p className="text-sm font-medium text-gray-300">{stat.title}</p>
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
 
-                      <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
+              <CardContent className="p-6">
 
-                      {/* <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p> */}
+                <div className="flex items-center justify-between">
 
-                    </div>
+                  <div>
 
-                    <div
+                    <p className="text-sm font-medium text-gray-300">{stat.title}</p>
 
-                      className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
+                    <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
 
-                    >
-
-                      <stat.icon className="w-6 h-6 text-white" />
-
-                    </div>
+                    {/* <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p> */}
 
                   </div>
 
-                </CardContent>
+                  <div
 
-              </Card>
+                    className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
 
-            </motion.div>
+                  >
 
-          ))}
+                    <stat.icon className="w-6 h-6 text-white" />
 
-        </div>
+                  </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                </div>
 
-  
+              </CardContent>
 
-          <div className="lg:col-span-2">
+            </Card>
 
-            <motion.div
+          </motion.div>
 
-              initial={{ opacity: 0, x: -30 }}
+        ))}
 
-              animate={{ opacity: 1, x: 0 }}
+      </div>
 
-              transition={{ duration: 0.6, delay: 0.4 }}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            >
 
-              <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
 
-                <CardHeader>
+        <div className="lg:col-span-2">
 
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
+          <motion.div
 
-                    <MessageSquare className="w-5 h-5 text-green-400" />
+            initial={{ opacity: 0, x: -30 }}
 
-                    My Proposals
+            animate={{ opacity: 1, x: 0 }}
 
-                  </CardTitle>
+            transition={{ duration: 0.6, delay: 0.4 }}
 
-                </CardHeader>
+          >
 
-                <CardContent className="space-y-4">
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
 
-                  {loadingProposals ? (
+              <CardHeader>
 
-                    <p className="text-gray-400">Loading proposals...</p>
+                <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
 
-                  ) : proposals.length === 0 ? (
+                  <MessageSquare className="w-5 h-5 text-green-400" />
 
-                    <p className="text-gray-400">No proposals submitted yet.</p>
+                  My Proposals
 
-                  ) : (
+                </CardTitle>
 
-                    proposals.map((proposal, index) => (
+              </CardHeader>
 
-                      <motion.div
+              <CardContent className="space-y-4">
 
-                        key={proposal._id}
+                {loadingProposals ? (
 
-                        initial={{ opacity: 0, y: 20 }}
+                  <p className="text-gray-400">Loading proposals...</p>
 
-                        animate={{ opacity: 1, y: 0 }}
+                ) : proposals.length === 0 ? (
 
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                  <p className="text-gray-400">No proposals submitted yet.</p>
 
-                        className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
+                ) : (
 
-                      >
+                  proposals.map((proposal, index) => (
 
-                        <div className="flex items-start justify-between mb-3">
+                    <motion.div
 
-                          <div className="flex items-center gap-3">
+                      key={proposal._id}
 
-                          <UserAvatar 
+                      initial={{ opacity: 0, y: 20 }}
 
-                              user={{
+                      animate={{ opacity: 1, y: 0 }}
 
-                                  name: proposal.job?.client?.fullName || "Client",
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
 
-                                  image: proposal.job?.client?.image
+                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
 
-                              }} 
+                    >
 
-                              className="w-10 h-10 border border-white/20"
+                      <div className="flex items-start justify-between mb-3">
+
+                        <div className="flex items-center gap-3">
+
+                          <UserAvatar
+
+                            user={{
+
+                              name: proposal.job?.client?.fullName || "Client",
+
+                              image: proposal.job?.client?.image
+
+                            }}
+
+                            className="w-10 h-10 border border-white/20"
 
                           />
 
-                            <div>
-
-                              <h4 className="font-semibold text-white text-sm">{proposal.job?.title || "Unknown Job"}</h4>
-
-                              <p className="text-xs text-gray-400">{proposal.job?.client?.fullName || "Unknown Client"}</p>
-
-                            </div>
-
-                          </div>
-
-                          <Badge className={`${getStatusColor(proposal.status)} flex items-center gap-1`}>
-
-                            {getStatusIcon(proposal.status)}
-
-                            {getStatusText(proposal.status)}
-
-                          </Badge>
-
-                        </div>
-
-  
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-
                           <div>
 
-                            <p className="text-xs text-gray-400">Client Budget</p>
+                            <h4 className="font-semibold text-white text-sm">{proposal.job?.title || "Unknown Job"}</h4>
 
-                            <p className="text-sm font-medium text-white">
-
-                              {proposal.job?.paymentCurrency === 'INR' ? `₹${proposal.job?.budget}` : `${proposal.job?.budget} ETH`}
-
-                            </p>
-
-                          </div>
-
-                          <div>
-
-                            <p className="text-xs text-gray-400">Your Rate</p>
-
-                            <p className="text-sm font-medium text-green-400">
-
-                              {proposal.job?.paymentCurrency === 'INR' ? `₹${proposal.proposedRate}` : `${proposal.proposedRate} ETH`}
-
-                            </p>
-
-                          </div>
-
-                          <div>
-
-                            <p className="text-xs text-gray-400">Delivery</p>
-
-                            <p className="text-sm font-medium text-white">{proposal.deliveryTime}</p>
-
-                          </div>
-
-                          <div>
-
-                            <p className="text-xs text-gray-400">Submitted</p>
-
-                            <p className="text-sm font-medium text-white">{new Date(proposal.createdAt).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-400">{proposal.job?.client?.fullName || "Unknown Client"}</p>
 
                           </div>
 
                         </div>
 
-  
+                        <Badge className={`${getStatusColor(proposal.status)} flex items-center gap-1`}>
 
-                        <div className="mb-3">
+                          {getStatusIcon(proposal.status)}
 
-                          <p className="text-xs text-gray-400 mb-1">Cover Letter</p>
+                          {getStatusText(proposal.status)}
 
-                          <p className="text-sm text-gray-300 line-clamp-2">{proposal.coverLetter}</p>
+                        </Badge>
+
+                      </div>
+
+
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+
+                        <div>
+
+                          <p className="text-xs text-gray-400">Client Budget</p>
+
+                          <p className="text-sm font-medium text-white">
+
+                            {proposal.job?.budget} ETH
+
+                          </p>
 
                         </div>
 
-  
+                        <div>
 
-                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-400">Your Rate</p>
 
-                          {/* <Button
+                          <p className="text-sm font-medium text-green-400">
+
+                            {proposal.proposedRate} ETH
+
+                          </p>
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-xs text-gray-400">Delivery</p>
+
+                          <p className="text-sm font-medium text-white">{proposal.deliveryTime}</p>
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-xs text-gray-400">Submitted</p>
+
+                          <p className="text-sm font-medium text-white">{new Date(proposal.createdAt).toLocaleDateString()}</p>
+
+                        </div>
+
+                      </div>
+
+
+
+                      <div className="mb-3">
+
+                        <p className="text-xs text-gray-400 mb-1">Cover Letter</p>
+
+                        <p className="text-sm text-gray-300 line-clamp-2">{proposal.coverLetter}</p>
+
+                      </div>
+
+
+
+                      <div className="flex items-center justify-between">
+
+                        {/* <Button
 
                             variant="ghost"
 
@@ -619,153 +619,153 @@ export default function FreelancerDashboard() {
 
                           </Button> */}
 
-                          {proposal.status === "accepted" && (
+                        {proposal.status === "accepted" && (
 
-                            <Button
+                          <Button
 
-                              size="sm"
+                            size="sm"
 
-                              className="bg-white/90 hover:bg-white/80 text-zinc-950 rounded-xl p-4 hover:text-black-600 transition-all duration-300 group"
+                            className="bg-white/90 hover:bg-white/80 text-zinc-950 rounded-xl p-4 hover:text-black-600 transition-all duration-300 group"
 
-                            >
+                          >
 
-                              <Play className="w-4 h-4 mr-2" />
+                            <Play className="w-4 h-4 mr-2" />
 
-                              Start Project
+                            Start Project
 
-                            </Button>
+                          </Button>
 
-                          )}
+                        )}
 
-                        </div>
+                      </div>
 
-                      </motion.div>
+                    </motion.div>
 
-                    ))
+                  ))
 
-                  )}
+                )}
 
-                </CardContent>
+              </CardContent>
 
-              </Card>
+            </Card>
 
-            </motion.div>
+          </motion.div>
 
-          </div>
+        </div>
 
-  
 
-          {/* Right Column - Quick Actions & Recent Activity */}
 
-          <div className="space-y-6">
+        {/* Right Column - Quick Actions & Recent Activity */}
 
-            {/* Quick Actions */}
+        <div className="space-y-6">
 
-            <motion.div
+          {/* Quick Actions */}
 
-              initial={{ opacity: 0, x: 30 }}
+          <motion.div
 
-              animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: 30 }}
 
-              transition={{ duration: 0.6, delay: 0.6 }}
+            animate={{ opacity: 1, x: 0 }}
 
-            >
+            transition={{ duration: 0.6, delay: 0.6 }}
 
-              <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
+          >
 
-                <CardHeader>
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
 
-                  <CardTitle className="text-lg font-bold text-white">Quick Actions</CardTitle>
+              <CardHeader>
 
-                </CardHeader>
+                <CardTitle className="text-lg font-bold text-white">Quick Actions</CardTitle>
 
-                <CardContent className="space-y-3">
+              </CardHeader>
 
-                  <button
+              <CardContent className="space-y-3">
 
-                    onClick={handleJobsRedirect}
+                <button
 
-                    className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
+                  onClick={handleJobsRedirect}
 
-                  >
+                  className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
 
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                >
 
-                      <Briefcase className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
 
-                    </div>
+                    <Briefcase className="w-5 h-5 text-blue-400" />
 
-                    <div>
+                  </div>
 
-                      <h4 className="text-sm font-bold text-zinc-100">Find Work</h4>
+                  <div>
 
-                      <p className="text-xs text-zinc-400 mt-0.5">Browse new opportunities</p>
+                    <h4 className="text-sm font-bold text-zinc-100">Find Work</h4>
 
-                    </div>
+                    <p className="text-xs text-zinc-400 mt-0.5">Browse new opportunities</p>
 
-                  </button>
+                  </div>
 
-  
+                </button>
 
-                  <button
 
-                    onClick={handleGoalsRedirect}
 
-                    className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
+                <button
 
-                  >
+                  onClick={handleGoalsRedirect}
 
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                  className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
 
-                      <Target className="w-5 h-5 text-purple-400" />
+                >
 
-                    </div>
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
 
-                    <div>
+                    <Target className="w-5 h-5 text-purple-400" />
 
-                      <h4 className="text-sm font-bold text-zinc-100">Set Goals</h4>
+                  </div>
 
-                      <p className="text-xs text-zinc-400 mt-0.5">Update your targets</p>
+                  <div>
 
-                    </div>
+                    <h4 className="text-sm font-bold text-zinc-100">Set Goals</h4>
 
-                  </button>
+                    <p className="text-xs text-zinc-400 mt-0.5">Update your targets</p>
 
-  
+                  </div>
 
-                  <button
+                </button>
 
-                    onClick={handleMessagesRedirect}
 
-                    className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
 
-                  >
+                <button
 
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                  onClick={handleMessagesRedirect}
 
-                      <MessageSquare className="w-5 h-5 text-emerald-400" />
+                  className="w-full group flex items-center gap-4 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-xl p-4 transition-all duration-300 text-left"
 
-                    </div>
+                >
 
-                    <div>
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
 
-                      <h4 className="text-sm font-bold text-zinc-100">Messages</h4>
+                    <MessageSquare className="w-5 h-5 text-emerald-400" />
 
-                      <p className="text-xs text-zinc-400 mt-0.5">Chat with clients</p>
+                  </div>
 
-                    </div>
+                  <div>
 
-                  </button>
+                    <h4 className="text-sm font-bold text-zinc-100">Messages</h4>
 
-                </CardContent>
+                    <p className="text-xs text-zinc-400 mt-0.5">Chat with clients</p>
 
-              </Card>
+                  </div>
 
-            </motion.div>
+                </button>
 
-  
+              </CardContent>
 
-            {/* Recent Activity */}
+            </Card>
+
+          </motion.div>
+
+
+
+          {/* Recent Activity */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}

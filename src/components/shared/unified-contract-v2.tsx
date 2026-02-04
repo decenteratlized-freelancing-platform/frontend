@@ -21,7 +21,17 @@ import { LoadingButton } from "./loading-button";
 import { formatCurrency } from "@/lib/utils";
 
 const fetchData = async (userRole: string, userEmail: string | undefined) => {
-  const contractsRes = await fetch('http://localhost:5000/api/contracts');
+  // Build URL with appropriate email filter based on role
+  let contractsUrl = 'http://localhost:5000/api/contracts';
+  if (userEmail) {
+    if (userRole === 'client') {
+      contractsUrl += `?clientEmail=${encodeURIComponent(userEmail)}`;
+    } else if (userRole === 'freelancer') {
+      contractsUrl += `?freelancerEmail=${encodeURIComponent(userEmail)}`;
+    }
+  }
+
+  const contractsRes = await fetch(contractsUrl);
   const contractsData = await contractsRes.json();
   if (!contractsRes.ok) throw new Error(contractsData.error || "Failed to fetch contracts");
 
@@ -100,49 +110,49 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
         <div className="space-y-8 py-6">
           <div>
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Milestones</h3>
-                <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="h-8 border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800" 
-                    onClick={handleAddMilestone}
-                >
-                    <Plus className="w-3.5 h-3.5 mr-2" /> Add Milestone
-                </Button>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Milestones</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                onClick={handleAddMilestone}
+              >
+                <Plus className="w-3.5 h-3.5 mr-2" /> Add Milestone
+              </Button>
             </div>
             <div className="space-y-3">
               {milestones.map((milestone, index) => (
                 <div key={index} className="flex gap-3">
                   <div className="flex-1">
-                      <Input 
-                        placeholder={`Milestone ${index + 1} description`} 
-                        value={milestone.description} 
-                        onChange={e => {
-                            const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
-                        }} 
-                        className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12" 
-                      />
+                    <Input
+                      placeholder={`Milestone ${index + 1} description`}
+                      value={milestone.description}
+                      onChange={e => {
+                        const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
+                      }}
+                      className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12"
+                    />
                   </div>
                   <div className="w-32">
-                      <Input 
-                        type="number" 
-                        placeholder="Amount" 
-                        value={milestone.amount} 
-                        onChange={e => {
-                            const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
-                        }} 
-                        className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12" 
-                      />
+                    <Input
+                      type="number"
+                      placeholder="Amount"
+                      value={milestone.amount}
+                      onChange={e => {
+                        const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
+                      }}
+                      className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12"
+                    />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          
+
           <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex justify-between items-center">
             <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Total Value</p>
-                <p className="text-zinc-400 text-xs mt-1">Sum of all milestones</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Total Value</p>
+              <p className="text-zinc-400 text-xs mt-1">Sum of all milestones</p>
             </div>
             <span className="text-2xl font-bold text-white">{formatCurrency(totalAmount, proposal.job?.paymentCurrency === 'INR' ? 'INR' : 'ETH')}</span>
           </div>

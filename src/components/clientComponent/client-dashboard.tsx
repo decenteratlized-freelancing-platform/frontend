@@ -23,6 +23,7 @@ import { ProposalReviewModal } from "./proposal-review-modal"
 import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
 import { JobDetailsModal } from "@/components/shared/job-details-modal"
+import AnnouncementBanner from "@/components/shared/AnnouncementBanner"
 
 const recentActivity = [
   {
@@ -155,6 +156,7 @@ export default function ClientDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
+      <AnnouncementBanner role="client" />
       <ProposalReviewModal
         jobId={selectedJobId}
         isOpen={isReviewModalOpen}

@@ -71,8 +71,9 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         ? localContract.freelancer?._id
         : localContract.client?._id;
 
-    // Can only raise dispute on active/in-progress contracts
-    const canRaiseDispute = ['active', 'in_progress', 'pending'].includes(localContract.status?.toLowerCase());
+    // Can raise dispute on any contract that is not completed, cancelled, or refunded
+    const excludedStatuses = ['completed', 'cancelled', 'refunded'];
+    const canRaiseDispute = !excludedStatuses.includes(localContract.status?.toLowerCase());
 
     const handleDisputeSuccess = () => {
         setShowDisputeModal(false);
@@ -86,7 +87,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                 method: "POST",
                 headers: { "Content-Type": "application/json" }
             });
-            
+
             if (!res.ok) {
                 const text = await res.text();
                 try {
@@ -96,13 +97,13 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                     throw new Error(`Server error: ${res.status} ${res.statusText}`);
                 }
             }
-            
+
             const data = await res.json();
-            
+
             toast({ title: "Terms Accepted", description: "You have accepted the contract terms." });
             setHasAccepted(true);
-            
-            if(data && data.freelancerAccepted) setHasAccepted(true);
+
+            if (data && data.freelancerAccepted) setHasAccepted(true);
         } catch (err: any) {
             console.error("Accept error:", err);
             toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -124,7 +125,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ clientWallet: walletAddress })
             });
-            
+
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || "Failed to publish contract");
@@ -133,7 +134,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             toast({ title: "Success", description: "Contract published to blockchain! Waiting for confirmation..." });
             // Refresh local state to show 'Registered' status and Fund button
             const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
-            if(statusRes.ok) {
+            if (statusRes.ok) {
                 setLocalContract(await statusRes.json());
             }
         } catch (err: any) {
@@ -149,14 +150,14 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         try {
             if (!window.ethereum) throw new Error("No wallet found");
             const provider = new ethers.BrowserProvider(window.ethereum);
-            
+
             // Check Network (Sepolia)
             const network = await provider.getNetwork();
             if (network.chainId !== 11155111n) {
-                toast({ 
-                    title: "Wrong Network", 
-                    description: "Please switch your wallet to Sepolia Testnet.", 
-                    variant: "destructive" 
+                toast({
+                    title: "Wrong Network",
+                    description: "Please switch your wallet to Sepolia Testnet.",
+                    variant: "destructive"
                 });
                 try {
                     await window.ethereum.request({
@@ -166,38 +167,38 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                 } catch (switchError) {
                     // User rejected switch
                     setIsProcessing(false);
-                    return; 
+                    return;
                 }
                 // Update provider after switch might be needed, but usually Metamask handles reload or state change. 
                 // Ideally we return and let user click again or continue if provider updates automatically.
                 // For safety, let's stop and ask user to click again.
                 setIsProcessing(false);
-                return; 
+                return;
             }
 
             const signer = await provider.getSigner();
             const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
 
             const amountWei = ethers.parseEther(localContract.totalAmount.toString());
-            
+
             // Optional: Check balance proactively
             const balance = await provider.getBalance(walletAddress);
             if (balance < amountWei) {
-                 const balanceEth = ethers.formatEther(balance);
-                 const requiredEth = ethers.formatEther(amountWei);
-                 throw new Error(`INSUFFICIENT_FUNDS_DETAILED: Has ${balanceEth} ETH, Needs ${requiredEth} ETH`);
+                const balanceEth = ethers.formatEther(balance);
+                const requiredEth = ethers.formatEther(amountWei);
+                throw new Error(`INSUFFICIENT_FUNDS_DETAILED: Has ${balanceEth} ETH, Needs ${requiredEth} ETH`);
             }
 
             const tx = await escrow.deposit(localContract.onchainId, { value: amountWei });
             toast({ title: "Transaction Sent", description: "Funding escrow..." });
             await tx.wait();
-            
+
             toast({ title: "Funded", description: "Escrow funded successfully!" });
-            
+
             // Sync status
             await fetch(`http://localhost:5000/api/contracts/${localContract._id}/sync`, { method: 'POST' });
             const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
-            if(statusRes.ok) {
+            if (statusRes.ok) {
                 setLocalContract(await statusRes.json());
             }
 
@@ -234,15 +235,15 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             const tx = await escrow.releaseMilestone(localContract.onchainId, index);
             toast({ title: "Transaction Sent", description: "Releasing milestone..." });
             await tx.wait();
-            
+
             toast({ title: "Released", description: "Funds released to freelancer!" });
-            
-             // Sync status
-             await fetch(`http://localhost:5000/api/contracts/${localContract._id}/sync`, { method: 'POST' });
-             const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
-             if(statusRes.ok) {
-                 setLocalContract(await statusRes.json());
-             }
+
+            // Sync status
+            await fetch(`http://localhost:5000/api/contracts/${localContract._id}/sync`, { method: 'POST' });
+            const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
+            if (statusRes.ok) {
+                setLocalContract(await statusRes.json());
+            }
 
         } catch (err: any) {
             console.error(err);
@@ -276,7 +277,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                     Raise Dispute
                                 </Button>
                             )}
-                            
+
                             {/* Freelancer Actions */}
                             {userRole === 'freelancer' && localContract.status === 'Created' && !hasAccepted && (
                                 <Button
@@ -330,8 +331,8 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                 <div className="lg:col-span-2">
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
                         <h2 className="text-3xl font-bold text-white mb-6">Milestone Progress</h2>
-                        <MilestoneStepper 
-                            milestones={localContract.milestones || []} 
+                        <MilestoneStepper
+                            milestones={localContract.milestones || []}
                             currency={currency}
                             userRole={userRole}
                             contractStatus={localContract.status}
