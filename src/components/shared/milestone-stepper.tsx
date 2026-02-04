@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, Dot, Clock, ShieldCheck, ArrowRight } from "lucide-react";
+import { CheckCircle, Circle, Dot, Clock, ShieldCheck, ArrowRight, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const getStatusIcon = (status?: string) => {
@@ -26,7 +26,15 @@ const formatCurrency = (amount: number, currency: 'INR' | 'ETH') => {
     return `₹${amount.toLocaleString('en-IN')}`;
 };
 
-export function MilestoneStepper({ milestones, currency }: { milestones: any[], currency: 'INR' | 'ETH' }) {
+interface MilestoneStepperProps {
+    milestones: any[];
+    currency: 'INR' | 'ETH';
+    userRole?: string;
+    contractStatus?: string;
+    onRelease?: (index: number) => void;
+}
+
+export function MilestoneStepper({ milestones, currency, userRole, contractStatus, onRelease }: MilestoneStepperProps) {
     if (!milestones || milestones.length === 0) {
         return (
             <div className="text-center py-10 bg-white/5 rounded-2xl">
@@ -43,6 +51,7 @@ export function MilestoneStepper({ milestones, currency }: { milestones: any[], 
             {milestones.map((milestone, index) => {
                 const isCompleted = milestone.status === 'paid' || milestone.status === 'completed';
                 const isCurrent = index === currentMilestoneIndex;
+                const canRelease = userRole === 'client' && contractStatus === 'Funded' && !isCompleted && onRelease;
 
                 return (
                     <div key={milestone._id || index} className="relative pb-12 last:pb-0">
@@ -92,11 +101,14 @@ export function MilestoneStepper({ milestones, currency }: { milestones: any[], 
                                     </p>
                                 </div>
 
-                                {isCurrent && (
+                                {canRelease && (
                                     <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between">
-                                        <p className="text-sm text-blue-300">Action Required</p>
-                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                            Fund & Start <ArrowRight className="w-4 h-4 ml-2"/>
+                                        <p className="text-sm text-blue-300">Milestone Ready for Approval</p>
+                                        <Button 
+                                            onClick={() => onRelease && onRelease(index)}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                            <Unlock className="w-4 h-4 mr-2"/> Release Funds
                                         </Button>
                                     </div>
                                 )}

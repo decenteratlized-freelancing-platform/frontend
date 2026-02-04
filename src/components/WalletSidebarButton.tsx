@@ -41,13 +41,15 @@ export function WalletSidebarButton({ isCollapsed }: WalletSidebarButtonProps) {
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
+            className={`w-full bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white ${
+              isCollapsed ? "justify-center" : "justify-between"
+            }`}
           >
             <span className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               {!isCollapsed && <span className="text-xs font-medium">{walletLabel}</span>}
             </span>
-            <ChevronDown className="w-3 h-3 opacity-50" />
+            {!isCollapsed && <ChevronDown className="w-3 h-3 opacity-50" />}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56 bg-gray-900/95 backdrop-blur-sm border border-white/20 shadow-xl hover:text-red-800">
@@ -64,7 +66,9 @@ export function WalletSidebarButton({ isCollapsed }: WalletSidebarButtonProps) {
     <Button
       variant="outline"
       size="sm"
-      className="w-full justify-between bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white"
+      className={`w-full bg-white/5 hover:bg-blue-500 border-white/20 text-white hover:text-white ${
+        isCollapsed ? "justify-center" : "justify-between"
+      }`}
       onClick={handleWalletClick}
       disabled={isConnecting}
     >
@@ -74,7 +78,7 @@ export function WalletSidebarButton({ isCollapsed }: WalletSidebarButtonProps) {
         ) : (
           <Wallet className="w-4 h-4" />
         )}
-        <span className="text-xs font-medium">{walletLabel}</span>
+        {!isCollapsed && <span className="text-xs font-medium">{walletLabel}</span>}
       </span>
     </Button>
   );

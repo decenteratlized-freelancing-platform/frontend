@@ -90,40 +90,66 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900/90 backdrop-blur-xl border-white/10 text-white max-w-2xl">
+      <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold">Create Contract</DialogTitle>
-          <DialogDescription className="text-neutral-400">
-            Finalize the terms for your project with <span className="font-semibold text-white">{proposal.freelancer.fullName}</span>.
+          <DialogTitle className="text-2xl font-bold text-white">Create Contract</DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            Finalize the terms for your project with <span className="font-semibold text-zinc-200">{proposal.freelancer.fullName}</span>.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 py-6">
+        <div className="space-y-8 py-6">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-3">Milestones</h3>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Milestones</h3>
+                <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-8 border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800" 
+                    onClick={handleAddMilestone}
+                >
+                    <Plus className="w-3.5 h-3.5 mr-2" /> Add Milestone
+                </Button>
+            </div>
             <div className="space-y-3">
               {milestones.map((milestone, index) => (
                 <div key={index} className="flex gap-3">
-                  <Input placeholder={`Milestone ${index + 1} description`} value={milestone.description} onChange={e => {
-                    const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
-                  }} className="bg-white/10 border-white/20 h-12" />
-                  <Input type="number" placeholder="Amount" value={milestone.amount} onChange={e => {
-                    const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
-                  }} className="bg-white/10 border-white/20 h-12 w-32" />
+                  <div className="flex-1">
+                      <Input 
+                        placeholder={`Milestone ${index + 1} description`} 
+                        value={milestone.description} 
+                        onChange={e => {
+                            const newM = [...milestones]; newM[index].description = e.target.value; setMilestones(newM);
+                        }} 
+                        className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12" 
+                      />
+                  </div>
+                  <div className="w-32">
+                      <Input 
+                        type="number" 
+                        placeholder="Amount" 
+                        value={milestone.amount} 
+                        onChange={e => {
+                            const newM = [...milestones]; newM[index].amount = e.target.value; setMilestones(newM);
+                        }} 
+                        className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:ring-blue-500/20 h-12" 
+                      />
+                  </div>
                 </div>
               ))}
             </div>
-            <Button size="sm" variant="outline" className="mt-4 bg-transparent border-dashed border-white/30 hover:border-solid hover:bg-white/10" onClick={handleAddMilestone}>
-              <Plus className="w-4 h-4 mr-2" /> Add Milestone
-            </Button>
           </div>
-          <div className="p-4 rounded-lg bg-white/10 flex justify-between items-center">
-            <span className="text-lg font-semibold">Total Contract Value</span>
-            <span className="text-2xl font-bold text-green-400">{formatCurrency(totalAmount, (proposal.paymentType || '').toLowerCase().includes('crypto') ? 'ETH' : 'INR')}</span>
+          
+          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex justify-between items-center">
+            <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Total Value</p>
+                <p className="text-zinc-400 text-xs mt-1">Sum of all milestones</p>
+            </div>
+            <span className="text-2xl font-bold text-white">{formatCurrency(totalAmount, proposal.job?.paymentCurrency === 'INR' ? 'INR' : 'ETH')}</span>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <LoadingButton loading={isCreating} onClick={handleCreate} className="px-8 py-6 text-base">Create Contract</LoadingButton>
+        <DialogFooter className="gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900">Cancel</Button>
+          <LoadingButton loading={isCreating} onClick={handleCreate} className="px-8 py-2.5 text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200">Create Contract</LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -267,15 +293,16 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
                     placeholder="Search by title, name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 text-lg rounded-xl bg-white/5 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-12 pr-4 py-4 h-14 text-lg rounded-xl bg-white/5 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="md:w-56 h-auto py-3 text-lg rounded-xl bg-white/5 border-white/10 text-white focus:ring-2 focus:ring-blue-500">
+                  <SelectTrigger className="md:w-56 h-14 py-3 text-lg rounded-xl bg-white/5 border-white/10 text-white focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/10 text-white">
                     <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="created">Created</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>

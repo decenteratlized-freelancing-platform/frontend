@@ -382,10 +382,10 @@ export default function ClientSettings() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
-            <TabsTrigger value="billing" className="data-[state=active]:bg-white text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}

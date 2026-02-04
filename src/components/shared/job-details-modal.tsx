@@ -34,10 +34,14 @@ interface JobDetailsModalProps {
 }
 
 const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: React.ReactNode }) => (
-    <div className="flex items-center gap-4 text-sm">
-        <Icon className="w-5 h-5 text-blue-400 flex-shrink-0" />
-        <span className="font-medium text-gray-400 w-32">{label}</span>
-        <span className="text-white font-semibold">{value}</span>
+    <div className="flex items-center gap-3 text-sm">
+        <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-800">
+            <Icon className="w-4 h-4 text-zinc-400" />
+        </div>
+        <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">{label}</span>
+            <span className="text-zinc-200 font-medium">{value}</span>
+        </div>
     </div>
 );
 
@@ -46,58 +50,67 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] bg-[#1a1b26] border-white/10 text-white flex flex-col">
-                <DialogHeader className="border-b border-white/10 pb-4">
-                    <DialogTitle className="text-3xl font-bold flex items-center gap-3">
-                        <Briefcase className="w-7 h-7 text-blue-400" />
-                        {job.title}
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-400 pt-1">
-                        Posted on {new Date(job.createdAt).toLocaleDateString()}
-                    </DialogDescription>
+            <DialogContent className="max-w-3xl max-h-[90vh] bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 gap-0 shadow-2xl">
+                <DialogHeader className="p-6 border-b border-zinc-800 bg-zinc-950/50">
+                    <div className="flex items-start justify-between">
+                        <div className="space-y-1.5">
+                            <DialogTitle className="text-2xl font-bold text-white flex items-center gap-3">
+                                {job.title}
+                            </DialogTitle>
+                            <DialogDescription className="text-zinc-500 text-xs font-medium uppercase tracking-wide">
+                                Posted on {new Date(job.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
-                <ScrollArea className="flex-grow pr-4 -mr-4">
-                    <div className="space-y-8 py-6">
+                <ScrollArea className="flex-grow p-6">
+                    <div className="space-y-8">
                         {/* Overview Section */}
-                        <div className="space-y-4">
-                            <h3 className="text-xl font-bold text-white border-l-4 border-blue-500 pl-3">Overview</h3>
-                            <DetailRow icon={Layers} label="Category:" value={job.category} />
-                            <DetailRow icon={BarChart} label="Experience Level:" value={job.experienceLevel} />
-                            <DetailRow icon={Clock} label="Project Duration:" value={job.duration} />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <DetailRow icon={Layers} label="Category" value={job.category} />
+                            <DetailRow icon={BarChart} label="Experience" value={job.experienceLevel} />
+                            <DetailRow icon={Clock} label="Duration" value={job.duration} />
                         </div>
 
                         {/* Description Section */}
-                        <div>
-                            <h3 className="text-xl font-bold text-white mb-3 border-l-4 border-blue-500 pl-3">Job Description</h3>
-                            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                {job.description}
-                            </p>
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Job Description</h3>
+                            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-5">
+                                <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-sm">
+                                    {job.description}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Budget & Payment Section */}
-                        <div className="space-y-4">
-                            <h3 className="text-xl font-bold text-white border-l-4 border-blue-500 pl-3">Budget & Payment</h3>
-                            <div className="flex items-center justify-between bg-white/5 p-4 rounded-lg">
-                                <div>
-                                    <DetailRow
-                                    icon={job.paymentCurrency === 'INR' ? IndianRupeeIcon : Tag}
-                                    label="Budget"
-                                    value={`${job.paymentCurrency === 'INR' ? '₹' : ''}${job.budget} ${job.paymentCurrency === 'ETH' ? 'ETH' : ''} (${job.budgetType})`}
-                                />
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Financials</h3>
+                            <div className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 p-5 rounded-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                        {job.paymentCurrency === 'INR' ? <IndianRupeeIcon className="w-5 h-5 text-emerald-500" /> : <Tag className="w-5 h-5 text-emerald-500" />}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Estimated Budget</p>
+                                        <p className="text-xl font-bold text-white">
+                                            {job.paymentCurrency === 'INR' ? '₹' : ''}{job.budget} {job.paymentCurrency === 'ETH' ? 'ETH' : ''}
+                                            <span className="text-sm text-zinc-500 font-normal ml-1">({job.budgetType})</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <Badge className={`text-base ${job.paymentCurrency === 'ETH' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-green-500/20 text-green-300 border-green-500/30'}`}>
-                                    Pays in {job.paymentCurrency}
+                                <Badge className={`text-xs font-bold px-3 py-1 rounded-lg border ${job.paymentCurrency === 'ETH' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                                    {job.paymentCurrency} Payment
                                 </Badge>
                             </div>
                         </div>
 
                         {/* Skills Section */}
-                        <div>
-                            <h3 className="text-xl font-bold text-white mb-3 border-l-4 border-blue-500 pl-3">Required Skills</h3>
-                            <div className="flex flex-wrap gap-3">
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Required Skills</h3>
+                            <div className="flex flex-wrap gap-2">
                                 {job.skills.map((skill) => (
-                                    <Badge key={skill} variant="secondary" className="text-sm bg-gray-700/50 text-gray-300 border-gray-600/50">
+                                    <Badge key={skill} variant="outline" className="text-xs bg-zinc-900 text-zinc-300 border-zinc-800 px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
                                         {skill}
                                     </Badge>
                                 ))}
@@ -106,9 +119,9 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                     </div>
                 </ScrollArea>
 
-                <div className="border-t border-white/10 pt-4 flex justify-end">
-                    <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-                        Close
+                <div className="p-6 border-t border-zinc-800 bg-zinc-950/50 flex justify-end">
+                    <button onClick={onClose} className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-white/5 text-sm">
+                        Close Details
                     </button>
                 </div>
             </DialogContent>

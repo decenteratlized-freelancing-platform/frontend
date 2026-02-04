@@ -14,10 +14,13 @@ import {
   Sparkles,
   Loader2,
   MessageSquare,
+  Briefcase
 } from "lucide-react"
 import Link from "next/link";
 import { useCurrency } from "@/context/CurrencyContext";
 import CurrencyToggle from "@/components/shared/currency-toggle";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Define the Freelancer interface to match backend data
 interface Freelancer {
@@ -43,7 +46,7 @@ interface Freelancer {
 }
 
 const SkillChip = ({ skill }: { skill: string }) => (
-  <div className="bg-gray-200 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full">
+  <div className="bg-zinc-800 text-zinc-300 text-xs font-medium px-3 py-1 rounded-full border border-zinc-700/50">
     {skill}
   </div>
 );
@@ -61,30 +64,33 @@ const FreelancerCard = ({
 }) => {
   const { getConvertedAmount } = useCurrency();
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200/80">
-      <div className="flex items-center space-x-4 mb-4">
+    <div className="bg-zinc-900/40 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 group relative overflow-hidden">
+      {/* Subtle top light effect */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      
+      <div className="flex items-center space-x-4 mb-5">
         {freelancer.image ? (
           <img
             src={freelancer.image}
             alt={freelancer.fullName}
-            className="w-20 h-20 rounded-full border-4 border-white shadow-sm object-cover"
+            className="w-14 h-14 rounded-full border border-zinc-700 object-cover"
           />
         ) : (
-          <div className="w-20 h-20 rounded-full border-4 border-white shadow-sm bg-gray-200 flex items-center justify-center">
-            <Users className="w-10 h-10 text-gray-500" />
+          <div className="w-14 h-14 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+            <Users className="w-6 h-6 text-zinc-500" />
           </div>
         )}
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">{freelancer.fullName}</h3>
-              <p className="text-gray-500 capitalize">{freelancer.role}</p>
+              <h3 className="text-base font-semibold text-zinc-100 group-hover:text-white transition-colors">{freelancer.fullName}</h3>
+              <p className="text-zinc-500 text-xs font-medium uppercase tracking-tight">{freelancer.role}</p>
             </div>
-            <button onClick={() => onToggleFavorite(freelancer._id)}>
+            <button onClick={() => onToggleFavorite(freelancer._id)} className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors border border-transparent hover:border-zinc-700">
               <Heart
-                className={`w-6 h-6 transition-colors ${freelancer.isFavorite
+                className={`w-4 h-4 transition-colors ${freelancer.isFavorite
                     ? "text-red-500 fill-current"
-                    : "text-gray-400 hover:text-red-500"
+                    : "text-zinc-500 hover:text-red-400"
                   }`}
               />
             </button>
@@ -92,47 +98,52 @@ const FreelancerCard = ({
         </div>
       </div>
 
-      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-        {freelancer.bio.substring(0, 100)}{freelancer.bio.length > 100 && "..."}
+      <p className="text-zinc-400 text-sm mb-6 leading-relaxed line-clamp-2 h-10">
+        {freelancer.bio}
       </p>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {freelancer.skills.slice(0, 4).map((skill) => (
+      <div className="flex flex-wrap gap-1.5 mb-6 h-7 overflow-hidden">
+        {freelancer.skills.slice(0, 3).map((skill) => (
           <SkillChip key={skill} skill={skill} />
         ))}
       </div>
 
-      <div className="space-y-3 text-sm text-gray-600">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-1">
-            <Users className="w-4 h-4 text-gray-500" />
-            <span className="font-bold text-gray-800">{freelancer.projectsCompleted}</span>
-            <span className="text-gray-500">Projects Completed</span>
+      <div className="grid grid-cols-2 gap-4 py-4 border-y border-zinc-800/50 mb-6 bg-zinc-950/20 rounded-xl px-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">Projects</p>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-sm font-semibold text-zinc-200">{freelancer.projectsCompleted}</span>
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <Star className="w-4 h-4 text-yellow-500" />
-            <span className="font-bold text-gray-800">{freelancer.averageRating || "N/A"}</span>
-            <span className="text-gray-500">({freelancer.reviewsCount} reviews)</span>
-          </div>
-          <div className="text-blue-600 font-bold text-lg">
-            {getConvertedAmount(freelancer.hourlyRate, 'INR')}/hr
+        <div className="text-right">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">Rating</p>
+          <div className="flex items-center justify-end space-x-1">
+            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+            <span className="text-sm font-semibold text-zinc-200">{freelancer.averageRating || "N/A"}</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 flex space-x-3 text-sm">
+      <div className="flex items-center justify-between mb-6">
+         <div className="text-zinc-100 font-bold text-xl">
+            {getConvertedAmount(freelancer.hourlyRate, 'INR')}<span className="text-xs text-zinc-500 font-medium ml-1">/hr</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{freelancer.status}</span>
+          </div>
+      </div>
+
+      <div className="flex gap-2">
         <button
           onClick={() => onViewProfile(freelancer)}
-          className="flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all hover:bg-blue-700"
+          className="flex-1 bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold uppercase tracking-wider py-3 rounded-xl transition-all shadow-lg shadow-white/5"
         >
           View Profile
         </button>
-        <Link href={`/client/messages?receiverId=${freelancer._id}`} className="flex-1">
-          <button className="w-full flex items-center justify-center border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold py-3 px-4 rounded-lg transition-colors">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Chat
+        <Link href={`/client/messages?receiverId=${freelancer._id}`} className="flex-none">
+          <button className="flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white p-3 rounded-xl transition-colors border border-zinc-800">
+            <MessageSquare className="w-4 h-4" />
           </button>
         </Link>
       </div>
@@ -151,31 +162,30 @@ const FilterBar = ({
   searchTerm: string;
   onSearchChange: (term: string) => void;
 }) => (
-  <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
-    <div className="relative flex-1 md:max-w-xs">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+  <div className="flex flex-col lg:flex-row gap-4 mb-10 items-center">
+    <div className="relative w-full lg:max-w-md">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
       <input
         type="text"
-        placeholder="Search by name, role, or skill..."
+        placeholder="Search by talent or expertise..."
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3.5 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-700 transition-all text-sm"
       />
     </div>
-    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 md:ml-4">
-      {["Skills", "Availability", "Rates", "Locations"].map((filter) => (
+    <div className="flex gap-2 w-full lg:w-auto overflow-x-auto no-scrollbar py-1">
+      {["Skills", "Availability", "Rate", "Location"].map((filter) => (
         <button
           key={filter}
-          className="flex items-center justify-between w-full bg-gray-900 border-gray-700 rounded-lg px-4 py-2 text-white hover:bg-gray-800"
+          className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-3 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-xs font-bold uppercase tracking-wider whitespace-nowrap"
         >
           <span>{filter}</span>
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-3 h-3 opacity-40" />
         </button>
       ))}
     </div>
-    <div className="hidden md:block text-gray-400 text-sm md:ml-6 whitespace-nowrap">
-      Showing <strong>{count}</strong> of <strong>{totalCount}</strong>{" "}
-      freelancers
+    <div className="hidden lg:flex items-center text-zinc-500 text-[11px] font-bold uppercase tracking-widest ml-auto">
+      Found <span className="text-zinc-200 mx-1.5">{count}</span> matched experts
     </div>
   </div>
 );
@@ -183,90 +193,120 @@ const FilterBar = ({
 const FreelancerProfileModal = ({
   freelancer,
   onClose,
+  onHire,
 }: {
   freelancer: Freelancer | null;
   onClose: () => void;
+  onHire: (freelancer: Freelancer) => void;
 }) => {
   const { getConvertedAmount } = useCurrency();
   if (!freelancer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-lg z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col"
+        exit={{ opacity: 0, scale: 0.98 }}
+        className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-4xl max-h-[90vh] shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
       >
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Freelancer Profile
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
-            <X className="w-6 h-6" />
+        <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">
+              Expert Profile
+            </h2>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 p-2 hover:bg-zinc-800 rounded-xl transition-colors border border-transparent hover:border-zinc-700">
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="overflow-y-auto p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-1 flex flex-col items-center text-center">
-              {freelancer.image ? (
-                <img
-                  src={freelancer.image}
-                  alt={freelancer.fullName}
-                  className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 object-cover"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full border-4 border-blue-500/50 mb-4 bg-gray-200 flex items-center justify-center">
-                  <Users className="w-16 h-16 text-gray-500" />
-                </div>
-              )}
-              <h3 className="text-2xl font-bold text-gray-900">{freelancer.fullName}</h3>
-              <p className="text-gray-500 mb-4 capitalize">{freelancer.role}</p>
-              <button className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                Hire Me
-              </button>
+        <div className="overflow-y-auto p-8 lg:p-12 custom-scrollbar">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4 flex flex-col items-center text-center">
+              <div className="relative mb-6">
+                {freelancer.image ? (
+                  <img
+                    src={freelancer.image}
+                    alt={freelancer.fullName}
+                    className="w-40 h-40 rounded-3xl border border-zinc-700 object-cover"
+                  />
+                ) : (
+                  <div className="w-40 h-40 rounded-3xl border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+                    <Users className="w-16 h-16 text-zinc-600" />
+                  </div>
+                )}
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-6 h-6 rounded-full border-4 border-zinc-900 shadow-xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-zinc-100 mb-1">{freelancer.fullName}</h3>
+              <p className="text-zinc-500 text-sm font-medium uppercase tracking-wider mb-8">{freelancer.role}</p>
+              
+              <div className="w-full space-y-3">
+                <button 
+                  onClick={() => onHire(freelancer)}
+                  className="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-bold py-4 rounded-2xl transition-all shadow-xl shadow-white/5"
+                >
+                  Hire Expert
+                </button>
+                <button className="w-full bg-zinc-800/50 text-zinc-300 font-bold py-4 rounded-2xl hover:bg-zinc-800 transition-colors border border-zinc-700/50">
+                  Contact
+                </button>
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center mb-8">
+            
+            <div className="lg:col-span-8 space-y-10">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { label: "Rating", value: `${freelancer.averageRating || "N/A"} ★` },
-                  { label: "Rate", value: `${getConvertedAmount(freelancer.hourlyRate, "INR")}/hr` },
-                  { label: "Projects", value: freelancer.projectsCompleted },
+                  { label: "Rating", value: `${freelancer.averageRating || "N/A"}` },
+                  { label: "Rate", value: `${getConvertedAmount(freelancer.hourlyRate, "INR")}/h` },
+                  { label: "Done", value: `${freelancer.projectsCompleted}` },
                   { label: "Earned", value: getConvertedAmount(freelancer.totalEarned, "INR") },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-gray-100 rounded-xl p-3">
-                    <p className="text-gray-500 text-sm">{stat.label}</p>
-                    <p className="text-gray-900 font-bold text-xl">{stat.value}</p>
+                  <div key={stat.label} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-4">
+                    <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold mb-1">{stat.label}</p>
+                    <p className="text-zinc-200 font-bold text-base truncate">{stat.value}</p>
                   </div>
                 ))}
               </div>
-              <div className="mb-8">
-                <h4 className="text-xl font-bold text-gray-900 mb-2">About</h4>
-                <p className="text-gray-600 leading-relaxed">{freelancer.bio}</p>
+
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Biography</h4>
+                <p className="text-zinc-400 leading-relaxed text-sm bg-zinc-950/20 p-6 rounded-2xl border border-zinc-800/50">
+                  {freelancer.bio}
+                </p>
               </div>
-              <div className="mb-8">
-                <h4 className="text-xl font-bold text-gray-900 mb-3">Skills</h4>
+
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Core Stack</h4>
                 <div className="flex flex-wrap gap-2">
                   {freelancer.skills.map((skill) => (
-                    <SkillChip key={skill} skill={skill} />
+                    <div key={skill} className="bg-zinc-800 text-zinc-300 text-xs font-bold px-4 py-2 rounded-xl border border-zinc-700/50">
+                      {skill}
+                    </div>
                   ))}
                 </div>
               </div>
+
               <div>
-                <h4 className="text-xl font-bold text-gray-900 mb-3">Portfolio</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Selected Works</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {freelancer.portfolio.length > 0 ? (
                     freelancer.portfolio.map((item, index) => (
                       <div
                         key={item.id || index}
-                        className="bg-gray-100 rounded-lg p-4 border border-gray-200"
+                        className="bg-zinc-950/40 rounded-2xl p-4 border border-zinc-800 hover:border-zinc-700 transition-colors group cursor-pointer"
                       >
-                        <h5 className="font-bold text-gray-800">{item.title}</h5>
-                        <p className="text-sm text-gray-500 mt-1">Web Application</p>
+                        <div className="aspect-video bg-zinc-950 rounded-xl mb-4 overflow-hidden border border-zinc-800">
+                          <div className="w-full h-full flex items-center justify-center text-zinc-800 bg-zinc-900 group-hover:scale-105 transition-transform duration-500 text-[10px] font-bold uppercase tracking-widest">
+                            No Preview
+                          </div>
+                        </div>
+                        <h5 className="font-bold text-zinc-200 text-sm truncate">{item.title}</h5>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-1">Web Development</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500">No portfolio items to display.</p>
+                    <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest">Gallery Empty</p>
                   )}
                 </div>
               </div>
@@ -285,125 +325,155 @@ const HireFreelancerModal = ({
   freelancer: Freelancer | null;
   onClose: () => void;
 }) => {
-  const { getConvertedAmount } = useCurrency();
-  const [budget, setBudget] = useState(0);
-  const [paymentCurrency, setPaymentCurrency] = useState<'INR' | 'ETH'>("INR");
-  const [budgetInput, setBudgetInput] = useState("0");
-  const INR_TO_ETH = 0.000004;
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const numericInput = parseFloat(budgetInput) || 0;
-    if (paymentCurrency === "INR") {
-      setBudget(numericInput);
-    } else {
-      setBudget(numericInput / INR_TO_ETH);
+    const fetchJobs = async () => {
+      const email = session?.user?.email;
+      if (!email) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/jobs/my-jobs?email=${email}`);
+        if (res.ok) {
+          const data = await res.json();
+          const openJobs = data.filter((job: any) => job.status === "open");
+          setJobs(openJobs);
+        }
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        setError("Failed to load your jobs.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [session]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJobId) return;
+
+    setCreating(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/contracts/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientEmail: session?.user?.email,
+          freelancerId: freelancer?._id,
+          jobId: selectedJobId,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create contract");
+      }
+
+      const data = await res.json();
+      router.push(`/client/contracts/${data.contractId}`);
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Something went wrong");
+    } finally {
+      setCreating(false);
     }
-  }, [budgetInput, paymentCurrency]);
+  };
 
   if (!freelancer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl shadow-blue-500/10 flex flex-col">
-        <div className="flex justify-between items-center p-6 border-b border-white/10">
-          <h2 className="text-2xl font-bold text-white">Hire {freelancer.fullName}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X className="w-6 h-6" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col">
+        <div className="flex justify-between items-center p-6 border-b border-zinc-800">
+          <h2 className="text-lg font-semibold text-zinc-100">Hire {freelancer.fullName}</h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200">
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="overflow-y-auto p-8">
-          <form
-            className="space-y-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Hire request sent!");
-              onClose();
-            }}
-          >
-            <div>
-              <label htmlFor="projectTitle" className="block text-sm font-medium text-gray-300 mb-2">
-                Project Title
-              </label>
-              <input
-                type="text"
-                id="projectTitle"
-                className="w-full bg-gray-900/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Build a new marketing website"
-              />
+        
+        <div className="p-8">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
             </div>
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
-                Description
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                className="w-full bg-gray-900/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe the project requirements in detail..."
-              ></textarea>
+          ) : jobs.length === 0 ? (
+            <div className="text-center py-6">
+              <Briefcase className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-zinc-200 mb-2">No Open Jobs Found</h3>
+              <p className="text-zinc-500 mb-6 text-sm">
+                You need to post a job before you can hire a freelancer directly.
+              </p>
+              <Link href="/client/post-job">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-xl transition-colors text-sm">
+                  Post a Job Now
+                </button>
+              </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="budget" className="block text-sm font-medium text-gray-300 mb-2">
-                  Budget
-                </label>
-                <input
-                  type="number"
-                  id="budget"
-                  className="w-full bg-gray-900/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., 50000"
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="paymentCurrency" className="block text-sm font-medium text-gray-300 mb-2">
-                  Payment Currency
+                <label className="block text-sm font-medium text-zinc-400 mb-2">
+                  Select a Job to Offer
                 </label>
                 <select
-                  id="paymentCurrency"
-                  value={paymentCurrency}
-                  onChange={(e) => setPaymentCurrency(e.target.value as "INR" | "ETH")}
-                  className="w-full bg-gray-900/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]"
+                  value={selectedJobId}
+                  onChange={(e) => setSelectedJobId(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
+                  required
                 >
-                  <option value="INR">₹ INR</option>
-                  <option value="ETH">ETH</option>
+                  <option value="" disabled>-- Select a published job --</option>
+                  {jobs.map((job) => (
+                    <option key={job._id} value={job._id}>
+                      {job.title} ({job.budget} ETH)
+                    </option>
+                  ))}
                 </select>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Only "Open" jobs are shown. Selecting a job will create a contract draft.
+                </p>
               </div>
-            </div>
-            <div>
-              <label htmlFor="timeline" className="block text-sm font-medium text-gray-300 mb-2">
-                Timeline
-              </label>
-              <input
-                type="text"
-                id="timeline"
-                className="w-full bg-gray-900/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., 4 weeks"
-              />
-            </div>
-            <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-              <span className="text-gray-300">Total Cost</span>
-              <span className="text-green-400 font-bold text-xl">
-                {getConvertedAmount(budget, paymentCurrency)}
-              </span>
-            </div>
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="border border-white/20 text-white hover:bg-white/10 bg-transparent font-bold py-2 px-6 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-2 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700"
-              >
-                Send Hire Request
-              </button>
-            </div>
-          </form>
+
+              {selectedJobId && (
+                <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-4 h-4 text-blue-400 mt-0.5" />
+                    <div>
+                      <h4 className="text-blue-200 font-medium text-sm">Next Step: Contract Review</h4>
+                      <p className="text-blue-200/60 text-xs mt-1 leading-relaxed">
+                        You will be redirected to the contract page to review milestones and sign the agreement.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="border border-zinc-800 text-zinc-300 hover:bg-zinc-900 bg-transparent font-medium py-2.5 px-5 rounded-xl text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!selectedJobId || creating}
+                  className="bg-white text-zinc-950 font-bold py-2.5 px-6 rounded-xl hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm shadow-lg shadow-white/5"
+                >
+                  {creating && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+                  Create Contract
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
@@ -506,6 +576,7 @@ export default function DiscoverFreelancersPage() {
 
   const handleHire = (freelancer: Freelancer) => {
     setSelectedFreelancer(freelancer);
+    setIsProfileModalOpen(false);
     setIsHireModalOpen(true);
   };
 
@@ -517,38 +588,37 @@ export default function DiscoverFreelancersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-        <p className="ml-4 text-white text-xl">Loading freelancers...</p>
+        <p className="ml-4 text-zinc-400 text-lg">Loading freelancers...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-red-500 text-xl">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950 text-red-500 text-lg">
         Error: {error}
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-900 text-white">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-zinc-950 min-h-screen">
       <header className="mb-12">
         <div className="flex justify-between items-center">
-          <div className="inline-flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-full px-6 py-3 mb-6">
+          <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2.5 mb-6">
             <Sparkles className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-white">Find Talent</span>
+            <span className="text-sm font-medium text-zinc-300">Find Talent</span>
           </div>
-          <CurrencyToggle />
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight tracking-tight">
           Discover{" "}
-          <span className="text-violet-500 text-transparent">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-500">
             Freelancers
           </span>
         </h1>
-        <p className="mt-3 max-w-md text-lg text-gray-400 sm:text-xl md:mt-5 md:max-w-3xl">
+        <p className="mt-3 max-w-md text-lg text-zinc-400">
           Find the perfect freelance expert for your project.
         </p>
       </header>
@@ -561,11 +631,11 @@ export default function DiscoverFreelancersPage() {
           onSearchChange={setSearchTerm}
         />
         {filteredFreelancers.length === 0 && !loading ? (
-          <p className="text-gray-400 text-center text-lg mt-8">
+          <p className="text-zinc-500 text-center text-lg mt-12">
             {searchTerm ? "No freelancers match your search." : "No freelancers found."}
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFreelancers.map((freelancer) => (
               <FreelancerCard
                 key={freelancer._id}
@@ -584,6 +654,7 @@ export default function DiscoverFreelancersPage() {
           <FreelancerProfileModal
             freelancer={selectedFreelancer}
             onClose={closeModal}
+            onHire={handleHire}
           />
         )}
         {isHireModalOpen && (

@@ -9,7 +9,6 @@ import { useCurrentUser } from "@/hooks/useCurrentUser"
 import {
   Plus,
   Sparkles,
-  IndianRupeeIcon,
   Users,
   Clock,
   Eye,
@@ -23,8 +22,6 @@ import AnimatedCounter from "@/components/homepageComponents/animated-counter"
 import { ProposalReviewModal } from "./proposal-review-modal"
 import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
-// import { useCurrency } from "@/context/CurrencyContext"
-// import CurrencyToggle from "@/components/shared/currency-toggle"
 import { JobDetailsModal } from "@/components/shared/job-details-modal"
 
 const recentActivity = [
@@ -54,17 +51,16 @@ const recentActivity = [
 export default function ClientDashboard() {
   const { data: session } = useSession();
   const user = useCurrentUser();
-  // const { currency, getFormattedAmount, getConvertedAmount } = useCurrency();
   const [displayName, setDisplayName] = useState("Client");
   const [jobs, setJobs] = useState<any[]>([]);
-  const [jobsLoading, setJobsLoading] = useState(true); // Specific loading for jobs list
+  const [jobsLoading, setJobsLoading] = useState(true);
   const [dashboardSummary, setDashboardSummary] = useState({
     activeJobsCount: 0,
     totalSpent: 0,
     freelancersHiredCount: 0,
     averageResponseTimeHours: 0,
   });
-  const [dashboardLoading, setDashboardLoading] = useState(true); // Specific loading for dashboard summary
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [activeChat, setActiveChat] = useState<{ id: string; name: string; image?: string } | null>(null);
@@ -80,7 +76,6 @@ export default function ClientDashboard() {
     setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client");
   }, [session, user]);
 
-  // Effect for fetching dashboard summary
   useEffect(() => {
     const fetchSummary = async () => {
       if (session?.user?.email) {
@@ -91,8 +86,6 @@ export default function ClientDashboard() {
           if (res.ok) {
             const data = await res.json();
             setDashboardSummary(data);
-          } else {
-            console.error("Error fetching dashboard summary:", res.statusText);
           }
         } catch (error) {
           console.error("Error fetching dashboard summary:", error);
@@ -107,7 +100,6 @@ export default function ClientDashboard() {
     }
   }, [session]);
 
-  // Effect for fetching client's jobs list
   useEffect(() => {
     const fetchJobsList = async () => {
       if (session?.user?.email) {
@@ -118,8 +110,6 @@ export default function ClientDashboard() {
           if (res.ok) {
             const data = await res.json();
             setJobs(data);
-          } else {
-            console.error("Error fetching jobs list:", res.statusText);
           }
         } catch (error) {
           console.error("Error fetching jobs list:", error);
@@ -134,8 +124,6 @@ export default function ClientDashboard() {
     }
   }, [session]);
 
-  // Removed client-side activeJobsCount and totalSpent calculations as they are now from dashboardSummary
-
   const stats = [
     {
       title: "Active Jobs",
@@ -147,7 +135,7 @@ export default function ClientDashboard() {
       title: "Total Spent",
       value: dashboardSummary.totalSpent,
       displayValue: `${dashboardSummary.totalSpent} ETH`,
-      icon: TrendingUp, // Using a more generic icon
+      icon: TrendingUp,
       color: "from-green-500 to-emerald-500",
     },
     {
@@ -173,7 +161,7 @@ export default function ClientDashboard() {
         onClose={() => setIsReviewModalOpen(false)}
         onMessage={(freelancerId: string, freelancerName: string, freelancerImage?: string) => {
           setActiveChat({ id: freelancerId, name: freelancerName, image: freelancerImage })
-          setIsReviewModalOpen(false) // Optional: close modal when chat starts
+          setIsReviewModalOpen(false)
         }}
       />
       <JobDetailsModal
@@ -198,7 +186,6 @@ export default function ClientDashboard() {
           <Sparkles className="w-4 h-4 text-blue-400" />
           <span className="text-sm font-medium text-white">Client Dashboard</span>
         </div>
-        {/* <CurrencyToggle /> */}
       </div>
 
       <motion.div
@@ -214,7 +201,7 @@ export default function ClientDashboard() {
               {displayName}
             </span>
           </h1>
-          <p className="text-xl text-gray-300">Manage your projects and find talented freelancers</p>
+          <p className="text-xl text-zinc-300">Manage your projects and find talented freelancers</p>
         </div>
         <Link href="/client/post-job">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -236,13 +223,13 @@ export default function ClientDashboard() {
             transition={{ duration: 0.5, delay: index * 0.1 }}
             whileHover={{ y: -5, scale: 1.02 }}
           >
-            <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10 hover:bg-zinc-700/50 transition-all duration-300">
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-300">{stat.title}</p>
+                    <p className="text-sm font-medium text-zinc-400">{stat.title}</p>
                     {dashboardLoading ? (
-                      <div className="h-6 bg-gray-700 rounded w-2/3 mt-2 animate-pulse"></div>
+                      <div className="h-6 bg-white/5 rounded w-2/3 mt-2 animate-pulse"></div>
                     ) : (
                       <p className="text-2xl font-bold text-white mt-2">
                         {stat.displayValue ? (
@@ -264,6 +251,7 @@ export default function ClientDashboard() {
           </motion.div>
         ))}
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -271,16 +259,16 @@ export default function ClientDashboard() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="lg:col-span-2"
         >
-          <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10">
+          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-white">Recent Projects</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {jobsLoading ? (
-                  <p className="text-gray-400">Loading projects...</p>
+                  <p className="text-zinc-400">Loading projects...</p>
                 ) : jobs.length === 0 ? (
-                  <p className="text-gray-400">No projects found. Post a job to get started!</p>
+                  <p className="text-zinc-400">No projects found. Post a job to get started!</p>
                 ) : (
                   jobs.map((job, index) => (
                     <motion.div
@@ -288,12 +276,12 @@ export default function ClientDashboard() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                      className="bg-zinc-800/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-zinc-700/50 transition-all duration-300"
+                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="font-semibold text-white mb-1">{job.title}</h3>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-zinc-400">
                             {job.proposalsCount} Proposals
                           </p>
                         </div>
@@ -302,8 +290,8 @@ export default function ClientDashboard() {
                             {`${job.budget} ETH`}
                           </span>
                           <div className="flex items-center gap-2 mt-1">
-                            <Calendar className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-400">
+                            <Calendar className="w-3 h-3 text-zinc-400" />
+                            <span className="text-xs text-zinc-400">
                               {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
                             </span>
                           </div>
@@ -312,11 +300,10 @@ export default function ClientDashboard() {
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-300">Status</span>
+                          <span className="text-zinc-400">Status</span>
                           <span className="text-white font-semibold capitalize">{job.status.replace('_', ' ')}</span>
                         </div>
-                        {/* Progress bar placeholder - could be real if we had progress tracking */}
-                        <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div className="w-full bg-white/10 rounded-full h-2">
                           <div
                             className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: job.status === 'completed' ? '100%' : job.status === 'in_progress' ? '50%' : '10%' }}
@@ -367,12 +354,13 @@ export default function ClientDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <Card className="bg-zinc-800/50 backdrop-blur-sm border border-white/10">
+          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-white">Recent Activity</CardTitle>
             </CardHeader>
@@ -384,7 +372,7 @@ export default function ClientDashboard() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-colors duration-200"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200"
                   >
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.type === "completion"
@@ -404,8 +392,8 @@ export default function ClientDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white">{activity.title}</p>
-                      <p className="text-xs text-gray-400 mt-1">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                      <p className="text-xs text-zinc-400 mt-1">{activity.description}</p>
+                      <p className="text-xs text-zinc-500 mt-1">{activity.time}</p>
                     </div>
                   </motion.div>
                 ))}

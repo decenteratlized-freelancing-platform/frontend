@@ -33,6 +33,7 @@ import {
   Shield,
   Palette,
   AlertTriangle,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -48,8 +49,8 @@ interface SidebarProps {
 
 const clientMenuItems = [
   { name: "Dashboard", href: "/client/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
+  { name: "Contracts", href: "/client/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
   { name: "Discover", href: "/client/discover", icon: Users, color: "from-cyan-400 to-sky-400" },
-  { name: "Transactions", href: "/client/transactions", icon: CreditCard, color: "from-green-400 to-emerald-400" },
   { name: "Post Job", href: "/client/post-job", icon: Calendar, color: "from-blue-400 to-cyan-400" },
   { name: "Goals", href: "/client/goals", icon: Target, color: "from-pink-400 to-rose-400" },
   { name: "Disputes", href: "/client/disputes", icon: AlertTriangle, color: "from-red-400 to-orange-400" },
@@ -61,7 +62,7 @@ const clientMenuItems = [
 
 const freelancerMenuItems = [
   { name: "Dashboard", href: "/freelancer/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
-  { name: "Transactions", href: "/freelancer/transactions", icon: CreditCard, color: "from-green-400 to-emerald-400" },
+  { name: "Contracts", href: "/freelancer/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
   { name: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Calendar, color: "from-blue-400 to-cyan-400" },
   { name: "Goals", href: "/freelancer/goals", icon: Target, color: "from-pink-400 to-rose-400" },
   { name: "Disputes", href: "/freelancer/disputes", icon: AlertTriangle, color: "from-orange-400 to-red-400" },
@@ -155,7 +156,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
     >
       <div className="relative h-full">
         {/* Sidebar background */}
-        <div className="absolute inset-0 bg-white/5 backdrop-blur-xl border-r border-white/10 shadow-xl" />
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-xl border-r border-white/10 shadow-xl" />                               
 
         {/* Sidebar content */}
         <div className="relative h-full flex flex-col py-4">

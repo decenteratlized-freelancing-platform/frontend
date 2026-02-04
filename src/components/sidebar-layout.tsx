@@ -14,7 +14,7 @@ export default function SidebarLayout({ children, userType }: SidebarLayoutProps
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 relative overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         userType={userType}
