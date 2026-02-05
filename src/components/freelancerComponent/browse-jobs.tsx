@@ -62,52 +62,9 @@ export default function BrowseJobs() {
     setSavedJobs((prev) => (prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]))
   }
 
-  const handleSubmitProposal = async () => {
-    if (!session?.user?.email) {
-      toast({ title: "Error", description: "You must be logged in to submit a proposal", variant: "destructive" })
-      return
-    }
-
-
-    if (!session?.user?.walletAddress) {
-      toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to apply for jobs.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedJob && proposalText && proposalBudget && proposalDelivery) {
-      try {
-        const res = await fetch("http://localhost:5000/api/proposals", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jobId: selectedJob._id,
-            email: session.user.email,
-            coverLetter: proposalText,
-            proposedRate: parseFloat(proposalBudget),
-            deliveryTime: proposalDelivery,
-          }),
-        })
-
-        if (res.ok) {
-          setSubmittedProposals((prev) => [...prev, selectedJob._id])
-          setShowProposalDialog(false)
-          setProposalText("")
-          setProposalBudget("")
-          setProposalDelivery("")
-          toast({ title: "Success", description: "Proposal submitted successfully!" })
-        } else {
-          const error = await res.json()
-          toast({ title: "Error", description: error.error || "Failed to submit proposal", variant: "destructive" })
-        }
-      } catch (error) {
-        console.error("Error submitting proposal:", error)
-        toast({ title: "Error", description: "Something went wrong", variant: "destructive" })
-      }
-    }
+  const handleProposalSuccess = (jobId: string) => {
+    setSubmittedProposals((prev) => [...prev, jobId])
+    fetchJobs()
   }
 
   const filteredJobs = jobs.filter((job) => {
@@ -144,20 +101,6 @@ export default function BrowseJobs() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-zinc-950 min-h-screen text-zinc-100">
-      <ProposalSubmitModal 
-        job={selectedJob}
-        isOpen={showProposalDialog}
-        onClose={() => setShowProposalDialog(false)}
-        onSuccess={handleProposalSuccess}
-        userEmail={session?.user?.email}
-        walletAddress={session?.user?.walletAddress}
-      />
-      <JobDetailsModal
-        job={selectedJob}
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-      />
-
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -341,6 +284,14 @@ export default function BrowseJobs() {
         </AnimatePresence>
       </div>
 
+      <ProposalSubmitModal 
+        job={selectedJob}
+        isOpen={showProposalDialog}
+        onClose={() => setShowProposalDialog(false)}
+        onSuccess={handleProposalSuccess}
+        userEmail={session?.user?.email}
+        walletAddress={session?.user?.walletAddress}
+      />
       <JobDetailsModal
         job={selectedJob}
         isOpen={isDetailsModalOpen}

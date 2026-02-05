@@ -3,7 +3,6 @@
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Users, Wallet, Clock, Target, Award, Zap } from "lucide-react"
-import { BarChart3, TrendingUp, Users, Wallet, Clock, Target, Award, Zap } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -20,6 +19,7 @@ import {
   Area,
   Tooltip,
 } from "recharts"
+import { useCurrency } from "@/context/CurrencyContext";
 
 const monthlyData = [
   { name: "Jan", spending: 4000, projects: 12, freelancers: 8, completed: 10 },
@@ -36,8 +36,6 @@ const categoryData = [
   { name: "Writing", value: 15, color: "#06b6d4" },
   { name: "Marketing", value: 15, color: "#6366f1" },
 ]
-
-import { useCurrency } from "@/context/CurrencyContext";
 
 const performanceData = [
   { name: "Week 1", satisfaction: 4.2, delivery: 85, quality: 4.5 },
@@ -63,7 +61,7 @@ const CustomTooltip = ({ active, payload, label, getConvertedAmount, fromCurrenc
 }
 
 export default function ClientAnalytics() {
-  const { getFormattedAmount } = useCurrency();
+  const { getFormattedAmount, getConvertedAmount } = useCurrency();
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
       {/* Header */}

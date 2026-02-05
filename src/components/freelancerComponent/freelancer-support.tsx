@@ -151,7 +151,7 @@ export default function FreelancerSupport() {
               <label className="text-sm font-medium text-gray-300 mb-2 block">Message</label>
               <Textarea className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 min-h-32" />
             </div>
-            <Button className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 w-full">
+            <Button className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 w-full text-white">
               Send Message
             </Button>
           </CardContent>
