@@ -106,7 +106,7 @@ export default function ClientMessages() {
         // 2. If not, fetch the user details and create a temp conversation
         console.log("No existing conversation found. Fetching user details for:", receiverId);
         try {
-          const userRes = await fetch(`http://localhost:5000/api/user/${receiverId}`);
+          const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/${receiverId}`);
           const userData = await userRes.json();
 
           if (!userData.error) {
@@ -177,7 +177,7 @@ export default function ClientMessages() {
     if (!currentUserId) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/conversations?userId=${currentUserId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${currentUserId}`)
       const data = await res.json()
 
       if (!data.error && Array.isArray(data)) {
@@ -197,7 +197,7 @@ export default function ClientMessages() {
 
   const fetchMessages = async (otherUserId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${otherUserId}?senderId=${currentUserId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${otherUserId}?senderId=${currentUserId}`)
       const data = await res.json()
       if (!data.error && Array.isArray(data)) {
         setMessages(data)
@@ -211,7 +211,7 @@ export default function ClientMessages() {
     if (!newMessage.trim() || !selectedConversation?.participant?._id) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/send/${selectedConversation.participant._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${selectedConversation.participant._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

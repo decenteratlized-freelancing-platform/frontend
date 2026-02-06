@@ -12,7 +12,40 @@ import { X, Plus, Sparkles, Briefcase } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
-import { useCurrency } from "@/context/CurrencyContext" // Import useCurrency
+import { useCurrency } from "@/context/CurrencyContext"
+
+// Common skills list for autocomplete
+const availableSkills = [
+  "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
+  "PHP", "Ruby", "Go", "Swift", "Kotlin", "Dart", "Rust", "HTML/CSS",
+  "Vue.js", "Angular", "Next.js", "Express.js", "Django", "Flask", "Laravel",
+  "MongoDB", "PostgreSQL", "MySQL", "Redis", "GraphQL", "REST API",
+  "AWS", "Docker", "Kubernetes", "Git", "CI/CD", "DevOps",
+  "UI/UX Design", "Figma", "Adobe XD", "Photoshop", "Illustrator",
+  "Machine Learning", "Data Science", "Blockchain", "Web3", "Solidity",
+  "Mobile Development", "iOS", "Android", "React Native", "Flutter",
+  "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media",
+  "Smart Contracts", "DeFi", "NFTs", "Cybersecurity", "Cloud Computing"
+];
+
+// Expanded categories
+const categories = [
+  { value: "web-development", label: "Web Development" },
+  { value: "mobile-development", label: "Mobile Development" },
+  { value: "design", label: "Design & Creative" },
+  { value: "writing", label: "Writing & Content" },
+  { value: "marketing", label: "Marketing" },
+  { value: "data-science", label: "Data Science" },
+  { value: "blockchain", label: "Blockchain & Web3" },
+  { value: "ai-ml", label: "AI & Machine Learning" },
+  { value: "cybersecurity", label: "Cybersecurity" },
+  { value: "cloud-computing", label: "Cloud Computing" },
+  { value: "devops", label: "DevOps & Infrastructure" },
+  { value: "finance", label: "Finance & Accounting" },
+  { value: "legal", label: "Legal Services" },
+  { value: "admin-support", label: "Admin Support" },
+  { value: "customer-service", label: "Customer Service" },
+];
 
 export default function PostJobForm() {
   const { data: session } = useSession()
@@ -20,7 +53,8 @@ export default function PostJobForm() {
   const [skills, setSkills] = useState<string[]>([])
   const [newSkill, setNewSkill] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { currency, toggleCurrency, getConvertedAmount } = useCurrency(); // Use useCurrency
+  const [showSkillSuggestions, setShowSkillSuggestions] = useState(false)
+  const { getConvertedAmount } = useCurrency();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -29,21 +63,73 @@ export default function PostJobForm() {
     budgetType: "",
     budgetAmount: "",
     duration: "",
-    experienceLevel: "",
     paymentMode: "hourly",
-    paymentCurrency: "ETH", // Add paymentCurrency to formData
+    paymentCurrency: "ETH",
     experienceLevel: "intermediate",
   })
 
-  const addSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()])
+  const addSkill = (skillToAdd: string = newSkill) => {
+    if (skillToAdd.trim() && !skills.includes(skillToAdd.trim())) {
+      setSkills([...skills, skillToAdd.trim()])
       setNewSkill("")
+      setShowSkillSuggestions(false)
     }
   }
 
   const removeSkill = (skillToRemove: string) => {
     setSkills(skills.filter((skill) => skill !== skillToRemove))
+  }
+
+  const handleSaveDraft = async () => {
+    if (!session?.user?.email) {
+      toast({ title: "Error", description: "You must be logged in to save a draft", variant: "destructive" })
+      return
+    }
+
+    if (!formData.title) {
+        toast({ title: "Error", description: "Job title is required to save a draft", variant: "destructive" })
+        return
+    }
+
+    setIsSubmitting(true)
+    try {
+        const budget = parseFloat(formData.budgetAmount) || 0;
+        const token = localStorage.getItem("token");
+        
+        const res = await fetch("/api/jobs", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+                title: formData.title,
+                description: formData.description || "Draft Description", // Allow partial data for draft
+                budget: budget,
+                skills: skills,
+                email: session.user.email,
+                category: formData.category,
+                experienceLevel: formData.experienceLevel,
+                budgetType: formData.budgetType,
+                duration: formData.duration,
+                paymentCurrency: formData.paymentCurrency,
+                status: "draft" // Explicitly set status to draft
+            }),
+        })
+
+        if (res.ok) {
+            toast({ title: "Success", description: "Job saved as draft!" })
+            // Optional: Redirect to a drafts page or keep user here
+        } else {
+            const error = await res.json()
+            toast({ title: "Error", description: error.error || "Failed to save draft", variant: "destructive" })
+        }
+    } catch (err) {
+        console.error(err)
+        toast({ title: "Error", description: "Something went wrong", variant: "destructive" })
+    } finally {
+        setIsSubmitting(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -60,6 +146,7 @@ export default function PostJobForm() {
     setIsSubmitting(true)
     try {
       const budget = parseFloat(formData.budgetAmount);
+      const token = localStorage.getItem("token");
       if (isNaN(budget)) {
         toast({ title: "Error", description: "Invalid budget amount", variant: "destructive" });
         return;
@@ -70,18 +157,22 @@ export default function PostJobForm() {
       }
       const res = await fetch("/api/jobs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
-          budget: budget, // Send raw budget amount
+          budget: budget,
           skills: skills,
           email: session.user.email,
           category: formData.category,
           experienceLevel: formData.experienceLevel,
           budgetType: formData.budgetType,
           duration: formData.duration,
-          paymentCurrency: formData.paymentCurrency, // Send selected payment currency
+          paymentCurrency: formData.paymentCurrency,
+          status: "open" // Default to open for published jobs
         }),
       })
 
@@ -138,13 +229,10 @@ export default function PostJobForm() {
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/10">
-                  <SelectItem value="web-development">Web Development</SelectItem>
-                  <SelectItem value="mobile-development">Mobile Development</SelectItem>
-                  <SelectItem value="design">Design & Creative</SelectItem>
-                  <SelectItem value="writing">Writing & Content</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="data-science">Data Science</SelectItem>
+                <SelectContent className="bg-slate-800 border-white/10 max-h-60">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </motion.div>
@@ -165,7 +253,7 @@ export default function PostJobForm() {
             />
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Changed to 3 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <motion.div
               className="space-y-2"
               initial={{ opacity: 0, x: -20 }}
@@ -193,6 +281,7 @@ export default function PostJobForm() {
               <Input
                 placeholder="e.g. 2500"
                 type="number"
+                min="0"
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
                 value={formData.budgetAmount}
                 onChange={(e) => setFormData({ ...formData, budgetAmount: e.target.value })}
@@ -209,7 +298,6 @@ export default function PostJobForm() {
                 onValueChange={(val) => setFormData({ ...formData, paymentCurrency: val })}
                 value={formData.paymentCurrency}
                 defaultValue="ETH"
-                defaultValue="ETH"
               >
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Select currency" />
@@ -222,28 +310,59 @@ export default function PostJobForm() {
           </div>
 
           <motion.div
-            className="space-y-2"
+            className="space-y-2 relative"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
             <label className="text-sm font-medium text-gray-300">Required Skills</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                placeholder="Add a skill"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addSkill()}
-                className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
-              />
+            <div className="flex gap-2 mb-2 relative">
+              <div className="relative w-full">
+                <Input
+                  placeholder="Type to search skills..."
+                  value={newSkill}
+                  onChange={(e) => {
+                    setNewSkill(e.target.value);
+                    setShowSkillSuggestions(true);
+                  }}
+                  onFocus={() => setShowSkillSuggestions(true)}
+                  onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20 w-full"
+                />
+                
+                {/* Autocomplete Suggestions */}
+                {showSkillSuggestions && newSkill && (
+                  <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {availableSkills
+                      .filter(skill => 
+                        skill.toLowerCase().includes(newSkill.toLowerCase()) && 
+                        !skills.includes(skill)
+                      )
+                      .map((skill) => (
+                        <div
+                          key={skill}
+                          className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
+                          onClick={() => addSkill(skill)}
+                        >
+                          {skill}
+                        </div>
+                      ))
+                    }
+                    {availableSkills.filter(skill => skill.toLowerCase().includes(newSkill.toLowerCase())).length === 0 && (
+                        <div className="px-4 py-2 text-sm text-gray-400">No matching skills found. Press Enter to add custom skill.</div>
+                    )}
+                  </div>
+                )}
+              </div>
               <Button
-                onClick={addSkill}
+                onClick={() => addSkill()}
                 variant="outline"
                 className="border-white/20 text-white hover:bg-white/10 bg-transparent"
               >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
+            
             <div className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <motion.div
@@ -323,10 +442,12 @@ export default function PostJobForm() {
               {isSubmitting ? "Posting..." : "Post Job"}
             </Button>
             <Button
+              onClick={handleSaveDraft}
               variant="outline"
+              disabled={isSubmitting}
               className="border-white/20 text-white hover:bg-white/10 px-8 py-3 rounded-xl bg-transparent hover:text-white hover:border-blue-400"
             >
-              Save as Draft
+              {isSubmitting ? "Saving..." : "Save as Draft"}
             </Button>
           </motion.div>
         </CardContent>
@@ -334,4 +455,3 @@ export default function PostJobForm() {
     </motion.div>
   )
 }
-

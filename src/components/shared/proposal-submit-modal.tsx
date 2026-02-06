@@ -74,7 +74,7 @@ export function ProposalSubmitModal({
 
     setIsProcessing(true);
     try {
-      const res = await fetch("http://localhost:5000/api/proposals", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,7 +120,7 @@ export function ProposalSubmitModal({
             Apply for: {job.title}
           </DialogTitle>
           <DialogDescription className="text-zinc-400 mt-2">
-            Showcase your expertise and tell the client why you're the best fit for this project.
+            Showcase your expertise and tell the client why you&apos;re the best fit for this project.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,6 +153,7 @@ export function ProposalSubmitModal({
                   id="rate"
                   type="number"
                   step="0.001"
+                  min="0"
                   placeholder="0.00"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}

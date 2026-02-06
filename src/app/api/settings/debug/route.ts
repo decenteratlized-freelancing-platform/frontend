@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/connectDB";
 import User from "@/models/User";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     await connectDB();
@@ -10,10 +12,18 @@ export async function GET(req: Request) {
     
     if (email) {
       // Check specific email
-      const user = await User.findOne({ email }).select("email fullName role");
+      const user = await User.findOne({ email }).select("email fullName role favorites favoriteJobs");
       return NextResponse.json({ 
         found: !!user, 
-        user: user ? { email: user.email, fullName: user.fullName, role: user.role } : null 
+        user: user ? { 
+            email: user.email, 
+            fullName: user.fullName, 
+            role: user.role,
+            favoritesCount: user.favorites?.length || 0,
+            favoriteJobsCount: user.favoriteJobs?.length || 0,
+            favorites: user.favorites,
+            favoriteJobs: user.favoriteJobs
+        } : null 
       });
     } else {
       // List all users (be careful with this in production)

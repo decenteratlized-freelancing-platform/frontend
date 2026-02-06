@@ -12,7 +12,8 @@ import {
   Briefcase,
   CheckCircle,
   Tag,
-  Loader2
+  Loader2,
+  ChevronDown
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -20,9 +21,34 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast";
 import { JobDetailsModal } from "../shared/job-details-modal";
 import { ProposalSubmitModal } from "../shared/proposal-submit-modal";
+import { useCurrency } from "@/context/CurrencyContext";
+
+const categories = [
+    { value: "all", label: "All Categories" },
+    { value: "web-development", label: "Web Development" },
+    { value: "mobile-development", label: "Mobile Development" },
+    { value: "design", label: "Design & Creative" },
+    { value: "writing", label: "Writing & Content" },
+    { value: "marketing", label: "Marketing" },
+    { value: "data-science", label: "Data Science" },
+];
+
+const experienceLevels = [
+    { value: "all", label: "All Levels" },
+    { value: "entry", label: "Entry Level" },
+    { value: "intermediate", label: "Intermediate" },
+    { value: "expert", label: "Expert" },
+];
 
 export default function BrowseJobs() {
   const { data: session } = useSession()
@@ -32,21 +58,42 @@ export default function BrowseJobs() {
   const [savedJobs, setSavedJobs] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedExperience, setSelectedExperience] = useState("all")
-  const [budgetType, setBudgetType] = useState("all")
+  const [budgetTypeFilter, setBudgetType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [selectedJob, setSelectedJob] = useState<any>(null)
   const [showProposalDialog, setShowProposalDialog] = useState(false)
   const [submittedProposals, setSubmittedProposals] = useState<string[]>([])
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const { getConvertedAmount } = useCurrency();
 
+  const ensureToken = async () => {
+    let token = localStorage.getItem("token");
+    if (!token && session?.user?.email) {
+        try {
+            const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            if (devRes.ok) {
+                const data = await devRes.json();
+                token = data.token;
+                localStorage.setItem("token", token || "");
+            }
+        } catch (e) { console.error("Auto-token failed", e); }
+    }
+    return token;
+  };
 
   useEffect(() => {
     fetchJobs()
+    fetchSavedJobs()
   }, [])
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/jobs")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`)
       if (res.ok) {
         const data = await res.json()
         setJobs(data)
@@ -58,8 +105,48 @@ export default function BrowseJobs() {
     }
   }
 
-  const toggleSaveJob = (jobId: string) => {
-    setSavedJobs((prev) => (prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]))
+  const fetchSavedJobs = async () => {
+    try {
+        const token = await ensureToken();
+        if (!token) return
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/favorites`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.ok) {
+            const data = await res.json()
+            setSavedJobs(data.jobs.map((j: any) => j._id))
+        }
+    } catch (error) {
+        console.error("Error fetching saved jobs:", error)
+    }
+  }
+
+  const toggleSaveJob = async (jobId: string) => {
+    const isSaved = savedJobs.includes(jobId)
+    const token = await ensureToken();
+    if (!token) {
+        toast({ title: "Auth Required", description: "Please log in to save jobs.", variant: "destructive" })
+        return
+    }
+
+    try {
+        const endpoint = isSaved ? "/api/user/favorites/jobs/remove" : "/api/user/favorites/jobs/add"
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${endpoint}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ jobId })
+        })
+
+        if (res.ok) {
+            setSavedJobs(prev => isSaved ? prev.filter(id => id !== jobId) : [...prev, jobId])
+            toast({ title: isSaved ? "Removed" : "Saved", description: isSaved ? "Job removed from favorites" : "Job saved to favorites" })
+        }
+    } catch (error) {
+        console.error("Error toggling favorite:", error)
+    }
   }
 
   const handleProposalSuccess = (jobId: string) => {
@@ -75,7 +162,7 @@ export default function BrowseJobs() {
 
     const matchesCategory = selectedCategory === "all" || job.category === selectedCategory
     const matchesExperience = selectedExperience === "all" || job.experienceLevel === selectedExperience
-    const matchesBudgetType = budgetType === "all" || job.budgetType === budgetType
+    const matchesBudgetType = budgetTypeFilter === "all" || job.budgetType === budgetTypeFilter
 
     return matchesSearch && matchesCategory && matchesExperience && matchesBudgetType
   })
@@ -83,9 +170,9 @@ export default function BrowseJobs() {
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     switch (sortBy) {
       case "budget-high":
-        return b.budget - a.budget
+        return parseFloat(b.budget) - parseFloat(a.budget)
       case "budget-low":
-        return a.budget - b.budget
+        return parseFloat(a.budget) - parseFloat(b.budget)
       default:
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     }
@@ -123,7 +210,7 @@ export default function BrowseJobs() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="mb-10"
+        className="mb-10 space-y-4"
       >
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
@@ -137,20 +224,90 @@ export default function BrowseJobs() {
             />
           </div>
           <div className="flex gap-2">
-            <button className="bg-zinc-900 border border-zinc-800 rounded-2xl px-6 h-14 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-2 font-bold text-xs uppercase tracking-widest">
-              <Filter className="w-4 h-4" /> Filters
-            </button>
-            <button className="bg-white hover:bg-zinc-200 text-zinc-950 px-8 h-14 rounded-2xl font-bold transition-all shadow-xl shadow-white/5 whitespace-nowrap">
+            <Button 
+                variant="outline" 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`border-zinc-800 rounded-2xl px-6 h-14 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-2 font-bold text-xs uppercase tracking-widest ${showFilters ? "bg-zinc-800 text-white border-zinc-600" : "bg-zinc-900"}`}
+            >
+              <Filter className="w-4 h-4" /> {showFilters ? "Hide Filters" : "Show Filters"}
+            </Button>
+            <Button className="bg-white hover:bg-zinc-200 text-zinc-950 px-8 h-14 rounded-2xl font-bold transition-all shadow-xl shadow-white/5 whitespace-nowrap">
               Search Jobs
-            </button>
+            </Button>
           </div>
         </div>
+
+        {/* Filter Bar */}
+        <AnimatePresence>
+            {showFilters && (
+                <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                >
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
+                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Experience</label>
+                            <Select value={selectedExperience} onValueChange={setSelectedExperience}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    {experienceLevels.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Budget Type</label>
+                            <Select value={budgetTypeFilter} onValueChange={setBudgetType}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    <SelectItem value="all">All Types</SelectItem>
+                                    <SelectItem value="fixed">Fixed Price</SelectItem>
+                                    <SelectItem value="hourly">Hourly</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Sort By</label>
+                            <Select value={sortBy} onValueChange={setSortBy}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    <SelectItem value="newest">Newest First</SelectItem>
+                                    <SelectItem value="budget-high">Budget: High to Low</SelectItem>
+                                    <SelectItem value="budget-low">Budget: Low to High</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Job Listings */}
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence>
-          {sortedJobs.map((job, index) => (
+          {sortedJobs.length > 0 ? sortedJobs.map((job, index) => (
             <motion.div
               key={job._id}
               initial={{ opacity: 0, y: 20 }}
@@ -172,7 +329,7 @@ export default function BrowseJobs() {
                         <button
                           onClick={() => toggleSaveJob(job._id)}
                           className={`p-2 rounded-xl transition-colors ${
-                            savedJobs.includes(job._id) ? "bg-red-500/10 text-red-500" : "text-zinc-600 hover:text-zinc-400"
+                            savedJobs.includes(job._id) ? "bg-pink-500/10 text-pink-500" : "text-zinc-600 hover:text-zinc-400"
                           }`}
                         >
                           <Heart className={`w-5 h-5 ${savedJobs.includes(job._id) ? "fill-current" : ""}`} />
@@ -202,7 +359,7 @@ export default function BrowseJobs() {
                           </div>
                           <div>
                             <span className="font-semibold text-white">
-                              {job.budget} ETH
+                              {getConvertedAmount(job.budget)}
                             </span>
                             <p className="text-xs text-gray-400">Budget</p>
                           </div>
@@ -280,7 +437,12 @@ export default function BrowseJobs() {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          )) : (
+            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                <Search className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                <p className="text-zinc-500">No jobs match your search criteria.</p>
+            </div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -290,7 +452,7 @@ export default function BrowseJobs() {
         onClose={() => setShowProposalDialog(false)}
         onSuccess={handleProposalSuccess}
         userEmail={session?.user?.email}
-        walletAddress={session?.user?.walletAddress}
+        walletAddress={session?.user?.walletAddress || undefined}
       />
       <JobDetailsModal
         job={selectedJob}

@@ -1,9 +1,15 @@
 "use client";
 import React, { useRef } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import * as THREE from 'three';
 import { TextureLoader, Shape, ExtrudeGeometry } from 'three';
 
-const Box = ({ position, rotation }) => {
+interface BoxProps {
+    position: [number, number, number];
+    rotation: [number, number, number];
+}
+
+const Box = ({ position, rotation }: BoxProps) => {
     const shape = new Shape();
     const angleStep = Math.PI * 0.5;
     const radius = 1;
@@ -64,7 +70,7 @@ const Box = ({ position, rotation }) => {
 };
 
 const AnimatedBoxes = () => {
-    const groupRef = useRef();
+    const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state, delta) => {
         if (groupRef.current) {
@@ -72,7 +78,7 @@ const AnimatedBoxes = () => {
         }
     });
 
-    const boxes = Array.from({ length: 50 }, (_, index) => ({
+    const boxes: { position: [number, number, number]; rotation: [number, number, number]; id: number }[] = Array.from({ length: 50 }, (_, index) => ({
         position: [(index - 25) * 0.75, 0, 0],
         rotation: [
             (index - 10) * 0.1,
@@ -96,7 +102,7 @@ const AnimatedBoxes = () => {
 };
 
 export const Scene = () => {
-    const [cameraPosition, setCameraPosition] = React.useState([5, 5, 20]);
+    const [cameraPosition, setCameraPosition] = React.useState<[number, number, number]>([5, 5, 20]);
 
     return (
         <div className="w-full h-full z-0">

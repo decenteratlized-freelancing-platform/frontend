@@ -9,14 +9,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon, X } from "lucide-react"
+import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon, X, LogOut, AlertTriangle, Lock, Key, Mail } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import WalletManagement from "@/components/shared/wallet-management"
 import dynamic from "next/dynamic"
+import { Label } from "@/components/ui/label"
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
   ssr: false,
@@ -289,7 +290,7 @@ export default function ClientSettings() {
         image: profile.image,
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/update-profile", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/update-profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -334,7 +335,7 @@ export default function ClientSettings() {
 
     setLoading(true)
     try {
-      const response = await fetch("http://localhost:5000/api/auth/change-password", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -364,6 +365,34 @@ export default function ClientSettings() {
     }
   }
 
+  const handleLogout = async () => {
+    localStorage.clear();
+    await signOut({ callbackUrl: "/login" });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure? This action cannot be undone.")) return;
+    
+    const email = localStorage.getItem("email") || session?.user?.email;
+    if (!email) return;
+
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/delete`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        
+        if (res.ok) {
+            handleLogout();
+        } else {
+            toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+        }
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-8 py-8">
       {/* Header */}
@@ -385,7 +414,7 @@ export default function ClientSettings() {
             <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
             <TabsTrigger value="billing" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Globe className="w-4 h-4 mr-2" />Preferences</TabsTrigger>
+            <TabsTrigger value="account" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Settings className="w-4 h-4 mr-2" />Account</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -550,83 +579,6 @@ export default function ClientSettings() {
                   <Textarea value={profile.professionalBio} onChange={e => setProfile(prev => ({ ...prev, professionalBio: e.target.value }))} className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Skills & Expertise</label>
-                  <div className="relative">
-                    <Input
-                      value={skillInput}
-                      onChange={(e) => {
-                        setSkillInput(e.target.value)
-                        setShowSkillSuggestions(true)
-                      }}
-                      onFocus={() => setShowSkillSuggestions(true)}
-                      placeholder="Type a skill (e.g. React, Python)..."
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                    />
-                    {showSkillSuggestions && skillInput && (
-                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                        {availableSkills
-                          .filter(
-                            (skill) =>
-                              !selectedSkills.includes(skill) &&
-                              skill.toLowerCase().includes(skillInput.toLowerCase())
-                          )
-                          .map((skill) => (
-                            <div
-                              key={skill}
-                              className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
-                              onClick={() => {
-                                if (!selectedSkills.includes(skill)) {
-                                  const newSkills = [...selectedSkills, skill]
-                                  setSelectedSkills(newSkills)
-                                  setProfile((prev) => ({
-                                    ...prev,
-                                    skills: newSkills,
-                                  }))
-                                  setSkillInput("")
-                                  setShowSkillSuggestions(false)
-                                }
-                              }}
-                            >
-                              {skill}
-                            </div>
-                          ))}
-                        {availableSkills.filter(
-                          (skill) =>
-                            !selectedSkills.includes(skill) &&
-                            skill.toLowerCase().includes(skillInput.toLowerCase())
-                        ).length === 0 && (
-                            <div className="px-4 py-2 text-sm text-gray-400">
-                              No matching skills found
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {selectedSkills.length > 0 ? (
-                      selectedSkills.map((skill, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="bg-white/10 text-white cursor-pointer hover:bg-white/20 flex items-center gap-1"
-                          onClick={() => {
-                            const newSkills = selectedSkills.filter((_, i) => i !== index)
-                            setSelectedSkills(newSkills)
-                            setProfile((prev) => ({ ...prev, skills: newSkills }))
-                          }}
-                        >
-                          {skill} <X className="w-3 h-3" />
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-gray-400 text-sm">
-                        No skills selected. Type above to add skills.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
                 <Button onClick={handleSaveProfile} disabled={loading} className="bg-white hover:bg-gray-200 text-black">
                   <Save className="w-4 h-4 mr-2" />
                   {loading ? "Saving..." : "Save Changes"}
@@ -700,54 +652,34 @@ export default function ClientSettings() {
             <WalletManagement />
           </TabsContent>
 
-          {/* Preferences Tab */}
-          <TabsContent value="preferences">
+          {/* Account Tab */}
+          <TabsContent value="account" className="mt-6 space-y-6">
             <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">Preferences</CardTitle>
+                <CardTitle className="text-gray-100">Account Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium text-gray-300 mb-2 block">Language</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.language} onChange={e => setPreferences(prev => ({ ...prev, language: e.target.value }))}>
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-300 mb-2 block">Timezone</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.timezone} onChange={e => setPreferences(prev => ({ ...prev, timezone: e.target.value }))}>
-                      <option value="utc">UTC</option>
-                      <option value="est">Eastern Time</option>
-                      <option value="pst">Pacific Time</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-300 mb-2 block">Currency</label>
-                    <select
-                      value={preferences.currency}
-                      onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
-                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                    >
-                      <option value="eth">ETH (Ξ)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-300 mb-2 block">Theme</label>
-                    <select className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white" value={preferences.theme} onChange={e => setPreferences(prev => ({ ...prev, theme: e.target.value }))}>
-                      <option value="dark">Dark</option>
-                      <option value="light">Light</option>
-                      <option value="auto">Auto</option>
-                    </select>
-                  </div>
+                <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-700">
+                    <div>
+                        <h3 className="text-lg font-medium text-white">Sign Out</h3>
+                        <p className="text-sm text-gray-400">Securely log out of your session on this device.</p>
+                    </div>
+                    <Button onClick={handleLogout} variant="outline" className="border-gray-600 text-gray-200 hover:bg-gray-700">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Log Out
+                    </Button>
                 </div>
 
-                <Button className="bg-white hover:bg-gray-200 text-black">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Preferences
-                </Button>
+                <div className="flex items-center justify-between p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <div>
+                        <h3 className="text-lg font-medium text-red-400">Delete Account</h3>
+                        <p className="text-sm text-red-300/70">Permanently delete your account and all data. This action cannot be undone.</p>
+                    </div>
+                    <Button onClick={handleDeleteAccount} variant="destructive" className="bg-red-500 hover:bg-red-600">
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Delete Account
+                    </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -756,4 +688,3 @@ export default function ClientSettings() {
     </div>
   )
 }
-

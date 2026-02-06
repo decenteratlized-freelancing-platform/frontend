@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
-let isConnected = false;
-
 export async function connectDB() {
-  if (isConnected) return;
+  if (mongoose.connections[0].readyState) {
+    return;
+  }
 
   try {
     const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
@@ -13,7 +13,6 @@ export async function connectDB() {
     await mongoose.connect(uri, {
       dbName: 'smarthire_db',
     });
-    isConnected = true;
     console.log('MongoDB connected');
   } catch (error) {
     console.error('MongoDB connection error:', error);

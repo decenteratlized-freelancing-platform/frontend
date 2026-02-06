@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
     FileText, Calendar, Clock, User,
     ArrowLeft, CheckCircle, XCircle, AlertCircle, Loader2,
-    Briefcase, MessageSquare
+    Briefcase, MessageSquare, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +60,7 @@ export function ProposalDetail({ proposalId, userRole, userEmail }: ProposalDeta
     const [actionLoading, setActionLoading] = useState(false);
     const router = useRouter();
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
     useEffect(() => {
         async function fetchData() {

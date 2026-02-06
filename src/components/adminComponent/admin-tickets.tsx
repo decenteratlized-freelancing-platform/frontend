@@ -61,7 +61,7 @@ export default function AdminTickets() {
                 ...(statusFilter !== "all" && { status: statusFilter }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/tickets?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/tickets?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -80,7 +80,7 @@ export default function AdminTickets() {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch("http://localhost:5000/api/admin/tickets/stats/overview", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/tickets/stats/overview`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             if (res.ok) {
@@ -102,7 +102,7 @@ export default function AdminTickets() {
 
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/tickets/${selectedTicket._id}/reply`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/tickets/${selectedTicket._id}/reply`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -123,7 +123,7 @@ export default function AdminTickets() {
     const handleUpdateStatus = async (ticketId: string, status: string) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/tickets/${ticketId}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/tickets/${ticketId}/status`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,

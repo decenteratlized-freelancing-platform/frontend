@@ -51,7 +51,7 @@ export default function TestimonialsSection() {
               transition={{ duration: 0.6, delay: idx * 0.1 }}
               className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-8 h-auto flex flex-col justify-start items-start space-y-4"
             >
-              <p className="text-lg text-white">"{testimonial.quote}"</p>
+              <p className="text-lg text-white">&quot;{testimonial.quote}&quot;</p>
               <div className="flex items-center gap-4 pt-4">
                 {/* <Image
                   src={testimonial.avatar}

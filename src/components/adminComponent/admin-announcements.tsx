@@ -61,7 +61,7 @@ export default function AdminAnnouncements() {
     const fetchAnnouncements = async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/announcements?page=${page}&limit=20`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/announcements?page=${page}&limit=20`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -87,8 +87,8 @@ export default function AdminAnnouncements() {
         try {
             const token = localStorage.getItem("adminToken")
             const url = editing
-                ? `http://localhost:5000/api/admin/announcements/${editing._id}`
-                : "http://localhost:5000/api/admin/announcements"
+                ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/announcements/${editing._id}`
+                : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/announcements`
 
             const res = await fetch(url, {
                 method: editing ? "PUT" : "POST",
@@ -115,7 +115,7 @@ export default function AdminAnnouncements() {
 
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/announcements/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/announcements/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             })
@@ -131,7 +131,7 @@ export default function AdminAnnouncements() {
     const handleToggleActive = async (announcement: Announcement) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/announcements/${announcement._id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/announcements/${announcement._id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,

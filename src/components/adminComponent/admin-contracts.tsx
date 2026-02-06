@@ -51,7 +51,7 @@ export default function AdminContracts() {
                 ...(statusFilter !== "all" && { status: statusFilter }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/contracts?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/contracts?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 

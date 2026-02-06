@@ -55,7 +55,7 @@ export default function AdminProposals() {
                 ...(statusFilter !== "all" && { status: statusFilter }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/proposals?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/proposals?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -78,7 +78,7 @@ export default function AdminProposals() {
     const handleUpdateStatus = async (proposalId: string, newStatus: string) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/proposals/${proposalId}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/proposals/${proposalId}/status`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,

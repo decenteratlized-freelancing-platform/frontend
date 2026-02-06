@@ -62,7 +62,7 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
 
     const fetchMessages = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/messages/${receiverId}?senderId=${currentUserId}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${receiverId}?senderId=${currentUserId}`)
             const data = await res.json()
             if (!data.error) {
                 setMessages(data)
@@ -77,7 +77,7 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
         if (!newMessage.trim()) return
 
         try {
-            const res = await fetch(`http://localhost:5000/api/messages/send/${receiverId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${receiverId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MilestoneStepper } from "./milestone-stepper";
 import { UserAvatar } from "./user-avatar";
-import { ChevronLeft, FileText, Bot, AlertTriangle, ThumbsUp, Loader2, Wallet, Send } from "lucide-react";
+import { ChevronLeft, FileText, Bot, AlertTriangle, ThumbsUp, Loader2, Wallet, Send, Star, XCircle, MessageSquare } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { getStatusStyles } from "@/lib/contract-utils";
 import RaiseDisputeModal from "./raise-dispute-modal";
@@ -14,6 +14,9 @@ import { toast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { ethers } from "ethers";
 import { GeminiAssistant } from "./gemini-assistant";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { Textarea } from "@/components/ui/textarea";
 
 const ESCROW_ADDRESS = "0x41fE53C6963a87006Fb59177CE1136b86a9B7297";
 const ESCROW_ABI = [
@@ -52,10 +55,15 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     const { address: walletAddress, connectWallet } = useWalletConnection();
 
+    // Review State
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
     useEffect(() => {
         const fetchLatestContract = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/contracts/${initialContract._id}`);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${initialContract._id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setLocalContract(data);
@@ -85,7 +93,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
     const handleAccept = async () => {
         setIsAccepting(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/contracts/${localContract._id}/accept`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/accept`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" }
             });
@@ -114,6 +122,50 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         }
     };
 
+    const handleReject = async () => {
+        if (!window.confirm("Are you sure you want to reject this contract? This will cancel the proposal and return the job to 'open' status.")) return;
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/reject`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            if (!res.ok) throw new Error("Failed to reject contract");
+            toast({ title: "Contract Rejected", description: "The contract has been cancelled." });
+            onBack(); // Go back to list since contract is cancelled
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleRevise = async () => {
+        const feedback = window.prompt("What changes do you need? (This will notify the client)");
+        if (feedback === null) return;
+
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/revise`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ feedback })
+            });
+            if (!res.ok) throw new Error("Failed to request revisions");
+            toast({ title: "Revision Requested", description: "The client has been notified of your feedback." });
+            
+            // Refresh
+            const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
+            if (statusRes.ok) {
+                setLocalContract(await statusRes.json());
+            }
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     const handlePublish = async () => {
         if (!walletAddress) {
             toast({ title: "Wallet Required", description: "Please connect your wallet first.", variant: "destructive" });
@@ -122,7 +174,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         }
         setIsProcessing(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/contracts/${localContract._id}/publish`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/publish`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ clientWallet: walletAddress })
@@ -135,7 +187,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
 
             toast({ title: "Success", description: "Contract published to blockchain! Waiting for confirmation..." });
             // Refresh local state to show 'Registered' status and Fund button
-            const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
+            const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
             if (statusRes.ok) {
                 setLocalContract(await statusRes.json());
             }
@@ -150,19 +202,19 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         if (!walletAddress) return;
         setIsProcessing(true);
         try {
-            if (!window.ethereum) throw new Error("No wallet found");
-            const provider = new ethers.BrowserProvider(window.ethereum);
+            if (!(window as any).ethereum) throw new Error("No wallet found");
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
 
             // Check Network (Sepolia)
             const network = await provider.getNetwork();
-            if (network.chainId !== 11155111n) {
+            if (network.chainId !== BigInt(11155111)) {
                 toast({
                     title: "Wrong Network",
                     description: "Please switch your wallet to Sepolia Testnet.",
                     variant: "destructive"
                 });
                 try {
-                    await window.ethereum.request({
+                    await (window as any).ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0xaa36a7' }], // 11155111 in hex
                     });
@@ -198,8 +250,8 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             toast({ title: "Funded", description: "Escrow funded successfully!" });
 
             // Sync status
-            await fetch(`http://localhost:5000/api/contracts/${localContract._id}/sync`, { method: 'POST' });
-            const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/sync`, { method: 'POST' });
+            const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
             if (statusRes.ok) {
                 setLocalContract(await statusRes.json());
             }
@@ -229,8 +281,8 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         if (!walletAddress) return;
         setIsProcessing(true);
         try {
-            if (!window.ethereum) throw new Error("No wallet found");
-            const provider = new ethers.BrowserProvider(window.ethereum);
+            if (!(window as any).ethereum) throw new Error("No wallet found");
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
             const signer = await provider.getSigner();
             const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
 
@@ -241,8 +293,8 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             toast({ title: "Released", description: "Funds released to freelancer!" });
 
             // Sync status
-            await fetch(`http://localhost:5000/api/contracts/${localContract._id}/sync`, { method: 'POST' });
-            const statusRes = await fetch(`http://localhost:5000/api/contracts/${localContract._id}`);
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/sync`, { method: 'POST' });
+            const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
             if (statusRes.ok) {
                 setLocalContract(await statusRes.json());
             }
@@ -253,6 +305,101 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         } finally {
             setIsProcessing(false);
         }
+    };
+
+    const handleSubmitReview = async () => {
+        if (!localContract) return;
+        if (reviewRating === 0) {
+            toast({ title: "Rating Required", description: "Please select a star rating.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmittingReview(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/review`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: userId,
+                    role: userRole,
+                    rating: reviewRating,
+                    comment: reviewComment
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to submit review");
+            
+            toast({ title: "Review Submitted", description: "Thank you for your feedback!" });
+            
+            // Refresh contract data
+            const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
+            if (statusRes.ok) {
+                setLocalContract(await statusRes.json());
+            }
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
+
+    const generateInvoice = (milestone: any, index: number) => {
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString();
+
+        // Header
+        doc.setFontSize(20);
+        doc.text("SmartHire Invoice", 105, 20, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Invoice Date: ${date}`, 105, 30, { align: "center" });
+        doc.text(`Contract ID: ${localContract.contractId}`, 105, 35, { align: "center" });
+
+        // Line
+        doc.setDrawColor(200);
+        doc.line(20, 45, 190, 45);
+
+        // Parties
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text("From (Client):", 20, 55);
+        doc.setFontSize(10);
+        doc.text(`${localContract.client.fullName}`, 20, 62);
+        doc.text(`${localContract.client.email}`, 20, 67);
+
+        doc.setFontSize(12);
+        doc.text("To (Freelancer):", 120, 55);
+        doc.setFontSize(10);
+        doc.text(`${localContract.freelancer.fullName}`, 120, 62);
+        doc.text(`${localContract.freelancer.email}`, 120, 67);
+
+        // Milestone Details
+        doc.setFontSize(12);
+        doc.text("Project / Milestone Details:", 20, 85);
+        
+        autoTable(doc, {
+            startY: 90,
+            head: [['Milestone #', 'Description', 'Amount']],
+            body: [
+                [index + 1, milestone.description, `${milestone.amount} ETH`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [59, 130, 246] }
+        });
+
+        // Total
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(14);
+        doc.text(`Total Amount: ${milestone.amount} ETH`, 190, finalY, { align: "right" });
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("This is a blockchain-verified invoice generated by SmartHire.", 105, 280, { align: "center" });
+
+        doc.save(`Invoice_${localContract.contractId.slice(0, 8)}_M${index + 1}.pdf`);
+        toast({ title: "Invoice Generated", description: "Your PDF invoice has been downloaded." });
     };
 
     return (
@@ -282,14 +429,34 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
 
                             {/* Freelancer Actions */}
                             {userRole === 'freelancer' && localContract.status === 'Created' && !hasAccepted && (
-                                <Button
-                                    onClick={handleAccept}
-                                    disabled={isAccepting}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
-                                >
-                                    {isAccepting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
-                                    Accept Contract
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={handleRevise}
+                                        disabled={isProcessing}
+                                        variant="outline"
+                                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 font-bold px-6"
+                                    >
+                                        <MessageSquare className="w-4 h-4 mr-2" />
+                                        Request Revisions
+                                    </Button>
+                                    <Button
+                                        onClick={handleReject}
+                                        disabled={isProcessing}
+                                        variant="outline"
+                                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 font-bold px-6"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Reject
+                                    </Button>
+                                    <Button
+                                        onClick={handleAccept}
+                                        disabled={isAccepting}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
+                                    >
+                                        {isAccepting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
+                                        Accept Contract
+                                    </Button>
+                                </div>
                             )}
 
                             {/* Client Actions */}
@@ -339,6 +506,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                             userRole={userRole}
                             contractStatus={localContract.status}
                             onRelease={handleRelease}
+                            onDownloadInvoice={generateInvoice}
                         />
                     </motion.div>
                 </div>
@@ -374,7 +542,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                     <h3 className="text-lg font-bold text-yellow-400">Having Issues?</h3>
                                 </div>
                                 <p className="text-sm text-neutral-300 mb-4">
-                                    If you're experiencing problems with this contract, you can raise a dispute for admin review.
+                                    If you&apos;re experiencing problems with this contract, you can raise a dispute for admin review.
                                 </p>
                                 <Button
                                     onClick={() => setShowDisputeModal(true)}
@@ -388,6 +556,121 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                     )}
                 </div>
             </div>
+
+            {/* Reviews Section */}
+            {localContract.status.toLowerCase() === "completed" && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 0.6 }}
+                    className="mt-12 bg-white/[0.02] border border-white/10 rounded-3xl p-8 shadow-2xl"
+                >
+                    <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                        <Star className="text-yellow-500 fill-yellow-500" /> Contract Reviews
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Review from Client (about Freelancer) */}
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5 relative">
+                            <Badge className="absolute -top-3 left-6 bg-blue-600 text-white border-none">Client Feedback</Badge>
+                            {localContract.freelancerReview ? (
+                                <div>
+                                    <div className="flex items-center gap-1 mb-3">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={`w-5 h-5 ${i < localContract.freelancerReview.rating ? "text-yellow-500 fill-yellow-500" : "text-zinc-700"}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-zinc-200 leading-relaxed italic text-lg">&quot;{localContract.freelancerReview.comment}&quot;</p>
+                                    <p className="text-zinc-500 text-xs mt-4 font-medium uppercase tracking-widest">{new Date(localContract.freelancerReview.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <Star className="w-8 h-8 text-zinc-800 mb-2" />
+                                    <p className="text-zinc-500 text-sm font-medium">Waiting for client review...</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Review from Freelancer (about Client) */}
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5 relative">
+                            <Badge className="absolute -top-3 left-6 bg-purple-600 text-white border-none">Freelancer Feedback</Badge>
+                            {localContract.clientReview ? (
+                                <div>
+                                    <div className="flex items-center gap-1 mb-3">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={`w-5 h-5 ${i < localContract.clientReview.rating ? "text-yellow-500 fill-yellow-500" : "text-zinc-700"}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-zinc-200 leading-relaxed italic text-lg">&quot;{localContract.clientReview.comment}&quot;</p>
+                                    <p className="text-zinc-500 text-xs mt-4 font-medium uppercase tracking-widest">{new Date(localContract.clientReview.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <Star className="w-8 h-8 text-zinc-800 mb-2" />
+                                    <p className="text-zinc-500 text-sm font-medium">Waiting for freelancer review...</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Review Submission Form */}
+                    {((userRole === "client" && !localContract.freelancerReview) || (userRole === "freelancer" && !localContract.clientReview)) && (
+                        <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mt-12 pt-12 border-t border-white/10"
+                        >
+                            <div className="max-w-2xl">
+                                <h4 className="text-xl font-bold text-white mb-2">How was your experience?</h4>
+                                <p className="text-zinc-400 mb-8">Your feedback helps maintain trust in the SmartHire community.</p>
+                                
+                                <div className="space-y-8">
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-bold uppercase tracking-widest text-zinc-500 block">Star Rating</label>
+                                        <div className="flex items-center gap-3">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    onClick={() => setReviewRating(star)}
+                                                    className="focus:outline-none transition-all hover:scale-125 group"
+                                                >
+                                                    <Star 
+                                                        className={`w-10 h-10 transition-colors ${
+                                                            star <= reviewRating 
+                                                                ? "text-yellow-500 fill-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]" 
+                                                                : "text-zinc-800 group-hover:text-zinc-600"
+                                                        }`} 
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-bold uppercase tracking-widest text-zinc-500 block">Your Comments</label>
+                                        <Textarea
+                                            value={reviewComment}
+                                            onChange={(e) => setReviewComment(e.target.value)}
+                                            placeholder="Write a brief summary of the collaboration..."
+                                            className="bg-black/40 border-white/10 text-white min-h-[120px] rounded-2xl focus:ring-blue-500/20 text-lg p-6"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-end">
+                                        <Button 
+                                            onClick={handleSubmitReview} 
+                                            disabled={isSubmittingReview || reviewRating === 0}
+                                            className="bg-white hover:bg-zinc-200 text-black font-black px-10 py-6 rounded-2xl transition-all shadow-xl shadow-white/5 text-base"
+                                        >
+                                            {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Submit Feedback"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </motion.div>
+            )}
 
             {/* Dispute Modal */}
             <RaiseDisputeModal

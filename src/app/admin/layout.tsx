@@ -33,7 +33,7 @@ export default function AdminLayout({
             }
 
             try {
-                const res = await fetch("http://localhost:5000/api/admin/auth/verify", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/auth/verify`, {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,

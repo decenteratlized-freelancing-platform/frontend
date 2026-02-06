@@ -60,7 +60,7 @@ export default function AdminJobs() {
                 ...(search && { search }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/jobs?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/jobs?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -88,7 +88,7 @@ export default function AdminJobs() {
     const handleUpdateStatus = async (jobId: string, newStatus: string) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/jobs/${jobId}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ export default function AdminJobs() {
 
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/jobs/${jobId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             })

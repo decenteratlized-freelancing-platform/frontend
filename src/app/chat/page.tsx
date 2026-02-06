@@ -44,7 +44,7 @@ export default function ChatPage() {
     if (!userId) return;
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/messages/conversations?userId=${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${userId}`);
       if (res.ok) {
         const data = await res.json();
         setConversations(data);
@@ -62,7 +62,7 @@ export default function ChatPage() {
   const fetchMessages = async (receiverId: string) => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${receiverId}?senderId=${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${receiverId}?senderId=${userId}`);
       const data = await res.json();
       if (!data.error) {
         setMessagesMap((prev) => ({
@@ -83,7 +83,7 @@ export default function ChatPage() {
   const handleSend = async (receiverId: string, message: string) => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/send/${receiverId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${receiverId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,9 +120,9 @@ export default function ChatPage() {
       <Sidebar />
       <ChatList
         users={filteredConversations.map(c => c.participant)}
-        conversations={conversations}
+        conversations={conversations as any}
         onSelect={handleSelectUser}
-        selectedId={selectedUserId}
+        selectedId={selectedUserId!}
         search={search}
         setSearch={setSearch}
       />
@@ -130,9 +130,9 @@ export default function ChatPage() {
         <div className="flex-1 h-full rounded-2xl bg-white shadow border border-gray-100 flex flex-col">
           <ChatWindow
             roomId={selectedUserId}
-            currentUser={userId}
+            currentUser={userId || ""}
             messages={messagesMap[selectedUserId] || []}
-            onSendMessage={(msg) => handleSend(selectedUserId, msg.text)}
+            onSendMessage={(msg) => handleSend(selectedUserId, msg.text || "")}
             onSendFileMessage={(file, fileUrl) => {
               // This is a placeholder, as the backend does not support file sending yet
             }}

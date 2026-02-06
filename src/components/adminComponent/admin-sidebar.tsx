@@ -47,7 +47,6 @@ const adminMenuItems = [
     { name: "Proposals", href: "/admin/proposals", icon: MessageSquare, color: "from-pink-400 to-rose-400" },
     { name: "Transactions", href: "/admin/transactions", icon: CreditCard, color: "from-indigo-400 to-purple-400" },
     { name: "Disputes", href: "/admin/disputes", icon: AlertTriangle, color: "from-red-400 to-orange-400" },
-    { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck, color: "from-emerald-400 to-green-400" },
     { name: "Support", href: "/admin/tickets", icon: Headphones, color: "from-violet-400 to-purple-400" },
     { name: "Announcements", href: "/admin/announcements", icon: Megaphone, color: "from-amber-400 to-orange-400" },
     { name: "Audit Logs", href: "/admin/audit-logs", icon: Activity, color: "from-slate-400 to-zinc-400" },

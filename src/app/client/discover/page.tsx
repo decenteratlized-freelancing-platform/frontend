@@ -6,8 +6,6 @@ import {
   Search,
   ChevronDown,
   Star,
-  MapPin,
-  Clock,
   Heart,
   X,
   Users,
@@ -20,6 +18,9 @@ import Link from "next/link";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast, toast } from "@/hooks/use-toast";
 
 // Define the Freelancer interface to match backend data
 interface Freelancer {
@@ -155,11 +156,15 @@ const FilterBar = ({
   totalCount,
   searchTerm,
   onSearchChange,
+  filters,
+  onFilterChange
 }: {
   count: number;
   totalCount: number;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  filters: any;
+  onFilterChange: (key: string, value: string) => void;
 }) => (
   <div className="flex flex-col lg:flex-row gap-4 mb-10 items-center">
     <div className="relative w-full lg:max-w-md">
@@ -173,15 +178,29 @@ const FilterBar = ({
       />
     </div>
     <div className="flex gap-2 w-full lg:w-auto overflow-x-auto no-scrollbar py-1">
-      {["Skills", "Availability", "Rate", "Location"].map((filter) => (
-        <button
-          key={filter}
-          className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-3 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-xs font-bold uppercase tracking-wider whitespace-nowrap"
-        >
-          <span>{filter}</span>
-          <ChevronDown className="w-3 h-3 opacity-40" />
-        </button>
-      ))}
+      <Select value={filters.status} onValueChange={(val) => onFilterChange('status', val)}>
+        <SelectTrigger className="w-[140px] bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 text-xs font-bold uppercase tracking-wider h-auto">
+          <SelectValue placeholder="Availability" />
+        </SelectTrigger>
+        <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
+          <SelectItem value="all">Any Status</SelectItem>
+          <SelectItem value="Available">Available</SelectItem>
+          <SelectItem value="Busy">Busy</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.rateRange} onValueChange={(val) => onFilterChange('rateRange', val)}>
+        <SelectTrigger className="w-[140px] bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 text-xs font-bold uppercase tracking-wider h-auto">
+          <SelectValue placeholder="Hourly Rate" />
+        </SelectTrigger>
+        <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
+          <SelectItem value="all">Any Rate</SelectItem>
+          <SelectItem value="0-0.05">Under 0.05 ETH</SelectItem>
+          <SelectItem value="0.05-0.1">0.05 - 0.1 ETH</SelectItem>
+          <SelectItem value="0.1-0.5">0.1 - 0.5 ETH</SelectItem>
+          <SelectItem value="0.5+">0.5+ ETH</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
     <div className="hidden lg:flex items-center text-zinc-500 text-[11px] font-bold uppercase tracking-widest ml-auto">
       Found <span className="text-zinc-200 mx-1.5">{count}</span> matched experts
@@ -199,6 +218,29 @@ const FreelancerProfileModal = ({
   onHire: (freelancer: Freelancer) => void;
 }) => {
   const { getConvertedAmount } = useCurrency();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  useEffect(() => {
+    if (freelancer?._id) {
+      const fetchReviews = async () => {
+        setLoadingReviews(true);
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/reviews/${freelancer._id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setReviews(data);
+          }
+        } catch (error) {
+          console.error("Error fetching reviews:", error);
+        } finally {
+          setLoadingReviews(false);
+        }
+      };
+      fetchReviews();
+    }
+  }, [freelancer]);
+
   if (!freelancer) return null;
 
   return (
@@ -240,16 +282,18 @@ const FreelancerProfileModal = ({
               <h3 className="text-2xl font-bold text-zinc-100 mb-1">{freelancer.fullName}</h3>
               <p className="text-zinc-500 text-sm font-medium uppercase tracking-wider mb-8">{freelancer.role}</p>
               
-              <div className="w-full space-y-3">
+              <div className="w-full flex flex-col gap-4">
                 <button 
                   onClick={() => onHire(freelancer)}
                   className="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-bold py-4 rounded-2xl transition-all shadow-xl shadow-white/5"
                 >
                   Hire Expert
                 </button>
-                <button className="w-full bg-zinc-800/50 text-zinc-300 font-bold py-4 rounded-2xl hover:bg-zinc-800 transition-colors border border-zinc-700/50">
-                  Contact
-                </button>
+                <Link href={`/client/messages?receiverId=${freelancer._id}`} className="w-full">
+                  <button className="w-full bg-zinc-800/50 text-zinc-300 font-bold py-4 rounded-2xl hover:bg-zinc-800 transition-colors border border-zinc-700/50">
+                    Contact
+                  </button>
+                </Link>
               </div>
             </div>
             
@@ -283,6 +327,37 @@ const FreelancerProfileModal = ({
                       {skill}
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Client Feedback</h4>
+                <div className="space-y-4">
+                  {loadingReviews ? (
+                    <p className="text-zinc-500 text-xs animate-pulse">Loading reviews...</p>
+                  ) : reviews.length > 0 ? (
+                    reviews.map((review, idx) => (
+                      <div key={idx} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-5">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} className={`w-3 h-3 ${i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-zinc-800"}`} />
+                              ))}
+                            </div>
+                            <span className="text-[10px] font-bold text-zinc-500 ml-2 uppercase tracking-widest">{review.reviewerName}</span>
+                          </div>
+                          <span className="text-[9px] text-zinc-600 font-bold uppercase">{new Date(review.date).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-zinc-300 text-sm leading-relaxed mb-2 italic">&quot;{review.comment}&quot;</p>
+                        <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                           <Briefcase className="w-2.5 h-2.5" /> {review.projectTitle}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest">No reviews yet</p>
+                  )}
                 </div>
               </div>
 
@@ -338,7 +413,7 @@ const HireFreelancerModal = ({
       if (!email) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/api/jobs/my-jobs?email=${email}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${email}`);
         if (res.ok) {
           const data = await res.json();
           // Filter only open jobs
@@ -362,7 +437,7 @@ const HireFreelancerModal = ({
 
     setCreating(true);
     try {
-      const res = await fetch("http://localhost:5000/api/contracts/direct", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/direct`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -437,7 +512,7 @@ const HireFreelancerModal = ({
                   ))}
                 </select>
                 <p className="text-xs text-zinc-500 mt-2">
-                  Only "Open" jobs are shown. Selecting a job will create a contract draft.
+                  Only &quot;Open&quot; jobs are shown. Selecting a job will create a contract draft.
                 </p>
               </div>
 
@@ -489,13 +564,44 @@ export default function DiscoverFreelancersPage() {
   const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
+  const { data: session } = useSession();
+  
+  // Filter States
+  const [filters, setFilters] = useState({
+    status: 'all',
+    rateRange: 'all'
+  });
+
+  const ensureToken = async () => {
+    let token = localStorage.getItem("token");
+    if (!token && session?.user?.email) {
+        try {
+            const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            if (devRes.ok) {
+                const data = await devRes.json();
+                token = data.token;
+                localStorage.setItem("token", token || "");
+            }
+        } catch (e) { console.error("Auto-token failed", e); }
+    }
+    return token;
+  };
 
   useEffect(() => {
     const fetchFreelancers = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://localhost:5000/api/user/freelancers");
+        
+        const token = await ensureToken();
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/freelancers`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -503,17 +609,6 @@ export default function DiscoverFreelancersPage() {
 
         const processedData: Freelancer[] = data.map((f: any) => {
           const settings = f.settings || {};
-
-          let totalEarnedInINR = 0;
-          // Clean up legacy INR data if any
-          if (typeof f.totalEarned === 'string') {
-            const numericValue = parseFloat(f.totalEarned.replace(/[^0-9.-]+/g, ""));
-            if (!isNaN(numericValue)) {
-              totalEarnedInINR = numericValue;
-            }
-          } else if (typeof f.totalEarned === 'number') {
-            totalEarnedInINR = f.totalEarned;
-          }
 
           return {
             _id: f._id,
@@ -526,14 +621,14 @@ export default function DiscoverFreelancersPage() {
             status: settings.availableForJobs ? "Available" : "Busy",
             location: settings.location || "Remote",
             responseTime: f.responseTime || "24 hours",
-            isFavorite: false,
+            isFavorite: f.isFavorite || false,
             image: f.image || "",
             portfolio: settings.portfolioWebsite ? [{ id: 1, title: 'Portfolio Website', imageUrl: settings.portfolioWebsite }] : [],
             languages: f.languages || [],
             projectsCompleted: settings.projectsCompleted || 0,
-            totalEarned: totalEarnedInINR,
+            totalEarned: settings.totalEarned || 0,
             averageRating: settings.rating || 0,
-            reviewsCount: f.reviewsCount || 0,
+            reviewsCount: settings.reviewsCount || 0,
           };
         });
 
@@ -547,26 +642,78 @@ export default function DiscoverFreelancersPage() {
       }
     };
     fetchFreelancers();
-  }, []);
+  }, [session]);
 
+  // Filter Logic
   useEffect(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
-    const results = allFreelancers.filter(
-      (freelancer) =>
-        freelancer.fullName.toLowerCase().includes(lowercasedTerm) ||
-        freelancer.role.toLowerCase().includes(lowercasedTerm) ||
-        freelancer.skills.some((skill) =>
-          skill.toLowerCase().includes(lowercasedTerm)
-        )
-    );
-    setFilteredFreelancers(results);
-  }, [searchTerm, allFreelancers]);
+    let results = allFreelancers;
 
-  const handleToggleFavorite = (id: string) => {
-    const updatedAllFreelancers = allFreelancers.map((f) =>
-      f._id === id ? { ...f, isFavorite: !f.isFavorite } : f
-    );
-    setAllFreelancers(updatedAllFreelancers);
+    // Search Term
+    if (searchTerm) {
+        const lowercasedTerm = searchTerm.toLowerCase();
+        results = results.filter(
+            (freelancer) =>
+              freelancer.fullName.toLowerCase().includes(lowercasedTerm) ||
+              freelancer.role.toLowerCase().includes(lowercasedTerm) ||
+              freelancer.skills.some((skill) =>
+                skill.toLowerCase().includes(lowercasedTerm)
+              )
+          );
+    }
+
+    // Status Filter
+    if (filters.status !== 'all') {
+        results = results.filter(f => f.status === filters.status);
+    }
+
+    // Rate Filter
+    if (filters.rateRange !== 'all') {
+        const [min, max] = filters.rateRange.split('-').map(Number);
+        if (filters.rateRange === '0.5+') {
+            results = results.filter(f => f.hourlyRate >= 0.5);
+        } else {
+            results = results.filter(f => f.hourlyRate >= min && f.hourlyRate <= max);
+        }
+    }
+
+    setFilteredFreelancers(results);
+  }, [searchTerm, allFreelancers, filters]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleToggleFavorite = async (id: string) => {
+    const freelancer = allFreelancers.find(f => f._id === id);
+    const isFavorite = freelancer?.isFavorite;
+    const token = await ensureToken();
+    
+    if (!token) {
+        toast({ title: "Auth Required", description: "Please log in to save favorites.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const endpoint = isFavorite ? "/api/user/favorites/remove" : "/api/user/favorites/add";
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${endpoint}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ freelancerId: id })
+        });
+
+        if (res.ok) {
+            const updatedAllFreelancers = allFreelancers.map((f) =>
+                f._id === id ? { ...f, isFavorite: !f.isFavorite } : f
+            );
+            setAllFreelancers(updatedAllFreelancers);
+            toast({ title: isFavorite ? "Removed" : "Saved", description: isFavorite ? "Freelancer removed from favorites" : "Freelancer saved to favorites" });
+        }
+    } catch (error) {
+        console.error("Error toggling favorite:", error);
+    }
   };
 
   const handleViewProfile = (freelancer: Freelancer) => {
@@ -629,6 +776,8 @@ export default function DiscoverFreelancersPage() {
           totalCount={allFreelancers.length}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
+          filters={filters}
+          onFilterChange={handleFilterChange}
         />
         {filteredFreelancers.length === 0 && !loading ? (
           <p className="text-zinc-500 text-center text-lg mt-12">

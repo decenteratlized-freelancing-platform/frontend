@@ -60,11 +60,10 @@ export default function ClientTransactions() {
   const [statusFilter, setStatusFilter] = useState("all")
 
   const stats = [
-        { title: "Total Spent", value: getConvertedAmount(1.96), change: "+12%", color: "from-red-500 to-pink-500" },
-        { title: "This Month", value: getConvertedAmount(0.25), change: "+8%", color: "from-blue-500 to-cyan-500" },
-        { title: "Pending", value: getConvertedAmount(0.14), change: "-5%", color: "from-orange-500 to-yellow-500" },
-      ].map((stat, index) => (
     { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
+    { title: "Total Spent", value: getConvertedAmount(1.96), change: "+12%", color: "from-red-500 to-pink-500" },
+    { title: "This Month", value: getConvertedAmount(0.25), change: "+8%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getConvertedAmount(0.14), change: "-5%", color: "from-orange-500 to-yellow-500" },
   ]
 
   return (

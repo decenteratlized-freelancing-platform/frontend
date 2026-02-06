@@ -75,7 +75,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
 
     const fetchJobDetails = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/jobs/${jobId}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/${jobId}`);
             if (res.ok) {
                 const job = await res.json();
                 setJobCurrency(job.paymentCurrency);
@@ -88,7 +88,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
     const fetchProposals = async () => {
         setLoading(true)
         try {
-            const res = await fetch(`http://localhost:5000/api/proposals/job/${jobId}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/job/${jobId}`)
             if (res.ok) {
                 const data = await res.json()
                 setProposals(data)
@@ -109,7 +109,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                 toast.error("You must be logged in to perform this action.");
                 return;
             }
-            const res = await fetch(`http://localhost:5000/api/proposals/${proposalId}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/${proposalId}/status`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -11,7 +11,7 @@ interface UserAvatarProps {
 export const UserAvatar = ({ user, className }: UserAvatarProps) => {
   return (
     <Avatar className={className}>
-      <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
+      <AvatarImage src={user?.image ?? ""} alt={user?.name ?? "User"} />
       <AvatarFallback className="bg-gray-700">
         <UserIcon className="text-gray-400" />
       </AvatarFallback>

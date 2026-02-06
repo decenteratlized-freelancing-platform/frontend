@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const statusParam = searchParams.get("status");
@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
       if (!tokenParam) return;
       setStatus("verifying");
       try {
-        const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/api/auth/verify-email?token=${encodeURIComponent(tokenParam)}`;
+        const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/verify-email?token=${encodeURIComponent(tokenParam)}`;
         const res = await fetch(backendUrl, { headers: { Accept: "application/json" } });
         const data = await res.json();
         if (res.ok && data.status === "success") {
@@ -79,5 +79,19 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
+        <div className="max-w-xl w-full bg-gray-800 p-8 rounded-lg border border-gray-700 text-center">
+          <p className="text-gray-300 animate-pulse">Loading verification details...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

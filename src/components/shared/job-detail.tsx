@@ -5,13 +5,15 @@ import { motion } from "framer-motion";
 import {
     Briefcase, Calendar, Clock, MapPin, User,
     ArrowLeft, Tag, Users, CheckCircle, AlertCircle, Loader2,
-    FileText, Send
+    FileText, Send, Heart, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
 interface JobDetailProps {
     jobId: string;
@@ -60,13 +62,74 @@ interface Proposal {
 }
 
 export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
+    const { data: session } = useSession();
     const [job, setJob] = useState<Job | null>(null);
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isTogglingFav, setIsTogglingFav] = useState(false);
     const router = useRouter();
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+    const ensureToken = async () => {
+        let token = localStorage.getItem("token");
+        if (!token && session?.user?.email) {
+            try {
+                const devRes = await fetch(`${BACKEND_URL}/api/auth/dev-token`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: session.user.email })
+                });
+                if (devRes.ok) {
+                    const data = await devRes.json();
+                    token = data.token;
+                    localStorage.setItem("token", token || "");
+                }
+            } catch (e) { console.error("Auto-token failed", e); }
+        }
+        return token;
+    };
+
+    const fetchFavoriteStatus = async () => {
+        const token = await ensureToken();
+        if (!token) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/user/favorites`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setIsFavorite(data.jobs?.some((j: any) => j._id === jobId));
+            }
+        } catch (e) {}
+    };
+
+    const toggleFavorite = async () => {
+        const token = await ensureToken();
+        if (!token) {
+            toast({ title: "Auth Required", description: "Log in to save favorites", variant: "destructive" });
+            return;
+        }
+        setIsTogglingFav(true);
+        try {
+            const endpoint = isFavorite ? "/api/user/favorites/jobs/remove" : "/api/user/favorites/jobs/add";
+            const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ jobId })
+            });
+            if (res.ok) {
+                setIsFavorite(!isFavorite);
+                toast({ title: isFavorite ? "Removed" : "Saved", description: isFavorite ? "Removed from favorites" : "Saved to favorites" });
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsTogglingFav(false);
+        }
+    };
 
     useEffect(() => {
         async function fetchData() {
@@ -92,6 +155,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
             }
         }
         fetchData();
+        fetchFavoriteStatus();
     }, [jobId, userRole, BACKEND_URL]);
 
     const handleAcceptProposal = async (proposalId: string) => {
@@ -160,29 +224,47 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
             </Button>
 
             {/* Job Header */}
-            <Card className="bg-white/5 border-white/10">
-                <CardHeader>
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <CardTitle className="text-2xl text-white mb-2">{job.title}</CardTitle>
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
-                                <span className="flex items-center gap-1">
-                                    <User className="w-4 h-4" />
-                                    {job.client?.fullName || "Unknown Client"}
+            <Card className="bg-white/5 border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-600" />
+                <CardHeader className="pt-8">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Badge variant={job.status === "open" ? "default" : "secondary"} className={job.status === "open" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : ""}>
+                                    {job.status}
+                                </Badge>
+                                <span className="text-zinc-600 text-xs">/</span>
+                                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">#{job._id.slice(-6)}</span>
+                            </div>
+                            <CardTitle className="text-3xl font-bold text-white">{job.title}</CardTitle>
+                            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-gray-400 pt-2">
+                                <span className="flex items-center gap-1.5 group cursor-pointer">
+                                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold border border-zinc-700">
+                                        {job.client?.fullName?.[0]}
+                                    </div>
+                                    <span className="group-hover:text-zinc-200 transition-colors">{job.client?.fullName || "Unknown Client"}</span>
                                 </span>
-                                <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
+                                <span className="flex items-center gap-1.5">
+                                    <Calendar className="w-4 h-4 text-zinc-500" />
                                     Posted {new Date(job.createdAt).toLocaleDateString()}
                                 </span>
-                                <span className="flex items-center gap-1">
-                                    <Users className="w-4 h-4" />
-                                    {job.proposalsCount} proposals
+                                <span className="flex items-center gap-1.5">
+                                    <Users className="w-4 h-4 text-zinc-500" />
+                                    {job.proposalsCount} Proposals
                                 </span>
                             </div>
                         </div>
-                        <Badge variant={job.status === "open" ? "default" : "secondary"}>
-                            {job.status}
-                        </Badge>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={toggleFavorite}
+                                disabled={isTogglingFav}
+                                className={`rounded-xl border-zinc-800 transition-all ${isFavorite ? "bg-pink-500/10 border-pink-500/50 text-pink-500" : "bg-zinc-900/50 text-zinc-500 hover:text-pink-400 hover:border-pink-500/30"}`}
+                            >
+                                <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6">

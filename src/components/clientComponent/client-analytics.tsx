@@ -89,7 +89,7 @@ export default function ClientAnalytics() {
         {[
           {
             title: "Total Spending",
-            value: getFormattedAmount(26, 'eth'),
+            value: getFormattedAmount(26),
             change: "+12%",
             icon: Wallet,
             color: "from-blue-500 to-indigo-500",

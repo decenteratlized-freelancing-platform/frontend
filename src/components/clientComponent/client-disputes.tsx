@@ -90,7 +90,7 @@ export default function ClientDisputes() {
         if (!userId) return
 
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/user/${userId}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/user/${userId}`)
             if (res.ok) {
                 const data = await res.json()
                 setDisputes(data)
@@ -112,7 +112,7 @@ export default function ClientDisputes() {
 
     const openDetail = async (dispute: Dispute) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/${dispute._id}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/${dispute._id}`)
             if (res.ok) {
                 const fullDispute = await res.json()
                 setSelectedDispute(fullDispute)
@@ -128,7 +128,7 @@ export default function ClientDisputes() {
 
         setSending(true)
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/${selectedDispute._id}/message`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/${selectedDispute._id}/message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

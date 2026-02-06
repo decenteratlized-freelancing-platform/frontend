@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, MapPin, Briefcase, Globe, Loader2, User } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Loader2, User, Heart, Star, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
 interface ProfileDialogProps {
     isOpen: boolean;
@@ -15,6 +18,7 @@ interface ProfileDialogProps {
 }
 
 interface UserProfile {
+    id?: string;
     fullName: string;
     email: string;
     image?: string;
@@ -27,14 +31,36 @@ interface UserProfile {
 }
 
 export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialogProps) {
+    const { data: session } = useSession();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isTogglingFav, setIsTogglingFav] = useState(false);
+
+    const ensureToken = async () => {
+        let token = localStorage.getItem("token");
+        if (!token && session?.user?.email) {
+            try {
+                const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: session.user.email })
+                });
+                if (devRes.ok) {
+                    const data = await devRes.json();
+                    token = data.token;
+                    localStorage.setItem("token", token || "");
+                }
+            } catch (e) { console.error("Auto-token failed", e); }
+        }
+        return token;
+    };
 
     useEffect(() => {
         if (isOpen && email) {
             fetchProfile();
         }
-    }, [isOpen, email]);
+    }, [isOpen, email, session]); // Add session to deps
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -43,14 +69,15 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
             const data = await response.json();
 
             if (response.ok) {
-                // Determine where the data is nested based on API structure (support both structure usually found)
                 const userData = data.profile || data.settings || data.user || {};
+                const profileId = data.user?._id || userData._id;
                 
                 const skillsArray = Array.isArray(userData.skills)
                     ? userData.skills
                     : (userData.skills ? userData.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
 
-                setProfile({
+                const profileData = {
+                    id: profileId,
                     fullName: userData.fullName || data.user?.fullName || "Anonymous",
                     email: userData.email || email,
                     image: userData.image || data.user?.image,
@@ -60,12 +87,54 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                     skills: skillsArray,
                     portfolioWebsite: userData.portfolioWebsite || "",
                     role: userType || "User",
-                });
+                };
+                
+                setProfile(profileData);
+
+                // Check favorite status if ID available
+                if (profileId) {
+                    const token = await ensureToken(); // Use ensureToken
+                    if (token) {
+                        const favRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/favorites`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (favRes.ok) {
+                            const favData = await favRes.json();
+                            setIsFavorite(favData.freelancers?.some((f: any) => f._id === profileId));
+                        }
+                    }
+                }
             }
         } catch (error) {
             console.error("Error fetching profile:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const toggleFavorite = async () => {
+        if (!profile?.id) return;
+        const token = await ensureToken(); // Use ensureToken
+        if (!token) {
+            toast({ title: "Auth Required", description: "Log in to save favorites", variant: "destructive" });
+            return;
+        }
+        setIsTogglingFav(true);
+        try {
+            const endpoint = isFavorite ? "/api/user/favorites/remove" : "/api/user/favorites/add";
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ freelancerId: profile.id })
+            });
+            if (res.ok) {
+                setIsFavorite(!isFavorite);
+                toast({ title: isFavorite ? "Removed" : "Saved", description: isFavorite ? "Removed from favorites" : "Saved to favorites" });
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsTogglingFav(false);
         }
     };
 
@@ -84,6 +153,20 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                         {/* Header Section */}
                         <div className="bg-zinc-900/50 border-b border-zinc-800 p-8 flex flex-col items-center text-center relative">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20" />
+                            
+                            {/* Favorite Button */}
+                            {userType === "client" && profile.id && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={toggleFavorite}
+                                    disabled={isTogglingFav}
+                                    className={`absolute top-4 right-4 rounded-full transition-all ${isFavorite ? "text-pink-500 hover:text-pink-600 bg-pink-500/10" : "text-zinc-500 hover:text-pink-400 hover:bg-pink-500/5"}`}
+                                >
+                                    <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+                                </Button>
+                            )}
+
                             <UserAvatar
                                 user={{ name: profile.fullName, image: profile.image }}
                                 className="w-24 h-24 border-4 border-zinc-950 shadow-xl mb-4"
@@ -97,7 +180,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                         </div>
 
                         {/* Content Section */}
-                        <div className="p-8 space-y-8">
+                        <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             
                             {/* Contact Grid */}
                             <div className="grid grid-cols-1 gap-4">

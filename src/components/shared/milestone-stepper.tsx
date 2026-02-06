@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, Dot, Clock, ShieldCheck, ArrowRight, Unlock } from "lucide-react";
+import { CheckCircle, Circle, Dot, Clock, ShieldCheck, ArrowRight, Unlock, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const getStatusIcon = (status?: string) => {
@@ -27,9 +27,10 @@ interface MilestoneStepperProps {
     userRole?: string;
     contractStatus?: string;
     onRelease?: (index: number) => void;
+    onDownloadInvoice?: (milestone: any, index: number) => void;
 }
 
-export function MilestoneStepper({ milestones, currency, userRole, contractStatus, onRelease }: MilestoneStepperProps) {
+export function MilestoneStepper({ milestones, currency, userRole, contractStatus, onRelease, onDownloadInvoice }: MilestoneStepperProps) {
     // A simple way to determine the current step. In a real app, this would be more robust.
     const currentMilestoneIndex = milestones.findIndex(m => 
         m.status !== 'paid' && m.status !== 'completed' && m.status !== 'approved'
@@ -82,14 +83,27 @@ export function MilestoneStepper({ milestones, currency, userRole, contractStatu
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 + index * 0.1 }}
                             >
-                                <div className="flex justify-between items-center">
-                                    <div>
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
                                         <p className="text-sm text-neutral-400">Milestone {index + 1}</p>
                                         <h4 className="text-lg font-bold text-white mt-1">{milestone.description}</h4>
                                     </div>
-                                    <span className="text-xs text-gray-400 mt-1">
-                                        {milestone.amount} {currency || 'ETH'}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-2 ml-4">
+                                        <span className="text-xs font-bold text-zinc-400 whitespace-nowrap bg-white/5 px-2 py-1 rounded">
+                                            {milestone.amount} {currency || 'ETH'}
+                                        </span>
+                                        {isCompleted && onDownloadInvoice && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => onDownloadInvoice(milestone, index)}
+                                                className="h-7 text-[10px] uppercase tracking-wider font-bold bg-blue-500/10 border-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all"
+                                            >
+                                                <FileText className="w-3 h-3 mr-1.5" />
+                                                Invoice
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {canRelease && (

@@ -7,19 +7,22 @@ import {
     ArrowLeft, CheckCircle, AlertCircle, Loader2,
     Briefcase, Target, Clock, AlertTriangle,
     RefreshCw, Wallet, Send, Edit, Plus, Trash2, Save, X, ThumbsUp,
-    ExternalLink, Bot
+    ExternalLink, Bot, Star, XCircle, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Assuming you have this
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { ethers } from "ethers";
 import { toast } from "@/hooks/use-toast";
 import { GeminiAssistant } from "./gemini-assistant";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const ESCROW_ADDRESS = "0x41fE53C6963a87006Fb59177CE1136b86a9B7297"; // SmartHireEscrowV2
 const ESCROW_ABI = [
@@ -38,6 +41,12 @@ interface Milestone {
     description: string;
     amount: string;
     status: string;
+}
+
+interface Review {
+    rating: number;
+    comment: string;
+    createdAt: string;
 }
 
 interface Contract {
@@ -71,6 +80,8 @@ interface Contract {
         walletAddress?: string;
     };
     milestones: Milestone[];
+    clientReview?: Review;
+    freelancerReview?: Review;
 }
 
 export function ContractDetail({ contractId, userRole, userEmail }: ContractDetailProps) {
@@ -92,10 +103,15 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
         description: "" 
     });
 
+    // Review State
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
     const router = useRouter();
     const { address: walletAddress, connectWallet } = useWalletConnection();
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
     const fetchData = async () => {
         try {
@@ -164,8 +180,8 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
         if (!walletAddress || !contract) return;
         setIsProcessing(true);
         try {
-            if (!window.ethereum) throw new Error("No wallet found");
-            const provider = new ethers.BrowserProvider(window.ethereum);
+            if (!(window as any).ethereum) throw new Error("No wallet found");
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
             const signer = await provider.getSigner();
             const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
 
@@ -190,8 +206,8 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
         if (!walletAddress || !contract) return;
         setIsProcessing(true);
         try {
-            if (!window.ethereum) throw new Error("No wallet found");
-            const provider = new ethers.BrowserProvider(window.ethereum);
+            if (!(window as any).ethereum) throw new Error("No wallet found");
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
             const signer = await provider.getSigner();
             const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
 
@@ -225,6 +241,143 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
             toast({ title: "Error", description: err.message, variant: "destructive" });
         } finally {
             setIsProcessing(false);
+        }
+    };
+
+    const handleReject = async () => {
+        if (!contract) return;
+        if (!window.confirm("Are you sure you want to reject this contract? This will cancel the proposal and return the job to 'open' status.")) return;
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/contracts/${contractId}/reject`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            if (!res.ok) throw new Error("Failed to reject contract");
+            toast({ title: "Contract Rejected", description: "The contract has been cancelled." });
+            router.back();
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleRevise = async () => {
+        if (!contract) return;
+        const feedback = window.prompt("What changes do you need? (This will notify the client)");
+        if (feedback === null) return;
+
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/contracts/${contractId}/revise`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ feedback })
+            });
+            if (!res.ok) throw new Error("Failed to request revisions");
+            toast({ title: "Revision Requested", description: "The client has been notified of your feedback." });
+            await fetchData();
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const generateInvoice = (milestone: Milestone, index: number) => {
+        if (!contract) return;
+
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString();
+
+        // Header
+        doc.setFontSize(20);
+        doc.text("SmartHire Invoice", 105, 20, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Invoice Date: ${date}`, 105, 30, { align: "center" });
+        doc.text(`Contract ID: ${contract.contractId}`, 105, 35, { align: "center" });
+
+        // Line
+        doc.setDrawColor(200);
+        doc.line(20, 45, 190, 45);
+
+        // Parties
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text("From (Client):", 20, 55);
+        doc.setFontSize(10);
+        doc.text(`${contract.client.fullName}`, 20, 62);
+        doc.text(`${contract.client.email}`, 20, 67);
+
+        doc.setFontSize(12);
+        doc.text("To (Freelancer):", 120, 55);
+        doc.setFontSize(10);
+        doc.text(`${contract.freelancer.fullName}`, 120, 62);
+        doc.text(`${contract.freelancer.email}`, 120, 67);
+
+        // Milestone Details
+        doc.setFontSize(12);
+        doc.text("Project / Milestone Details:", 20, 85);
+        
+        autoTable(doc, {
+            startY: 90,
+            head: [['Milestone #', 'Description', 'Amount']],
+            body: [
+                [index + 1, milestone.description, `${milestone.amount} ETH`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [59, 130, 246] } // Blue color
+        });
+
+        // Total
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(14);
+        doc.text(`Total Amount: ${milestone.amount} ETH`, 190, finalY, { align: "right" });
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("This is a blockchain-verified invoice generated by SmartHire.", 105, 280, { align: "center" });
+
+        doc.save(`Invoice_${contract.contractId.slice(0, 8)}_M${index + 1}.pdf`);
+        toast({ title: "Invoice Generated", description: "Your PDF invoice has been downloaded." });
+    };
+
+    // --- Review Handlers ---
+    const handleSubmitReview = async () => {
+        if (!contract) return;
+        if (reviewRating === 0) {
+            toast({ title: "Rating Required", description: "Please select a star rating.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmittingReview(true);
+        try {
+            // Determine user ID
+            const currentUserId = userRole === "client" ? contract.client._id : contract.freelancer._id;
+
+            const res = await fetch(`${BACKEND_URL}/api/contracts/${contract._id}/review`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    role: userRole,
+                    rating: reviewRating,
+                    comment: reviewComment
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to submit review");
+            
+            toast({ title: "Review Submitted", description: "Thank you for your feedback!" });
+            await fetchData();
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -482,15 +635,37 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
                             {/* Freelancer Actions */}
                             {userRole === "freelancer" && contract.status === "Created" && !contract.freelancerAccepted && (
-                                <Button 
-                                    size="sm" 
-                                    onClick={handleAccept} 
-                                    disabled={isProcessing}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-5 rounded-xl transition-all shadow-lg shadow-blue-500/10"
-                                >
-                                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
-                                    Accept Contract Terms
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        size="sm" 
+                                        onClick={handleRevise} 
+                                        disabled={isProcessing}
+                                        variant="outline"
+                                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 font-bold px-8 py-5 rounded-xl transition-all shadow-lg shadow-blue-500/10"
+                                    >
+                                        <MessageSquare className="w-4 h-4 mr-2" />
+                                        Request Revisions
+                                    </Button>
+                                    <Button 
+                                        size="sm" 
+                                        onClick={handleReject} 
+                                        disabled={isProcessing}
+                                        variant="outline"
+                                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 font-bold px-8 py-5 rounded-xl transition-all shadow-lg shadow-red-500/10"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Reject
+                                    </Button>
+                                    <Button 
+                                        size="sm" 
+                                        onClick={handleAccept} 
+                                        disabled={isProcessing}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-5 rounded-xl transition-all shadow-lg shadow-blue-500/10"
+                                    >
+                                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
+                                        Accept Terms
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -648,6 +823,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                                     <Input 
                                                         type="number"
                                                         step="0.001"
+                                                        min="0"
                                                         value={milestone.amount}
                                                         onChange={(e) => handleMilestoneChange(idx, "amount", e.target.value)}
                                                         className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-xl py-6 focus:ring-blue-500/20"
@@ -708,6 +884,17 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 w-full sm:w-auto">
+                                        {(milestone.status === "completed" || milestone.status === "approved") && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => generateInvoice(milestone, idx)}
+                                                className="border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white"
+                                            >
+                                                <FileText className="w-3.5 h-3.5 mr-2" />
+                                                Invoice
+                                            </Button>
+                                        )}
                                         {userRole === "client" && (contract.status === "Funded" || contract.status === "Completed") && (
                                             <Button
                                                 size="sm"
@@ -739,6 +926,92 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Reviews Section */}
+            {contract.status === "Completed" && (
+                <div className="bg-zinc-950/30 rounded-2xl p-6 border border-zinc-800/50">
+                    <h3 className="text-xl font-bold text-white mb-6">Contract Reviews</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Review from Client */}
+                        <div className="bg-zinc-900/40 p-5 rounded-xl border border-zinc-800">
+                            <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Client Feedback</h4>
+                            {contract.clientReview ? (
+                                <div>
+                                    <div className="flex items-center gap-1 mb-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={`w-4 h-4 ${i < contract.clientReview!.rating ? "text-yellow-400 fill-yellow-400" : "text-zinc-700"}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-zinc-200 text-sm italic">&quot;{contract.clientReview.comment}&quot;</p>
+                                    <p className="text-zinc-500 text-xs mt-2">{new Date(contract.clientReview.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            ) : (
+                                <p className="text-zinc-500 text-sm">No review submitted yet.</p>
+                            )}
+                        </div>
+
+                        {/* Review from Freelancer */}
+                        <div className="bg-zinc-900/40 p-5 rounded-xl border border-zinc-800">
+                            <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Freelancer Feedback</h4>
+                            {contract.freelancerReview ? (
+                                <div>
+                                    <div className="flex items-center gap-1 mb-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={`w-4 h-4 ${i < contract.freelancerReview!.rating ? "text-yellow-400 fill-yellow-400" : "text-zinc-700"}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-zinc-200 text-sm italic">&quot;{contract.freelancerReview.comment}&quot;</p>
+                                    <p className="text-zinc-500 text-xs mt-2">{new Date(contract.freelancerReview.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            ) : (
+                                <p className="text-zinc-500 text-sm">No review submitted yet.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Review Submission Form */}
+                    {((userRole === "client" && !contract.freelancerReview) || (userRole === "freelancer" && !contract.clientReview)) && (
+                        <div className="mt-8 pt-8 border-t border-zinc-800/50">
+                            <h4 className="text-lg font-bold text-white mb-4">Leave a Review</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium text-zinc-400 mb-2 block">Rating</label>
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                onClick={() => setReviewRating(star)}
+                                                className="focus:outline-none transition-transform hover:scale-110"
+                                            >
+                                                <Star className={`w-8 h-8 ${star <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-zinc-700"}`} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-zinc-400 mb-2 block">Comment</label>
+                                    <Textarea
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                        placeholder="Share your experience working on this contract..."
+                                        className="bg-zinc-900 border-zinc-800 text-zinc-100 min-h-[100px]"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button 
+                                        onClick={handleSubmitReview} 
+                                        disabled={isSubmittingReview || reviewRating === 0}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                                    >
+                                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Submit Review"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Quick Actions Footer */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-zinc-950/50 p-6 rounded-3xl border border-dashed border-zinc-800">

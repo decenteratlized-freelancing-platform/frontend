@@ -70,7 +70,7 @@ export default function AnnouncementBanner({ role }: AnnouncementBannerProps) {
     useEffect(() => {
         const fetchAnnouncements = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/announcements?role=${role}`)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/announcements?role=${role}`)
                 if (res.ok) {
                     const data = await res.json()
                     setAnnouncements(data.announcements || [])

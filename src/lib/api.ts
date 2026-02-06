@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth`;
 
 export async function registerUser(payload: { fullName: string; email: string; password: string; role?: string}) {
   const res = await fetch(`${API_URL}/register`, {

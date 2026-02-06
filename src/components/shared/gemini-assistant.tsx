@@ -20,6 +20,27 @@ interface Message {
   parts: { text: string }[];
 }
 
+const FormattedText = ({ text }: { text: string }) => {
+  if (!text) return null;
+  
+  // Split by bold (**text**) and italic (*text*)
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  
+  return (
+    <span>
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i} className="font-bold text-white">{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return <em key={i} className="italic text-zinc-300">{part.slice(1, -1)}</em>;
+        }
+        return part;
+      })}
+    </span>
+  );
+};
+
 interface GeminiAssistantProps {
   isOpen: boolean;
   onClose: () => void;
@@ -135,14 +156,30 @@ export function GeminiAssistant({ isOpen, onClose, context }: GeminiAssistantPro
                   ? "bg-blue-600 text-white rounded-br-none" 
                   : "bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-none"
               }`}>
-                {msg.parts[0].text}
+                <FormattedText text={msg.parts[0].text} />
               </div>
             </div>
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl rounded-bl-none">
-                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl rounded-bl-none">
+                <div className="flex gap-1">
+                  <motion.div
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ repeat: Infinity, duration: 1, delay: 0 }}
+                    className="w-1.5 h-1.5 bg-blue-400 rounded-full"
+                  />
+                  <motion.div
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+                    className="w-1.5 h-1.5 bg-blue-400 rounded-full"
+                  />
+                  <motion.div
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+                    className="w-1.5 h-1.5 bg-blue-400 rounded-full"
+                  />
+                </div>
               </div>
             </div>
           )}

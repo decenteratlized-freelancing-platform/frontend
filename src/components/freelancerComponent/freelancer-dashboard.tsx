@@ -89,7 +89,7 @@ export default function FreelancerDashboard() {
     totalEarnings: 0,
     activeProjectsCount: 0,
     completedJobsCount: 0,
-    clientRating: 0,
+    rating: 0,
   });
 
   const handleJobsRedirect = () => { router.push('/freelancer/browse-jobs') }
@@ -110,7 +110,7 @@ export default function FreelancerDashboard() {
 
         try {
 
-          const res = await fetch(`http://localhost:5000/api/dashboard/freelancer/summary?email=${email}`);
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/freelancer/summary?email=${email}`);
 
           if (res.ok) {
 
@@ -184,7 +184,7 @@ export default function FreelancerDashboard() {
 
         try {
 
-          const res = await fetch(`http://localhost:5000/api/proposals/my-proposals?email=${email}`);
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/my-proposals?email=${email}`);
 
           if (res.ok) {
 
@@ -341,7 +341,7 @@ export default function FreelancerDashboard() {
 
           title: "Total Earnings",
 
-          value: getFormattedAmount(dashboardStats.totalEarnings, 'eth'),
+          value: getFormattedAmount(dashboardStats.totalEarnings),
 
           change: "+18%",
 
@@ -379,19 +379,19 @@ export default function FreelancerDashboard() {
 
         },
 
-        {
+                        {
 
-          title: "Client Rating",
+                          title: "Rating",
 
-          value: dashboardStats.clientRating ? dashboardStats.clientRating.toString() : "N/A",
+                          value: dashboardStats.rating ? dashboardStats.rating.toString() : "N/A",
 
-          change: "+0.1",
+                          change: "+0.1",
 
-          icon: Star,
+                          icon: Star,
 
-          color: "from-orange-500 to-red-500",
+                          color: "from-orange-500 to-red-500",
 
-        },
+                        },
 
         ].map((stat, index) => (
 

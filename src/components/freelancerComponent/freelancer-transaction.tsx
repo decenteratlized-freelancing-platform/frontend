@@ -45,9 +45,9 @@ export default function FreelancerTransactions() {
   const [searchTerm, setSearchTerm] = useState("")
   const { getFormattedAmount } = useCurrency();
   const stats = [
-    { title: "Total Earned", value: getFormattedAmount(18750, 'eth'), change: "+15%", color: "from-green-500 to-emerald-500" },
-    { title: "This Month", value: getFormattedAmount(4900, 'eth'), change: "+22%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getFormattedAmount(600, 'eth'), change: "-10%", color: "from-orange-500 to-yellow-500" },
+    { title: "Total Earned", value: getFormattedAmount(18750), change: "+15%", color: "from-green-500 to-emerald-500" },
+    { title: "This Month", value: getFormattedAmount(4900), change: "+22%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getFormattedAmount(600), change: "-10%", color: "from-orange-500 to-yellow-500" },
     { title: "Transactions", value: "89", change: "+18%", color: "from-purple-500 to-pink-500" },
   ]
 
@@ -149,7 +149,7 @@ export default function FreelancerTransactions() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-green-400">+{getFormattedAmount(transaction.amount, 'eth')}</p>
+                      <p className="text-xl font-bold text-green-400">+{getFormattedAmount(transaction.amount)}</p>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}
                         className={

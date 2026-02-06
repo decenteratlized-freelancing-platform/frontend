@@ -22,7 +22,7 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
     useEffect(() => {
         if (user) {
             // @ts-ignore
-            const socketInstance = io("http://localhost:5000", {
+            const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
                 query: {
                     // @ts-ignore
                     userId: user.id || user._id,
@@ -55,7 +55,7 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
                     // or just show "New Message"
 
                     try {
-                        const res = await fetch(`http://localhost:5000/api/user/${message.senderId}`);
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/${message.senderId}`);
                         const senderData = await res.json();
                         const senderName = senderData.fullName || "Someone";
 

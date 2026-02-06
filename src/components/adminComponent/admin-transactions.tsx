@@ -56,7 +56,7 @@ export default function AdminTransactions() {
                 ...(modeFilter !== "all" && { mode: modeFilter }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/transactions?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/transactions?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 

@@ -115,7 +115,7 @@ export default function FreelancerMessages() {
     if (!currentUserId) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/conversations?userId=${currentUserId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${currentUserId}`)
       const data = await res.json()
 
       if (!data.error && Array.isArray(data)) {
@@ -133,7 +133,7 @@ export default function FreelancerMessages() {
 
   const fetchMessages = async (otherUserId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${otherUserId}?senderId=${currentUserId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${otherUserId}?senderId=${currentUserId}`)
       const data = await res.json()
       if (!data.error && Array.isArray(data)) {
         setMessages(data)
@@ -147,7 +147,7 @@ export default function FreelancerMessages() {
     if (!newMessage.trim() || !selectedConversation?.participant?._id) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/send/${selectedConversation.participant._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${selectedConversation.participant._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

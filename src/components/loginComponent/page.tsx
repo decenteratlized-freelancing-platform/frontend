@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Github } from 'lucide-react';
+import { Eye, EyeOff, Github, ArrowRight, Shield, Coins, Zap, CheckCircle2, Globe, Users, ArrowLeft } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { signOut } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 const LoginPage = () => {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
+  const [viewState, setViewState] = useState<'login' | 'register' | 'forgot'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
@@ -23,8 +24,33 @@ const LoginPage = () => {
     fullName: '',
     confirmPassword: '',
     role: 'freelancer'
-
   });
+
+  const handleResendEmail = async () => {
+    if (!formData.email) {
+      setStatusMessage({ type: 'error', text: 'Please enter your email first.' });
+      return;
+    }
+
+    setAuthState(prev => ({ ...prev, loading: true }));
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth`;
+      const res = await fetch(`${apiUrl}/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to resend email");
+
+      setStatusMessage({ type: "success", text: "Verification email sent! Check your inbox." });
+    } catch (err: any) {
+      setStatusMessage({ type: "error", text: err.message });
+    } finally {
+      setAuthState(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,24 +61,35 @@ const LoginPage = () => {
     setAuthState({ loading: true, successUser: null, error: null });
     setStatusMessage({ type: "", text: "" });
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://192.168.29.100:5000'}/api/auth`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth`;
 
     try {
-      // Basic validation
-      if (!formData.email || !formData.password || (!isLogin && !formData.fullName)) {
-        setAuthState({ loading: false, successUser: null, error: "Please fill all required fields" });
-        setStatusMessage({ type: "error", text: "Please fill all required fields" });
-        return;
+      if (viewState === 'forgot') {
+         if (!formData.email) throw new Error("Please enter your email");
+         
+         const res = await fetch(`${apiUrl}/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: formData.email }),
+         });
+         
+         const data = await res.json();
+         if (!res.ok) throw new Error(data.message || "Failed to send reset email");
+         
+         setStatusMessage({ type: "success", text: "Reset link sent to your email!" });
+         setAuthState({ loading: false, successUser: null, error: null });
+         return;
       }
 
-      if (!isLogin && formData.password.length < 6) {
-        setAuthState({ loading: false, successUser: null, error: "Password must be at least 6 characters long" });
-        setStatusMessage({ type: "error", text: "Password must be at least 6 characters long" });
-        return;
+      if (!formData.email || !formData.password || (viewState === 'register' && !formData.fullName)) {
+        throw new Error("Please fill all required fields");
       }
 
-      if (isLogin) {
-        // LOGIN
+      if (viewState === 'register' && formData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
+      if (viewState === 'login') {
         const res = await fetch(`${apiUrl}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -63,11 +100,7 @@ const LoginPage = () => {
 
         if (res.ok) {
           const user = data.user;
-
-          // Clear all previous localStorage data first to prevent old account data from persisting
           localStorage.clear();
-
-          // Now persist the new user's token and data
           localStorage.setItem("loginType", "manual");
           if (data.token) localStorage.setItem("token", data.token);
           localStorage.setItem("fullName", user?.fullName || "");
@@ -76,335 +109,342 @@ const LoginPage = () => {
           localStorage.setItem("currentUser", JSON.stringify(user));
 
           setAuthState({ loading: false, successUser: user, error: null });
-          setStatusMessage({ type: "success", text: "Login successful" });
+          setStatusMessage({ type: "success", text: "Welcome back! Redirecting..." });
 
-          // navigate to role page
-          router.push(user?.role === "client" ? "/client/dashboard" : "/freelancer/dashboard");
+          setTimeout(() => {
+            router.push(user?.role === "client" ? "/client/dashboard" : "/freelancer/dashboard");
+          }, 500);
         } else {
-          setAuthState({ loading: false, successUser: null, error: data.message || "Login failed" });
-          setStatusMessage({ type: "error", text: data.message || "Login failed" });
-
-          // If email not verified, show resend option
+          // Handle email not verified specifically
           if (data.emailNotVerified) {
-            setStatusMessage({
-              type: "error",
-              text: data.message + " Click 'Resend Verification' below to send a new email."
+            setStatusMessage({ 
+              type: "error", 
+              text: "Email not verified. Check your inbox or click below to resend." 
             });
+            setAuthState({ loading: false, successUser: null, error: "Email not verified" });
+            return;
           }
+          throw new Error(data.message || "Login failed");
         }
-      } else {
-        // SIGNUP / REGISTER
-        console.log("Sending registration request to:", `${apiUrl}/register`);
-        const requestBody = JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role || "freelancer",
-          settings: {
-            phone: "",
-            bio: "",
-            skills: "",
-            notifications: { email: true, push: false, sms: true, marketing: false },
-            privacy: { profileVisible: true, showEmail: false, showPhone: false, allowMessages: true },
-            preferences: { language: "en", timezone: "utc", currency: "inr", theme: "dark" },
-          },
-        });
-
-        console.log("Request body:", requestBody);
-
+      } else if (viewState === 'register') {
         const res = await fetch(`${apiUrl}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: requestBody,
+          body: JSON.stringify({
+            fullName: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role || "freelancer",
+          }),
         });
 
-        console.log("Response status:", res.status);
-        console.log("Response headers:", res.headers);
-
         const data = await res.json();
-        console.log("Response data:", data);
 
         if (res.ok) {
           setAuthState({ loading: false, successUser: null, error: null });
-          setStatusMessage({ type: "success", text: data.message || "Registration successful! Please check your email to verify your account." });
-          // switch to login view and clear form password fields
-          setIsLogin(true);
-          setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
+          setStatusMessage({ type: "success", text: "Account created! Please verify your email." });
+          // Don't redirect immediately to allow resend if needed
         } else {
-          setAuthState({ loading: false, successUser: null, error: data.message || "Registration failed" });
-          setStatusMessage({ type: "error", text: data.message || "Registration failed" });
+          throw new Error(data.message || "Registration failed");
         }
       }
     } catch (err: any) {
-      console.error("Error:", err);
-      setAuthState({ loading: false, successUser: null, error: err.message || "Something went wrong" });
-      setStatusMessage({ type: "error", text: err.message || "Something went wrong" });
+      setAuthState({ loading: false, successUser: null, error: err.message });
+      setStatusMessage({ type: "error", text: err.message });
     }
   };
 
-
-  // Handle URL error parameters
   useEffect(() => {
-    // NOTE: Removed signOut({ redirect: false }) that was here - it was causing
-    // cookie conflicts during OAuth flow, potentially contributing to 431 errors
-
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (error === "RoleMismatch") {
       setStatusMessage({
         type: "error",
-        text: "Account already exists with a different role. You cannot sign up/login as a different role."
+        text: "Account exists with a different role."
       });
     }
   }, []);
 
   const handleGoogleAuth = () => {
-    const intentRole = !isLogin ? formData.role : (formData.role || 'freelancer'); // Default to freelancer if not set, or handle logic for 'login' tab where role might be ambiguous if not selected, but usually for login we might not want to enforce UNLESS the user explicitly picked a role. 
-    // Actually, for Login tab, standard flow is just "Sign In". The user expects to go to THEIR dashboard.
-    // But the user specifically asked: "sign up the client page... say error".
-    // So if they are on SIGN UP tab, we enforce `formData.role`.
-
-    // Constructing URL
-    const params = new URLSearchParams();
-    params.set('intentRole', !isLogin ? formData.role : ''); // Only enforce on Signup or if we want to enforce on Login too. The user said "sign up the client page".
-    // Let's enforce it if we can determine it. On Login tab, we don't really have a role selector usually visible or relevant if we just want to "Start Session". 
-    // BUT, if the user tries to "Login as Client" (implied context), we might want to check.
-    // However, the prompt specifically mentioned "Sign Up the client page".
-    // Let's pass the role only if it is Signup mode for now to be safe, OR if the UI suggests a role context. 
-    // Looking at the UI code, there is a role selector ONLY in `!isLogin` (Sign Up) mode.
-    // In Login mode, there is NO role selector.
-    // So we only pass intentRole if !isLogin.
-
-    const callbackUrl = `/auth-callback${!isLogin ? `?intentRole=${formData.role}` : ''}`;
+    const callbackUrl = `/auth-callback${viewState === 'register' ? `?intentRole=${formData.role}` : ''}`;
     signIn('google', { callbackUrl });
   };
 
   const handleGithubAuth = () => {
-    const callbackUrl = `/auth-callback${!isLogin ? `?intentRole=${formData.role}` : ''}`;
+    const callbackUrl = `/auth-callback${viewState === 'register' ? `?intentRole=${formData.role}` : ''}`;
     signIn('github', { callbackUrl });
   };
 
-  const handleResendVerification = async () => {
-    if (!formData.email) {
-      setStatusMessage({ type: "error", text: "Please enter your email address first" });
-      return;
-    }
-
-    setAuthState({ loading: true, successUser: null, error: null });
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://192.168.29.100:5000'}/api/auth/resend-verification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setStatusMessage({ type: "success", text: data.message || "Verification email sent successfully!" });
-      } else {
-        setStatusMessage({ type: "error", text: data.message || "Failed to send verification email" });
-      }
-    } catch (err: any) {
-      setStatusMessage({ type: "error", text: "Network error. Please try again." });
-    }
-
-    setAuthState({ loading: false, successUser: null, error: null });
-  };
-
-
-
   return (
-    <div className="min-h-screen bg-zinc-900 relative overflow-hidden">
-      <div className="relative z-10 flex min-h-screen">
-        <div className="w-1/2 flex items-center justify-center px-8 py-12">
-          <div className="w-full max-w-2xl px-8">
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <h1 className="text-5xl font-bold text-white mb-2">
-                  SmartHire
-                </h1>
-                <p className="text-zinc-300 text-sm">Blockchain-Backed Freelance Platform</p>
-              </div>
-
-              <div className="flex bg-zinc-800 rounded-xl p-1 mb-8">
-                <button
-                  onClick={() => setIsLogin(true)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${isLogin ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                    }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => setIsLogin(false)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${!isLogin ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                    }`}
-                >
-                  Sign Up
-                </button>
-              </div>
-              <div className="space-y-4 mb-6">
-                <button
-                  onClick={handleGoogleAuth}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-zinc-700 rounded-xl hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-200 font-medium text-zinc-300 hover:text-white"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                    <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                  </svg>
-                  Continue with Google
-                </button>
-
-                <button
-                  onClick={handleGithubAuth}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-zinc-700 rounded-xl hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-200 font-medium text-zinc-300 hover:text-white"
-                >
-                  <Github className="w-5 h-5" />
-                  Continue with GitHub
-                </button>
-              </div>
-              {/* Status Message */}
-              {statusMessage.text && (
-                <div
-                  className={`text-sm font-medium text-center mb-4 ${statusMessage.type === 'error' ? 'text-red-600' : 'text-green-600'
-                    }`}
-                >
-                  {statusMessage.text}
+    <div className="min-h-screen bg-black text-white flex font-sans">
+      
+      {/* LEFT SIDE - FORM (55%) */}
+      <div className="w-full lg:w-[55%] flex flex-col justify-center px-6 sm:px-12 xl:px-24 py-12">
+        
+        <motion.div 
+          key={viewState}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-lg mx-auto"
+        >
+          {/* Brand Header */}
+          <div className="mb-12">
+             <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                   <span className="text-black font-black text-xl tracking-tighter">S</span>
                 </div>
-              )}
+                <span className="text-2xl font-bold tracking-tight">SmartHire</span>
+             </div>
+             
+             <h1 className="text-4xl font-bold mb-3">
+                {viewState === 'login' && 'Welcome back'}
+                {viewState === 'register' && 'Join the revolution'}
+                {viewState === 'forgot' && 'Reset Password'}
+             </h1>
+             <p className="text-zinc-500 text-lg">
+                {viewState === 'forgot' 
+                  ? 'Enter your email to receive a reset link.' 
+                  : 'The most secure decentralized platform for elite talent.'}
+             </p>
+          </div>
 
-              <div className="space-y-6">
-                {!isLogin && (
-                  <>
-                    <div className="space-y-2">
-                      <label htmlFor="fullName" className="text-sm font-medium text-zinc-300">Full Name</label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
-                        placeholder="Enter your full name"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label htmlFor="role" className="text-sm font-medium text-zinc-300">Select Role</label>
-                      <select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white appearance-none pr-10 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
-                        style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3e%3cpath fill=\'none\' stroke=\'%23ffffff\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'m2 5 6 6 6-6\'/%3e%3c/svg%3e")' }}
-                      >
-                        <option value="freelancer">Freelancer</option>
-                        <option value="client">Client</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email Address</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 pr-12 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
-                      placeholder="Enter your password"
-                      required
-                    />
+          {viewState !== 'forgot' && (
+              <>
+                  {/* Social Auth */}
+                  <div className="grid grid-cols-2 gap-4 mb-8">
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={handleGoogleAuth}
+                      className="flex items-center justify-center gap-3 py-3 px-4 bg-zinc-900/50 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-all font-medium text-sm text-zinc-300"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                      </svg>
+                      Google
+                    </button>
+                    <button
+                      onClick={handleGithubAuth}
+                      className="flex items-center justify-center gap-3 py-3 px-4 bg-zinc-900/50 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-all font-medium text-sm text-zinc-300"
+                    >
+                      <Github className="w-5 h-5" />
+                      GitHub
                     </button>
                   </div>
-                </div>
 
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-300">Confirm Password</label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 pr-12 bg-zinc-800 border-2 border-zinc-700 rounded-xl focus:border-blue-500 text-white placeholder:text-gray-500"
-                        placeholder="Confirm your password"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-zinc-800"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase tracking-widest text-zinc-600 font-bold">
+                      <span className="bg-black px-4">Or use your email</span>
                     </div>
                   </div>
-                )}
+              </>
+          )}
 
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  disabled={authState.loading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all"
+          {/* Form Fields */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <AnimatePresence mode="wait">
+              {viewState === 'register' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-6 overflow-hidden"
                 >
-                  {authState.loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
-                </button>
-              </div>
-
-              {isLogin && (
-                <div className="mt-6 text-center space-y-3">
-                  <a href="#" className="text-blue-400 hover:text-blue-300 text-sm font-medium block">
-                    Forgot your password?
-                  </a>
-                  <button
-                    onClick={handleResendVerification}
-                    disabled={authState.loading}
-                    className="text-blue-400 hover:text-blue-300 text-sm font-medium block w-full"
-                  >
-                    {authState.loading ? 'Sending...' : 'Resend Verification Email'}
-                  </button>
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Full Name</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
+                      placeholder="e.g. Satoshi Nakamoto"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">I want to</label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div 
+                          onClick={() => setFormData({...formData, role: 'freelancer'})}
+                          className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${formData.role === 'freelancer' ? 'border-white bg-zinc-900' : 'border-zinc-800 bg-transparent opacity-50 hover:opacity-100'}`}
+                        >
+                           <Zap size={20} className={formData.role === 'freelancer' ? 'text-yellow-400' : ''} />
+                           <span className="text-sm font-bold">Work & Earn</span>
+                        </div>
+                        <div 
+                          onClick={() => setFormData({...formData, role: 'client'})}
+                          className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${formData.role === 'client' ? 'border-white bg-zinc-900' : 'border-zinc-800 bg-transparent opacity-50 hover:opacity-100'}`}
+                        >
+                           <Globe size={20} className={formData.role === 'client' ? 'text-blue-400' : ''} />
+                           <span className="text-sm font-bold">Hire Talent</span>
+                        </div>
+                    </div>
+                  </div>
+                </motion.div>
               )}
-            </div>
-          </div>
-        </div>
+            </AnimatePresence>
 
-        {/* Right branding block remains the same */}
-        <div className="w-1/2 flex items-center justify-center text-white relative">
-          <Image
-            src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmFja2dyb3VuZHxlbnwwfHwwfHx8MA%3D%3D"
-            alt="Login Illustration"
-            fill
-            className="object-cover h-full w-full absolute rounded-2xl"
-          />
-        </div>
+            <div className="space-y-2">
+               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Email</label>
+               <input
+                 type="email"
+                 name="email"
+                 value={formData.email}
+                 onChange={handleInputChange}
+                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
+                 placeholder="name@company.com"
+               />
+            </div>
+
+            {viewState !== 'forgot' && (
+                <div className="space-y-2">
+                   <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Password</label>
+                      {viewState === 'login' && (
+                          <button 
+                            type="button" 
+                            onClick={() => { setViewState('forgot'); setStatusMessage({type:'', text:''}); }}
+                            className="text-xs text-zinc-500 hover:text-white transition-colors"
+                          >
+                            Forgot?
+                          </button>
+                      )}
+                   </div>
+                   <div className="relative">
+                     <input
+                       type={showPassword ? 'text' : 'password'}
+                       name="password"
+                       value={formData.password}
+                       onChange={handleInputChange}
+                       className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 pr-12 text-white focus:outline-none focus:border-white transition-colors"
+                       placeholder="••••••••"
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setShowPassword(!showPassword)}
+                       className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                     >
+                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                     </button>
+                   </div>
+                </div>
+            )}
+
+            {statusMessage.text && (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-3 ${
+                  statusMessage.type === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'
+                }`}>
+                  {statusMessage.type === 'error' ? '✕' : <CheckCircle2 size={16} />}
+                  {statusMessage.text}
+                </div>
+                
+                {(statusMessage.text.includes("verify") || statusMessage.text.includes("verified")) && (
+                  <button
+                    type="button"
+                    onClick={handleResendEmail}
+                    disabled={authState.loading}
+                    className="text-xs font-bold text-zinc-400 hover:text-white transition-colors flex items-center gap-2 mx-auto underline underline-offset-4"
+                  >
+                    Didn&apos;t get the email? Resend verification
+                  </button>
+                )}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={authState.loading}
+              className="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 group"
+            >
+              {authState.loading ? (
+                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              ) : (
+                <>
+                  {viewState === 'login' && 'Enter Platform'}
+                  {viewState === 'register' && 'Create Account'}
+                  {viewState === 'forgot' && 'Send Reset Link'}
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+          
+          <div className="mt-8 text-center">
+             {viewState === 'forgot' ? (
+                <button 
+                    onClick={() => { setViewState('login'); setStatusMessage({type:'', text:''}); }}
+                    className="flex items-center justify-center gap-2 text-zinc-500 hover:text-white transition-colors w-full"
+                >
+                    <ArrowLeft size={16} /> Back to Login
+                </button>
+             ) : (
+                <button 
+                    onClick={() => {
+                        setViewState(viewState === 'login' ? 'register' : 'login'); 
+                        setStatusMessage({type:'', text:''});
+                        setFormData(prev => ({...prev, password: '', confirmPassword: ''}));
+                    }}
+                    className="text-sm font-bold text-zinc-500 hover:text-white transition-colors"
+                >
+                    {viewState === 'login' ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+                </button>
+             )}
+          </div>
+
+          {/* Value Highlights (Only on Login/Register) */}
+          {viewState !== 'forgot' && (
+              <div className="mt-12 grid grid-cols-3 gap-6 pt-12 border-t border-zinc-900">
+                 <div className="space-y-1">
+                    <Shield size={20} className="text-zinc-400" />
+                    <h4 className="text-xs font-bold text-white">Secure Escrow</h4>
+                    <p className="text-[10px] text-zinc-600">Blockchain backed safety.</p>
+                 </div>
+                 <div className="space-y-1">
+                    <Coins size={20} className="text-zinc-400" />
+                    <h4 className="text-xs font-bold text-white">Low Fees</h4>
+                    <p className="text-[10px] text-zinc-600">Keep more of your earnings.</p>
+                 </div>
+                 <div className="space-y-1">
+                    <Zap size={20} className="text-zinc-400" />
+                    <h4 className="text-xs font-bold text-white">Instant Pay</h4>
+                    <p className="text-[10px] text-zinc-600">Automatic settlements.</p>
+                 </div>
+              </div>
+          )}
+
+        </motion.div>
       </div>
+
+      {/* RIGHT SIDE - IMAGE (45%) */}
+      <div className="hidden lg:block lg:w-[45%] relative bg-zinc-900">
+         <Image
+            src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2832&auto=format&fit=crop"
+            alt="Blockchain Technology"
+            fill
+            className="object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
+            priority
+         />
+         <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
+         
+         <div className="absolute bottom-12 left-12 right-12">
+             <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-px bg-white/20" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">Trusted by 10k+ users</span>
+             </div>
+             <h2 className="text-2xl font-bold leading-tight">
+                Empowering the next <br/> 
+                generation of builders.
+             </h2>
+         </div>
+      </div>
+
     </div>
   );
 };

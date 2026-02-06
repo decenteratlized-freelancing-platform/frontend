@@ -233,6 +233,7 @@ export default function FreelancerGoals() {
                     <Input
                       id="target"
                       type="number"
+                      min="0"
                       placeholder="Numerical target..."
                       value={newGoal.target}
                       onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}

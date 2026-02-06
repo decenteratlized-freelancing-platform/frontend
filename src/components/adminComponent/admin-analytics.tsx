@@ -53,13 +53,13 @@ export default function AdminAnalytics() {
         try {
             const token = localStorage.getItem("adminToken")
             const [revenueRes, platformRes, growthRes] = await Promise.all([
-                fetch(`http://localhost:5000/api/admin/analytics/revenue?period=${period}`, {
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/analytics/revenue?period=${period}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch("http://localhost:5000/api/admin/analytics/platform", {
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/analytics/platform`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch("http://localhost:5000/api/admin/analytics/growth", {
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/analytics/growth`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ])

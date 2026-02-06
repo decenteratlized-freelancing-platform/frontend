@@ -82,7 +82,7 @@ export default function ClientDashboard() {
       if (session?.user?.email) {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/summary?email=${session.user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/summary?email=${session.user.email}`
           );
           if (res.ok) {
             const data = await res.json();
@@ -106,7 +106,7 @@ export default function ClientDashboard() {
       if (session?.user?.email) {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/my-jobs?email=${session.user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${session.user.email}`
           );
           if (res.ok) {
             const data = await res.json();

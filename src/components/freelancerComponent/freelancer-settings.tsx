@@ -1,126 +1,82 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import {
-  Eye,
-  EyeOff,
-  Camera,
-  Upload,
-  Trash2,
-  Save,
-  Shield,
-  CreditCard,
-  Globe,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Link,
-  Lock,
-  Key,
-  Settings,
-  X,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import WalletManagement from "@/components/shared/wallet-management";
-import dynamic from "next/dynamic";
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { UserAvatar } from "@/components/shared/user-avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  Settings, User, Shield, CreditCard, Globe, Camera, Save, 
+  Upload, Trash2, Phone, MapPin, Link as LinkIcon, X, 
+  LogOut, AlertTriangle, Lock, Key, Mail, Bell, Eye, EyeOff
+} from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
+import WalletManagement from "@/components/shared/wallet-management"
+import dynamic from "next/dynamic"
+import { Label } from "@/components/ui/label"
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
   ssr: false,
-  loading: () => <div className="h-[250px] w-full bg-gray-800 animate-pulse rounded-lg" />
-});
+  loading: () => <div className="h-[250px] w-full bg-white/5 animate-pulse rounded-lg" />
+})
 
-interface UserSettings {
-  fullName: string;
-  email: string;
-  image?: string;
-  phone?: string;
-  location?: string;
-  portfolioWebsite?: string;
-  professionalBio?: string;
-  skills?: string[];
-  hourlyRate?: number;
-  language?: string;
-  timezone?: string;
-  currency?: string;
-  availabilityStatus?: string;
-  workSchedule?: string;
-  notifications?: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  security?: {
-    twoFactorEnabled: boolean;
-    smsEnabled: boolean;
-  };
-}
+export default function FreelancerSettings() {
+  const { data: session } = useSession()
+  const { toast } = useToast()
+  const router = useRouter()
 
-export default function SettingsPage() {
-  const { data: session, update } = useSession();
-  const { toast } = useToast();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("profile");
-  const [loading, setLoading] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
-
-  const [settings, setSettings] = useState<UserSettings>({
+  const [settings, setSettings] = useState({
     fullName: "",
     email: "",
     phone: "",
-    location: "",
-    portfolioWebsite: "",
     professionalBio: "",
-    skills: [],
-    hourlyRate: 5000,
+    skills: [] as string[],
+    portfolioWebsite: "",
+    location: "",
+    image: "",
+    hourlyRate: 0,
+  })
+
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    sms: false,
+  })
+
+  const [privacy, setPrivacy] = useState({
+    profileVisible: true,
+    showEmail: false,
+    showPhone: false,
+    allowMessages: true,
+  })
+
+  const [preferences, setPreferences] = useState({
     language: "en",
-    currency: "ETH (Ξ)",
+    currency: "eth",
     timezone: "ist",
-    availabilityStatus: "Available for Work",
-    workSchedule: "Full-time",
-    notifications: {
-      email: true,
-      push: true,
-      sms: false,
-    },
-    security: {
-      twoFactorEnabled: false,
-      smsEnabled: false,
-    },
-  });
+    workSchedule: "full-time",
+  })
 
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  });
+  const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" })
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false })
+  const [loading, setLoading] = useState(false)
+  const [phoneError, setPhoneError] = useState("")
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [skillInput, setSkillInput] = useState("")
+  const [showSkillSuggestions, setShowSkillSuggestions] = useState(false)
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([])
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+  const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lon: number } | null>(null)
 
-  const [phoneError, setPhoneError] = useState("");
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [skillInput, setSkillInput] = useState("");
-  const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lon: number } | null>(null);
-
-  // Common skills list
   const availableSkills = [
     "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
     "PHP", "Ruby", "Go", "Swift", "Kotlin", "Dart", "Rust", "HTML/CSS",
@@ -131,362 +87,229 @@ export default function SettingsPage() {
     "Machine Learning", "Data Science", "Blockchain", "Web3", "Solidity",
     "Mobile Development", "iOS", "Android", "React Native", "Flutter",
     "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
-  ];
+  ]
 
   useEffect(() => {
-    // Get email from localStorage (for manual login) or session (for OAuth)
-    const storedEmail = localStorage.getItem("email") || session?.user?.email || "";
-    const storedName = localStorage.getItem("fullName") || session?.user?.name || "";
-    const storedRole = localStorage.getItem("role") || "";
+    if (typeof window === "undefined") return
 
-    if (storedEmail) {
-      setSettings(prev => ({
-        ...prev,
-        fullName: storedName,
-        email: storedEmail,
-      }));
-      fetchSettings(storedEmail);
-    }
-  }, [session]);
-
-  const fetchSettings = async (email: string) => {
-    try {
-      const response = await fetch(`/api/settings?email=${email}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        const skillsArray = Array.isArray(data.settings?.skills)
-          ? data.settings.skills
-          : (data.settings?.skills ? data.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
-
-        setSelectedSkills(skillsArray);
-        setSettings(prev => ({
-          ...prev,
-          fullName: data.profile?.fullName || prev.fullName,
-          email: data.profile?.email || prev.email,
-          image: data.profile?.image,
-          phone: data.profile?.phone || "",
-          location: data.profile?.location || "",
-          portfolioWebsite: data.profile?.portfolioWebsite || "",
-          professionalBio: data.profile?.professionalBio || "",
-          skills: skillsArray,
-          hourlyRate: data.settings?.hourlyRate || 5000,
-          language: data.settings?.preferences?.language || "English",
-        currency: data.settings?.preferences?.currency || "ETH (Ξ)",
-        timezone: data.settings?.preferences?.timezone || "ist",
-          availabilityStatus: data.settings?.availableForJobs ? "Available for Work" : "Not Available",
-          workSchedule: data.settings?.workSchedule || "Full-time",
-          notifications: {
-            email: data.settings?.notifications?.email ?? true,
-            push: data.settings?.notifications?.push ?? true,
-            sms: data.settings?.notifications?.sms ?? false,
-          },
-          security: {
-            twoFactorEnabled: data.settings?.security?.twoFactorEnabled ?? false,
-            smsEnabled: data.settings?.security?.smsEnabled ?? false,
-          },
-        }));
+    const stored = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("currentUser") || "null")
+      } catch {
+        return null
       }
-    } catch (error) {
-      console.error("Error fetching settings:", error);
+    })()
+
+    const initialEmail = stored?.email || session?.user?.email || localStorage.getItem("email") || ""
+    const initialFullName = stored?.fullName || (session?.user?.name as string) || localStorage.getItem("fullName") || ""
+
+    setSettings(prev => ({
+      ...prev,
+      email: initialEmail,
+      fullName: initialFullName,
+      phone: stored?.settings?.phone || stored?.phone || prev.phone,
+      professionalBio: stored?.settings?.bio || stored?.professionalBio || prev.professionalBio,
+      portfolioWebsite: stored?.settings?.portfolioWebsite || stored?.portfolioWebsite || prev.portfolioWebsite,
+      location: stored?.settings?.location || stored?.location || prev.location,
+      image: stored?.image || prev.image,
+      hourlyRate: stored?.settings?.hourlyRate || prev.hourlyRate,
+      skills: Array.isArray(stored?.settings?.skills) ? stored.settings.skills : (stored?.settings?.skills ? stored.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
+    }))
+  }, [session])
+
+  useEffect(() => {
+    if (settings.skills && settings.skills.length > 0) {
+      setSelectedSkills(Array.isArray(settings.skills) ? settings.skills : [])
     }
-  };
+  }, [settings.skills])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please upload an image file",
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "Invalid file", description: "Please upload an image file", variant: "destructive" })
+      return
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Image must be less than 5MB",
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "File too large", description: "Image must be less than 5MB", variant: "destructive" })
+      return
     }
 
-    setUploadingImage(true);
+    setUploadingImage(true)
     try {
-      // Convert to base64
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = async () => {
-        const base64String = reader.result as string;
-        const email = localStorage.getItem("email") || session?.user?.email;
+        const base64String = reader.result as string
+        const email = settings.email || session?.user?.email || localStorage.getItem("email")
 
         if (!email) {
-          toast({
-            title: "Error",
-            description: "Email not found. Please log in again.",
-            variant: "destructive",
-          });
-          setUploadingImage(false);
-          return;
+          toast({ title: "Error", description: "Email not found. Please log in again.", variant: "destructive" })
+          setUploadingImage(false)
+          return
         }
 
         try {
           const response = await fetch("/api/user/upload-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              imageUrl: base64String,
-              email,
-            }),
-          });
+            body: JSON.stringify({ imageUrl: base64String, email }),
+          })
 
-          const data = await response.json();
+          const data = await response.json()
           if (response.ok) {
-            // await update({ image: data.image }); // Caused Cookie Overflow
-            localStorage.setItem("userImage", data.image);
-            window.dispatchEvent(new Event("userImageUpdated"));
-            setSettings(prev => ({ ...prev, image: data.image }));
-            toast({
-              title: "Success",
-              description: "Profile image updated successfully",
-            });
-            router.refresh();
+            localStorage.setItem("userImage", data.image)
+            window.dispatchEvent(new Event("userImageUpdated"))
+            setSettings(prev => ({ ...prev, image: data.image }))
+            toast({ title: "Success", description: "Profile image updated successfully" })
+            router.refresh()
           } else {
-            throw new Error(data.error || "Failed to upload image");
+            throw new Error(data.error || "Failed to upload image")
           }
         } catch (error: any) {
-          toast({
-            title: "Error",
-            description: error.message || "Failed to upload image",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: error.message || "Failed to upload image", variant: "destructive" })
         } finally {
-          setUploadingImage(false);
+          setUploadingImage(false)
         }
-      };
-      reader.readAsDataURL(file);
+      }
+      reader.readAsDataURL(file)
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to process image",
-        variant: "destructive",
-      });
-      setUploadingImage(false);
+      toast({ title: "Error", description: error.message || "Failed to process image", variant: "destructive" })
+      setUploadingImage(false)
     }
-  };
+  }
 
   const handleRemoveImage = async () => {
-    const email = localStorage.getItem("email") || session?.user?.email;
-    if (!email) return;
+    const email = settings.email || session?.user?.email || localStorage.getItem("email")
+    if (!email) return
 
     try {
       const response = await fetch("/api/user/upload-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl: null,
-          email,
-        }),
-      });
+        body: JSON.stringify({ imageUrl: null, email }),
+      })
 
       if (response.ok) {
-        // await update({ image: "" });
-        localStorage.removeItem("userImage");
-        window.dispatchEvent(new Event("userImageUpdated"));
-        setSettings(prev => ({ ...prev, image: "" }));
-        toast({
-          title: "Success",
-          description: "Profile image removed",
-        });
-        router.refresh();
+        localStorage.removeItem("userImage")
+        window.dispatchEvent(new Event("userImageUpdated"))
+        setSettings(prev => ({ ...prev, image: "" }))
+        toast({ title: "Success", description: "Profile image removed" })
+        router.refresh()
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to remove image",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to remove image", variant: "destructive" })
     }
-  };
-
-  const validatePhone = (phone: string): boolean => {
-    const phoneRegex = /^\d{10}$/;
-    return phoneRegex.test(phone.replace(/\D/g, ""));
-  };
+  }
 
   const handlePhoneChange = (value: string) => {
-    // Remove non-digits
-    const digitsOnly = value.replace(/\D/g, "");
-
-    // Limit to 10 digits
-    const limitedDigits = digitsOnly.slice(0, 10);
-
-    setSettings(prev => ({ ...prev, phone: limitedDigits }));
-
+    const digitsOnly = value.replace(/\D/g, "")
+    const limitedDigits = digitsOnly.slice(0, 10)
+    setSettings(prev => ({ ...prev, phone: limitedDigits }))
     if (limitedDigits.length > 0 && limitedDigits.length !== 10) {
-      setPhoneError("Phone number must be exactly 10 digits");
+      setPhoneError("Phone number must be exactly 10 digits")
     } else {
-      setPhoneError("");
+      setPhoneError("")
     }
-  };
+  }
 
   const handleLocationChange = async (value: string) => {
-    setSettings(prev => ({ ...prev, location: value }));
-
+    setSettings(prev => ({ ...prev, location: value }))
     if (value.length > 2) {
       try {
-        const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`);
-        const data = await response.json();
+        const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`)
+        const data = await response.json()
         if (data.predictions) {
-          setLocationSuggestions(data.predictions);
-          setShowLocationSuggestions(true);
+          setLocationSuggestions(data.predictions)
+          setShowLocationSuggestions(true)
         }
       } catch (error) {
-        console.error("Error fetching location suggestions:", error);
+        console.error("Error fetching location suggestions:", error)
       }
     } else {
-      setLocationSuggestions([]);
-      setShowLocationSuggestions(false);
+      setLocationSuggestions([])
+      setShowLocationSuggestions(false)
     }
-  };
+  }
 
   const selectLocation = (prediction: any) => {
-    setSettings(prev => ({ ...prev, location: prediction.description }));
+    setSettings(prev => ({ ...prev, location: prediction.description }))
     if (prediction.lat && prediction.lon) {
-      setMapCoordinates({ lat: parseFloat(prediction.lat), lon: parseFloat(prediction.lon) });
+      setMapCoordinates({ lat: parseFloat(prediction.lat), lon: parseFloat(prediction.lon) })
     }
-    setLocationSuggestions([]);
-    setShowLocationSuggestions(false);
-  };
+    setLocationSuggestions([])
+    setShowLocationSuggestions(false)
+  }
 
   const handleSaveProfile = async () => {
-    const email = localStorage.getItem("email") || session?.user?.email;
-
+    const email = settings.email || session?.user?.email || localStorage.getItem("email")
     if (!email) {
-      toast({
-        title: "Error",
-        description: "Email not found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "Error", description: "Email not found. Please log in again.", variant: "destructive" })
+      return
     }
 
-    // Validate phone number
-    if (settings.phone && !validatePhone(settings.phone)) {
-      setPhoneError("Phone number must be exactly 10 digits");
-      toast({
-        title: "Validation Error",
-        description: "Phone number must be exactly 10 digits",
-        variant: "destructive",
-      });
-      return;
+    if (settings.phone && settings.phone.length !== 10) {
+      toast({ title: "Validation Error", description: "Phone number must be exactly 10 digits", variant: "destructive" })
+      return
     }
 
-    // Validate portfolio website URL
-    if (settings.portfolioWebsite && !settings.portfolioWebsite.match(/^https?:\/\/.+/)) {
-      toast({
-        title: "Validation Error",
-        description: "Portfolio website must be a valid URL (starting with http:// or https://)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
+    setLoading(true)
     try {
-      // Send update to backend server (same DB as register/login)
-      const response = await fetch("http://localhost:5000/api/auth/update-profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          fullName: settings.fullName,
-          phone: settings.phone,
-          bio: settings.professionalBio,
-          skills: selectedSkills.length > 0 ? selectedSkills.join(", ") : settings.skills?.join(", ") || "",
-          notifications: settings.notifications,
-          privacy: settings.security,
-          preferences: {
-            language: settings.language,
-            timezone: settings.timezone,
-            currency: settings.currency,
-            hourlyRate: settings.hourlyRate,
-          },
-          portfolioWebsite: settings.portfolioWebsite,
-          location: settings.location,
-        }),
-      });
-
-      const data = await response.json();
-      console.log("Update profile response:", data);
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Profile settings updated successfully",
-        });
-
-        // Keep local app in sync
-        const newName = data.user?.fullName || settings.fullName;
-        localStorage.setItem("fullName", newName);
-        localStorage.setItem("email", email);
-        // Refresh UI (revalidate server components / session)
-        router.refresh();
-
-      } else {
-        throw new Error(data.message || "Failed to update settings");
+      const body = {
+        email,
+        fullName: settings.fullName,
+        phone: settings.phone,
+        bio: settings.professionalBio,
+        skills: selectedSkills.length > 0 ? selectedSkills.join(",") : settings.skills.join(","),
+        notifications,
+        privacy,
+        preferences: {
+            ...preferences,
+            hourlyRate: settings.hourlyRate
+        },
+        portfolioWebsite: settings.portfolioWebsite,
+        location: settings.location,
+        image: settings.image,
       }
-    } catch (error: any) {
-      console.error("Profile save error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update profile settings",
-        variant: "destructive",
-      });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/update-profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+        },
+        body: JSON.stringify(body),
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Failed to update profile")
+
+      toast({ title: "Success", description: "Profile updated successfully", variant: "default" })
+      router.refresh()
+    } catch (err: any) {
+      console.error("Profile save error:", err)
+      toast({ title: "Error", description: err.message || "Failed to update profile", variant: "destructive" })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handlePasswordUpdate = async () => {
     if (passwords.new !== passwords.confirm) {
-      toast({
-        title: "Error",
-        description: "New passwords don't match",
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "Error", description: "New passwords don't match", variant: "destructive" })
+      return
     }
 
-    const email = localStorage.getItem("email") || session?.user?.email;
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-    if (!email) {
-      toast({
-        title: "Error",
-        description: "Email not found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const token = localStorage.getItem("token")
     if (!token) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in before changing password.",
-        variant: "destructive",
-      });
-      return;
+      toast({ title: "Auth required", description: "Please log in before changing password.", variant: "destructive" })
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      // Call backend change-password route that validates JWT and updates DB
-      const response = await fetch("http://localhost:5000/api/auth/change-password", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -496,635 +319,303 @@ export default function SettingsPage() {
           currentPassword: passwords.current,
           newPassword: passwords.new,
         }),
-      });
+      })
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update password");
-      }
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Failed to update password")
 
-      toast({
-        title: "Success",
-        description: "Password updated successfully. Please login with the new password.",
-      });
-
-      // Clear local credentials and force user to re-login for security
-      localStorage.removeItem("token");
-      // optional: keep email for convenience but remove session info
-      // localStorage.removeItem("currentUser");
-      setPasswords({ current: "", new: "", confirm: "" });
-
-      // force UI refresh / sign out client session if using next-auth
-      router.refresh();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to update password",
-        variant: "destructive",
-      });
+      toast({ title: "Success", description: "Password updated successfully.", variant: "default" })
+      localStorage.removeItem("token")
+      setPasswords({ current: "", new: "", confirm: "" })
+      router.refresh()
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to update password", variant: "destructive" })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
+  }
+
+  const handleLogout = async () => {
+    localStorage.clear();
+    await signOut({ callbackUrl: "/login" });
   };
 
-  const handleSavePreferences = async () => {
-    const email = localStorage.getItem("email") || session?.user?.email;
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure? This action cannot be undone.")) return;
+    const email = settings.email || session?.user?.email || localStorage.getItem("email");
+    if (!email) return;
 
-    if (!email) {
-      toast({
-        title: "Error",
-        description: "Email not found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
     try {
-      const response = await fetch("/api/settings/preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          language: settings.language,
-          timezone: settings.timezone,
-          currency: settings.currency,
-          availabilityStatus: settings.availabilityStatus,
-          hourlyRate: settings.hourlyRate,
-          workSchedule: settings.workSchedule,
-        }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Preferences saved successfully",
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/delete`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
         });
-      } else {
-        throw new Error("Failed to save preferences");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save preferences",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+        if (res.ok) handleLogout();
+        else toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+    } catch (e) {
+        toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
-            <Settings className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-white">Account Settings</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            <span className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">
-              Settings
-            </span>
-          </h1>
-          <p className="text-xl text-gray-300">
-            Manage your freelancer profile and preferences
-          </p>
+    <div className="max-w-4xl mx-auto px-8 py-8">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="mb-8">
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-6">
+          <Settings className="w-4 h-4 text-gray-400" />
+          <span className="text-sm font-medium text-white">Freelancer Settings</span>
         </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <span className="bg-gradient-to-r from-gray-400 to-slate-500 bg-clip-text text-transparent">Profile Settings</span>
+        </h1>
+        <p className="text-xl text-gray-300">Manage your public profile and preferences</p>
+      </motion.div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-800 border border-gray-700">
-            <TabsTrigger
-              value="profile"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
-            >
-              <User className="w-4 h-4" />
-              Profile
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="security"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
-            >
-              <Shield className="w-4 h-4" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger
-              value="billing"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
-            >
-              <CreditCard className="w-4 h-4" />
-              Payment
-            </TabsTrigger>
-            <TabsTrigger
-              value="preferences"
-              className="flex items-center gap-2 data-[state=active]:bg-gray-700 data-[state=active]:text-white hover:bg-gray-600 hover:text-white"
-            >
-              <Globe className="w-4 h-4" />
-              Preferences
-            </TabsTrigger>
+      {/* Settings Tabs */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><CreditCard className="w-4 h-4 mr-2" />Payment</TabsTrigger>
+            <TabsTrigger value="account" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Settings className="w-4 h-4 mr-2" />Account</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Profile Picture */}
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-gray-100">Profile Picture</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <UserAvatar
-                        user={{ name: settings.fullName, image: settings.image }}
-                        className="w-32 h-32 border-4 border-gray-600"
-                      />
-                      <Button
-                        size="sm"
-                        className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-green-500 hover:bg-green-600 border-2 border-gray-800"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <label htmlFor="image-upload" className="flex-1">
-                      <Button
-                        variant="outline"
-                        className="w-full bg-white border-gray-600 text-black hover:bg-gray-200 hover:text-black cursor-pointer"
-                        disabled={uploadingImage}
-                        asChild
-                      >
-                        <span>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {uploadingImage ? "Uploading..." : "Upload"}
-                        </span>
-                      </Button>
-                      <input
-                        id="image-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <Button
-                      variant="outline"
-                      className="flex-1 bg-white border-gray-600 text-black hover:bg-gray-200 hover:text-black"
-                      onClick={handleRemoveImage}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Personal Information */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-gray-100">Personal Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName" className="text-gray-300">First Name</Label>
-                        <Input
-                          id="firstName"
-                          value={settings.fullName?.split(" ")[0] || ""}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            fullName: `${e.target.value} ${prev.fullName?.split(" ").slice(1).join(" ") || ""}`
-                          }))}
-                          className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName" className="text-gray-300">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          value={settings.fullName?.split(" ").slice(1).join(" ") || ""}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            fullName: `${prev.fullName?.split(" ")[0] || ""} ${e.target.value}`
-                          }))}
-                          className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email" className="text-gray-300">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="email"
-                            value={settings.email}
-                            disabled
-                            className="bg-gray-700 border-gray-600 text-gray-400 pl-10"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="phone" className="text-gray-300">Phone (10 digits)</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={settings.phone}
-                            onChange={(e) => handlePhoneChange(e.target.value)}
-                            placeholder="1234567890"
-                            maxLength={10}
-                            className={`bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500 ${phoneError ? "border-red-500" : ""}`}
-                          />
-                        </div>
-                        {phoneError && (
-                          <p className="text-red-400 text-xs mt-1">{phoneError}</p>
-                        )}
-                        {settings.phone && !phoneError && (
-                          <p className="text-green-400 text-xs mt-1">Valid phone number</p>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="location" className="text-gray-300">Location</Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="location"
-                            value={settings.location}
-                            onChange={(e) => handleLocationChange(e.target.value)}
-                            onFocus={() => settings.location && settings.location.length > 2 && setShowLocationSuggestions(true)}
-                            placeholder="Enter your location"
-                            className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
-                          />
-                          {showLocationSuggestions && locationSuggestions.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                              {locationSuggestions.map((prediction) => (
-                                <div
-                                  key={prediction.place_id}
-                                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200"
-                                  onClick={() => selectLocation(prediction)}
-                                >
-                                  {prediction.description}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {(mapCoordinates || settings.location) && (
-                          <div className="mt-2 h-[250px] w-full relative z-0">
-                            {mapCoordinates ? (
-                              <LeafletMap
-                                lat={mapCoordinates.lat}
-                                lon={mapCoordinates.lon}
-                                zoom={13}
-                                popupText={settings.location}
-                              />
-                            ) : (
-                              <div className="h-full w-full bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 border border-gray-700">
-                                Search and select a location to view map
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="website" className="text-gray-300">Portfolio Website</Label>
-                        <div className="relative">
-                          <Link className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="website"
-                            type="url"
-                            value={settings.portfolioWebsite}
-                            onChange={(e) => setSettings(prev => ({ ...prev, portfolioWebsite: e.target.value }))}
-                            placeholder="https://yourportfolio.com"
-                            className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
-                          />
-                        </div>
-                        {settings.portfolioWebsite && (
-                          <a
-                            href={settings.portfolioWebsite.startsWith("http") ? settings.portfolioWebsite : `https://${settings.portfolioWebsite}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 text-sm mt-1 inline-flex items-center gap-1"
-                          >
-                            <Link className="w-3 h-3" />
-                            Visit Portfolio
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-gray-100">Professional Bio</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={settings.professionalBio}
-                      onChange={(e) => setSettings(prev => ({ ...prev, professionalBio: e.target.value }))}
-                      placeholder="Tell us about your professional experience..."
-                      className="bg-gray-700 border-gray-600 text-gray-100 min-h-[100px] focus:border-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="text-gray-100">Skills & Expertise</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <Input
-                        value={skillInput}
-                        onChange={(e) => {
-                          setSkillInput(e.target.value);
-                          setShowSkillSuggestions(true);
-                        }}
-                        onFocus={() => setShowSkillSuggestions(true)}
-                        placeholder="Type a skill (e.g. React, Python)..."
-                        className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500"
-                      />
-                      {showSkillSuggestions && skillInput && (
-                        <div className="absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
-                          {availableSkills
-                            .filter(
-                              (skill) =>
-                                !selectedSkills.includes(skill) &&
-                                skill.toLowerCase().includes(skillInput.toLowerCase())
-                            )
-                            .map((skill) => (
-                              <div
-                                key={skill}
-                                className="px-4 py-2 hover:bg-gray-600 cursor-pointer text-sm text-gray-200"
-                                onClick={() => {
-                                  if (!selectedSkills.includes(skill)) {
-                                    const newSkills = [...selectedSkills, skill];
-                                    setSelectedSkills(newSkills);
-                                    setSettings((prev) => ({
-                                      ...prev,
-                                      skills: newSkills,
-                                    }));
-                                    setSkillInput("");
-                                    setShowSkillSuggestions(false);
-                                  }
-                                }}
-                              >
-                                {skill}
-                              </div>
-                            ))}
-                          {availableSkills.filter(
-                            (skill) =>
-                              !selectedSkills.includes(skill) &&
-                              skill.toLowerCase().includes(skillInput.toLowerCase())
-                          ).length === 0 && (
-                              <div className="px-4 py-2 text-sm text-gray-400">
-                                No matching skills found
-                              </div>
-                            )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {selectedSkills.length > 0 ? (
-                        selectedSkills.map((skill, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="bg-gray-600 text-gray-200 cursor-pointer hover:bg-gray-500 flex items-center gap-1"
-                            onClick={() => {
-                              const newSkills = selectedSkills.filter((_, i) => i !== index);
-                              setSelectedSkills(newSkills);
-                              setSettings((prev) => ({ ...prev, skills: newSkills }));
-                            }}
-                          >
-                            {skill} <X className="w-3 h-3" />
-                          </Badge>
-                        ))
-                      ) : (
-                        <p className="text-gray-400 text-sm">
-                          No skills selected. Type above to add skills.
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Button
-                  onClick={handleSaveProfile}
-                  disabled={loading}
-                  className="w-full bg-white hover:bg-gray-200 text-black"
-                >
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </div>
-          </TabsContent >
-
-          {/* Security Tab */}
-          < TabsContent value="security" className="mt-6 space-y-6" >
-            <Card className="bg-gray-800 border-gray-700">
+          <TabsContent value="profile">
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
               <CardHeader>
-                <CardTitle className="text-gray-100">Change Password</CardTitle>
+                <CardTitle className="text-2xl font-bold text-white">Profile Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="currentPassword" className="text-gray-300">Current Password</Label>
+              <CardContent className="space-y-6">
+                <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="currentPassword"
-                      type={showPasswords.current ? "text" : "password"}
-                      value={passwords.current}
-                      onChange={(e) => setPasswords(prev => ({ ...prev, current: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-gray-100 pl-10 pr-10 focus:border-blue-500"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400"
-                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-                    >
-                      {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <UserAvatar user={settings} className="w-24 h-24 border-2 border-white/20 bg-gray-700" />
+                    <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
+                      <Camera className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="newPassword" className="text-gray-300">New Password</Label>
-                  <div className="relative">
-                    <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="newPassword"
-                      type={showPasswords.new ? "text" : "password"}
-                      value={passwords.new}
-                      onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-gray-100 pl-10 pr-10 focus:border-blue-500"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400"
-                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                    >
-                      {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Profile Picture</h3>
+                    <p className="text-sm text-gray-400 mb-3">Upload a professional photo for your profile</p>
+                    <div className="flex gap-2">
+                      <label htmlFor="image-upload" className="flex-1">
+                        <Button variant="outline" className="w-full bg-white border-white/10 text-black hover:bg-gray-200 cursor-pointer" disabled={uploadingImage} asChild>
+                          <span><Upload className="w-4 h-4 mr-2" />{uploadingImage ? "Uploading..." : "Upload"}</span>
+                        </Button>
+                        <input id="image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      </label>
+                      <Button variant="outline" className="bg-white border-white/10 text-black hover:bg-gray-200" onClick={handleRemoveImage}>
+                        <Trash2 className="w-4 h-4 mr-2" />Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="confirmPassword" className="text-gray-300">Confirm New Password</Label>
-                  <div className="relative">
-                    <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={passwords.confirm}
-                      onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
-                      className="bg-gray-700 border-gray-600 text-gray-100 pl-10 focus:border-blue-500"
-                    />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">First Name</Label>
+                    <Input value={settings.fullName?.split(" ")[0] || ""} onChange={e => setSettings(prev => ({ ...prev, fullName: `${e.target.value} ${prev.fullName?.split(" ").slice(1).join(" ") || ""}` }))} className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">Last Name</Label>
+                    <Input value={settings.fullName?.split(" ").slice(1).join(" ") || ""} onChange={e => setSettings(prev => ({ ...prev, fullName: `${prev.fullName?.split(" ")[0] || ""} ${e.target.value}` }))} className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">Email</Label>
+                    <Input value={settings.email} disabled className="bg-white/5 border-white/10 text-gray-400 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">Phone (10 digits)</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input type="tel" value={settings.phone} onChange={e => handlePhoneChange(e.target.value)} placeholder="1234567890" maxLength={10} className={`bg-white/5 border-white/10 text-white pl-10 ${phoneError ? "border-red-500" : ""}`} />
+                    </div>
                   </div>
                 </div>
-                <Button
-                  onClick={handlePasswordUpdate}
-                  disabled={loading}
-                  className="w-full bg-white hover:bg-gray-200 text-black"
-                >
-                  Update Password
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 mb-2 block">Location</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input value={settings.location} onChange={e => handleLocationChange(e.target.value)} onFocus={() => settings.location.length > 2 && setShowLocationSuggestions(true)} placeholder="Enter your location" className="bg-white/5 border-white/10 text-white pl-10" />
+                    {showLocationSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {locationSuggestions.map((prediction) => (
+                          <div key={prediction.place_id} className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200" onClick={() => selectLocation(prediction)}>
+                            {prediction.description}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {(mapCoordinates || settings.location) && (
+                    <div className="mt-2 h-[250px] w-full relative z-0">
+                      {mapCoordinates ? (
+                        <LeafletMap lat={mapCoordinates.lat} lon={mapCoordinates.lon} zoom={13} popupText={settings.location} />
+                      ) : (
+                        <div className="h-full w-full bg-white/5 rounded-lg flex items-center justify-center text-gray-400 border border-white/10">Search and select a location to view map</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 mb-2 block">Portfolio Website</Label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input type="url" value={settings.portfolioWebsite} onChange={e => setSettings(prev => ({ ...prev, portfolioWebsite: e.target.value }))} placeholder="https://yourportfolio.com" className="bg-white/5 border-white/10 text-white pl-10" />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 mb-2 block">Professional Bio</Label>
+                  <Textarea value={settings.professionalBio} onChange={e => setSettings(prev => ({ ...prev, professionalBio: e.target.value }))} className="bg-white/5 border-white/10 text-white min-h-[100px]" />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 mb-2 block">Skills & Expertise</Label>
+                  <div className="relative">
+                    <Input value={skillInput} onChange={(e) => { setSkillInput(e.target.value); setShowSkillSuggestions(true); }} onFocus={() => setShowSkillSuggestions(true)} placeholder="Type a skill (e.g. React, Python)..." className="bg-white/5 border-white/10 text-white" />
+                    {showSkillSuggestions && skillInput && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {availableSkills
+                          .filter((skill) => !selectedSkills.includes(skill) && skill.toLowerCase().includes(skillInput.toLowerCase()))
+                          .map((skill) => (
+                            <div key={skill} className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-gray-200" onClick={() => {
+                              const newSkills = [...selectedSkills, skill];
+                              setSelectedSkills(newSkills);
+                              setSettings(prev => ({ ...prev, skills: newSkills }));
+                              setSkillInput("");
+                              setShowSkillSuggestions(false);
+                            }}>
+                              {skill}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {selectedSkills.map((skill, index) => (
+                      <Badge key={index} variant="secondary" className="bg-white/10 text-white cursor-pointer hover:bg-white/20 flex items-center gap-1" onClick={() => {
+                        const newSkills = selectedSkills.filter((_, i) => i !== index);
+                        setSelectedSkills(newSkills);
+                        setSettings(prev => ({ ...prev, skills: newSkills }));
+                      }}>
+                        {skill} <X className="w-3 h-3" />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                    <Label className="text-sm font-medium text-gray-300 mb-2 block">Hourly Rate (ETH)</Label>
+                    <div className="relative max-w-[200px]">
+                        <span className="absolute left-3 top-3 text-zinc-500 font-bold">Ξ</span>
+                        <Input 
+                            type="number" 
+                            min="0"
+                            value={settings.hourlyRate} 
+                            onChange={e => setSettings(prev => ({ ...prev, hourlyRate: parseFloat(e.target.value) || 0 }))} 
+                            className="bg-white/5 border-white/10 text-white pl-8" 
+                        />
+                    </div>
+                </div>
+
+                <Button onClick={handleSaveProfile} disabled={loading} className="bg-white hover:bg-gray-200 text-black w-full py-6 rounded-xl font-bold">
+                  <Save className="w-4 h-4 mr-2" />
+                  {loading ? "Saving Changes..." : "Save Profile Settings"}
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent >
+          </TabsContent>
 
-          {/* Preferences Tab */}
-          < TabsContent value="preferences" className="mt-6" >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-gray-800 border-gray-700">
+          {/* Security Tab */}
+          <TabsContent value="security">
+            <div className="space-y-6">
+              <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-gray-100">General Preferences</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-white">Password & Security</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="language" className="text-gray-300">Language</Label>
-                    <Select value={settings.language} onValueChange={(value) => setSettings(prev => ({ ...prev, language: value }))}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Spanish">Spanish</SelectItem>
-                        <SelectItem value="French">French</SelectItem>
-                        <SelectItem value="German">German</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="timezone" className="text-gray-300">Timezone</Label>
-                    <Select value={settings.timezone} onValueChange={(value) => setSettings(prev => ({ ...prev, timezone: value }))}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="EST">EST (UTC-5)</SelectItem>
-                        <SelectItem value="PST">PST (UTC-8)</SelectItem>
-                        <SelectItem value="IST">IST (UTC+5:30)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="currency" className="text-gray-300">Currency</Label>
-                    <Select value={settings.currency} onValueChange={(value) => setSettings(prev => ({ ...prev, currency: value }))}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                      <SelectItem value="ETH (Ξ)">ETH (Ξ)</SelectItem>
-                    </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-gray-100">Work Preferences</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="hourlyRate" className="text-gray-300">Hourly Rate (ETH)</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-3 text-gray-400">ETH</span>
-                      <Input
-                        id="hourlyRate"
-                        type="number"
-                        value={settings.hourlyRate}
-                        onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: parseInt(e.target.value) || 0 }))}
-                        className="bg-gray-700 border-gray-600 text-gray-100 pl-8 focus:border-blue-500"
-                        placeholder="5000"
-                      />
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-300 mb-2 block">Current Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input value={passwords.current} onChange={e => setPasswords(p => ({ ...p, current: e.target.value }))} type={showPasswords.current ? "text" : "password"} className="bg-white/5 border-white/10 text-white pl-10" />
+                        <button onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-3 text-zinc-500">{showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-300 mb-2 block">New Password</Label>
+                      <div className="relative">
+                        <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input value={passwords.new} onChange={e => setPasswords(p => ({ ...p, new: e.target.value }))} type={showPasswords.new ? "text" : "password"} className="bg-white/5 border-white/10 text-white pl-10" />
+                        <button onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-3 text-zinc-500">{showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-300 mb-2 block">Confirm New Password</Label>
+                      <Input value={passwords.confirm} onChange={e => setPasswords(p => ({ ...p, confirm: e.target.value }))} type="password" className="bg-white/5 border-white/10 text-white" />
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="availability" className="text-gray-300">Availability Status</Label>
-                    <Select value={settings.availabilityStatus} onValueChange={(value) => setSettings(prev => ({ ...prev, availabilityStatus: value }))}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="Available for Work">Available for Work</SelectItem>
-                        <SelectItem value="Busy">Busy</SelectItem>
-                        <SelectItem value="Not Available">Not Available</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="schedule" className="text-gray-300">Work Schedule</Label>
-                    <Select value={settings.workSchedule} onValueChange={(value) => setSettings(prev => ({ ...prev, workSchedule: value }))}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-blue-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="Full-time">Full-time</SelectItem>
-                        <SelectItem value="Part-time">Part-time</SelectItem>
-                        <SelectItem value="Contract">Contract</SelectItem>
-                        <SelectItem value="Freelance">Freelance</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Button onClick={handlePasswordUpdate} disabled={loading} className="bg-white hover:bg-gray-200 text-black w-full py-6 rounded-xl font-bold">Update Security Credentials</Button>
                 </CardContent>
               </Card>
 
-              <div className="lg:col-span-2">
-                <Button
-                  onClick={handleSavePreferences}
-                  disabled={loading}
-                  className="w-full bg-white hover:bg-gray-200 text-black"
-                >
-                  {loading ? "Saving..." : "Save Preferences"}
-                </Button>
-              </div>
+              <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
+                <CardHeader><CardTitle className="text-xl font-bold text-white">Privacy Preferences</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-white">Public Visibility</h3>
+                      <p className="text-sm text-gray-400">Make your profile discoverable to all clients</p>
+                    </div>
+                    <Switch checked={privacy.profileVisible} onCheckedChange={(v) => setPrivacy(prev => ({ ...prev, profileVisible: v }))} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-white">Allow Direct Messaging</h3>
+                      <p className="text-sm text-gray-400">Let clients message you before a contract starts</p>
+                    </div>
+                    <Switch checked={privacy.allowMessages} onCheckedChange={(v) => setPrivacy(prev => ({ ...prev, allowMessages: v }))} />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </TabsContent >
-
-
+          </TabsContent>
 
           {/* Billing Tab */}
-          < TabsContent value="billing" className="mt-6" >
+          <TabsContent value="billing">
             <WalletManagement />
-          </TabsContent >
+          </TabsContent>
 
-
-        </Tabs >
-      </div >
-
-    </div >
-  );
+          {/* Account Tab */}
+          <TabsContent value="account">
+            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
+              <CardHeader><CardTitle className="text-gray-100">Account Management</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                    <div>
+                        <h3 className="text-lg font-medium text-white">Sign Out</h3>
+                        <p className="text-sm text-gray-400">Securely end your current session</p>
+                    </div>
+                    <Button onClick={handleLogout} variant="outline" className="border-white/10 text-gray-200 hover:bg-white/10"><LogOut className="w-4 h-4 mr-2" />Log Out</Button>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <div>
+                        <h3 className="text-lg font-medium text-red-400">Delete Account</h3>
+                        <p className="text-sm text-red-300/70">Permanently erase your account and data. This is irreversible.</p>
+                    </div>
+                    <Button onClick={handleDeleteAccount} variant="destructive" className="bg-red-500 hover:bg-red-600"><AlertTriangle className="w-4 h-4 mr-2" />Delete Account</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </div>
+  )
 }

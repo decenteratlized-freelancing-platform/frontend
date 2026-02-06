@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         // Forward the request to the backend API
-        const backendRes = await fetch('http://localhost:5000/api/jobs', {
+        const backendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 // GET all jobs (proxy to backend)
 export async function GET() {
     try {
-        const backendRes = await fetch('http://localhost:5000/api/jobs');
+        const backendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`);
         const data = await backendRes.json();
         const status = backendRes.status;
         return NextResponse.json(data, { status });

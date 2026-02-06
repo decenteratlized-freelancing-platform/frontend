@@ -89,7 +89,7 @@ export default function FreelancerDisputes() {
         if (!userId) return
 
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/user/${userId}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/user/${userId}`)
             if (res.ok) {
                 const data = await res.json()
                 setDisputes(data)
@@ -111,7 +111,7 @@ export default function FreelancerDisputes() {
 
     const openDetail = async (dispute: Dispute) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/${dispute._id}`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/${dispute._id}`)
             if (res.ok) {
                 const fullDispute = await res.json()
                 setSelectedDispute(fullDispute)
@@ -127,7 +127,7 @@ export default function FreelancerDisputes() {
 
         setSending(true)
         try {
-            const res = await fetch(`http://localhost:5000/api/disputes/${selectedDispute._id}/message`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/disputes/${selectedDispute._id}/message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -228,7 +228,7 @@ export default function FreelancerDisputes() {
                             <div className="text-center py-12">
                                 <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                                 <p className="text-gray-400">No disputes found</p>
-                                <p className="text-sm text-gray-500 mt-1">You haven't been involved in any disputes</p>
+                                <p className="text-sm text-gray-500 mt-1">You haven&apos;t been involved in any disputes</p>
                             </div>
                         ) : (
                             <div className="space-y-3">

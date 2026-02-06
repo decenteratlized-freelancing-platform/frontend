@@ -130,7 +130,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, trigger, session, account }) {
-      console.log("JWT Callback - trigger:", trigger, "user:", user?.email);
+      // console.log("JWT Callback - trigger:", trigger, "user:", user?.email);
 
       // CRITICAL: Return a MINIMAL token to prevent chunking
       // NextAuth adds OAuth tokens (access_token, id_token, etc.) which bloat the cookie
@@ -147,6 +147,13 @@ export const authOptions: NextAuthOptions = {
           walletAddress: userData.walletAddress ?? (token as any).walletAddress,
           walletLinkedAt: userData.walletLinkedAt ?? (token as any).walletLinkedAt,
         };
+      }
+
+      // PERFORMANCE OPTIMIZATION: 
+      // If the token already has the user's role and ID, and we aren't forcing an update, 
+      // skip the database query. This speeds up every page load and redirect significantly.
+      if ((token as any).role && (token as any).id && trigger !== "update") {
+        return token;
       }
 
       const email = user?.email || token?.email;

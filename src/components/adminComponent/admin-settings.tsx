@@ -92,8 +92,9 @@ export default function AdminSettings() {
                                     <Label className="text-gray-300">Max Jobs Per User</Label>
                                     <Input
                                         type="number"
+                                        min="0"
                                         value={settings.maxJobsPerUser}
-                                        onChange={(e) => setSettings({ ...settings, maxJobsPerUser: parseInt(e.target.value) })}
+                                        onChange={(e) => setSettings({ ...settings, maxJobsPerUser: Math.max(0, parseInt(e.target.value) || 0) })}
                                         className="bg-white/5 border-white/10 text-white"
                                     />
                                 </div>
@@ -101,8 +102,10 @@ export default function AdminSettings() {
                                     <Label className="text-gray-300">Platform Fee (%)</Label>
                                     <Input
                                         type="number"
+                                        min="0"
+                                        max="100"
                                         value={settings.platformFeePercent}
-                                        onChange={(e) => setSettings({ ...settings, platformFeePercent: parseInt(e.target.value) })}
+                                        onChange={(e) => setSettings({ ...settings, platformFeePercent: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
                                         className="bg-white/5 border-white/10 text-white"
                                     />
                                 </div>

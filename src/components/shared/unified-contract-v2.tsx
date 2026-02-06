@@ -22,7 +22,7 @@ import { formatCurrency } from "@/lib/utils";
 
 const fetchData = async (userRole: string, userEmail: string | undefined) => {
   // Build URL with appropriate email filter based on role
-  let contractsUrl = 'http://localhost:5000/api/contracts';
+  let contractsUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts`;
   if (userEmail) {
     if (userRole === 'client') {
       contractsUrl += `?clientEmail=${encodeURIComponent(userEmail)}`;
@@ -37,7 +37,7 @@ const fetchData = async (userRole: string, userEmail: string | undefined) => {
 
   let hirableProposalsData = [];
   if (userRole === 'client' && userEmail) {
-    const hirableRes = await fetch(`http://localhost:5000/api/proposals/hirable?clientEmail=${userEmail}`);
+    const hirableRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/hirable?clientEmail=${userEmail}`);
     const hirableData = await hirableRes.json();
     if (hirableRes.ok) { // Only assign if fetch was successful
       hirableProposalsData = hirableData;
@@ -75,7 +75,7 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
 
     setIsCreating(true);
     try {
-      const response = await fetch("http://localhost:5000/api/contracts", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,6 +136,7 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
                   <div className="w-32">
                     <Input
                       type="number"
+                      min="0"
                       placeholder="Amount"
                       value={milestone.amount}
                       onChange={e => {

@@ -56,7 +56,7 @@ export default function AdminUsers() {
                 ...(search && { search }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/users?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/users?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -84,7 +84,7 @@ export default function AdminUsers() {
     const handleUpdateRole = async (userId: string, newRole: string) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/users/${userId}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -106,7 +106,7 @@ export default function AdminUsers() {
 
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/users/${userId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             })
@@ -166,7 +166,7 @@ export default function AdminUsers() {
                                     <SelectItem value="all">All Roles</SelectItem>
                                     <SelectItem value="client">Clients</SelectItem>
                                     <SelectItem value="freelancer">Freelancers</SelectItem>
-                                    <SelectItem value="pending">Pending</SelectItem>
+                                    {/* <SelectItem value="pending">Pending</SelectItem> */}
                                 </SelectContent>
                             </Select>
                             <Button onClick={handleSearch} className="bg-blue-500 hover:bg-blue-600 text-white">

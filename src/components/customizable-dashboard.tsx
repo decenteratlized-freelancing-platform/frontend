@@ -40,7 +40,7 @@ export default function CustomizableDashboard({ userType }: CustomizableDashboar
       size: "small",
       position: { x: 1, y: 0 },
       data: {
-        value: getConvertedAmount(userType === "client" ? 24500 : 18750, 'INR'),
+        value: getConvertedAmount(userType === "client" ? 24500 : 18750),
         change: userType === "client" ? "+1.2 ETH this month" : "+2.4 ETH this month",
         icon: Wallet,
         color: "from-green-500 to-emerald-500",

@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Eye, 
   EyeOff, 
@@ -728,6 +729,7 @@ export default function SettingsPage() {
                       <Input
                         id="hourlyRate"
                         type="number"
+                        min="0"
                         value={settings.hourlyRate}
                         onChange={(e) => setSettings(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
                         className="bg-gray-700 border-gray-600 text-gray-100 pl-8 focus:border-blue-500"

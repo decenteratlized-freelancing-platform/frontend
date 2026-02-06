@@ -47,5 +47,20 @@ export async function middleware(req: any) {
 
 // Protect dashboard routes
 export const config = {
-  matcher: ["/client/:path*", "/freelancer/:path*", "/login", "/choose-role", "/auth-callback"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public|api/auth).*)",
+    "/client/:path*", 
+    "/freelancer/:path*", 
+    "/login", 
+    "/choose-role", 
+    "/auth-callback"
+  ],
 };

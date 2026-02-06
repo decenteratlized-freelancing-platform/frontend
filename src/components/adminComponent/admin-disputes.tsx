@@ -95,7 +95,7 @@ export default function AdminDisputes() {
                 ...(priorityFilter !== "all" && { priority: priorityFilter }),
             })
 
-            const res = await fetch(`http://localhost:5000/api/admin/disputes?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/disputes?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
@@ -114,7 +114,7 @@ export default function AdminDisputes() {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch("http://localhost:5000/api/admin/disputes/stats/overview", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/disputes/stats/overview`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             if (res.ok) {
@@ -134,7 +134,7 @@ export default function AdminDisputes() {
     const handleUpdateStatus = async (disputeId: string, status: string, priority?: string) => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/disputes/${disputeId}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/disputes/${disputeId}/status`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function AdminDisputes() {
 
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch(`http://localhost:5000/api/admin/disputes/${selectedDispute._id}/resolve`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/disputes/${selectedDispute._id}/resolve`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,

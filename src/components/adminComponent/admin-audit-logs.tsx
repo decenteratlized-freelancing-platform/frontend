@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ interface AuditLog {
     details?: any
     ipAddress?: string
     createdAt: string
-    performedBy?: { fullName: string; email: string }
+    performedBy?: any // Can be object with fullName or string email
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -42,42 +42,61 @@ const formatAction = (action: string) => {
 export default function AdminAuditLogs() {
     const [logs, setLogs] = useState<AuditLog[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [actionFilter, setActionFilter] = useState("all")
     const [targetFilter, setTargetFilter] = useState("all")
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
     const [stats, setStats] = useState({ total: 0, todayCount: 0, byAction: [] as any[] })
     const [actions, setActions] = useState<string[]>([])
+    
+    // Use ref to track the latest request to avoid race conditions
+    const lastRequestId = useRef(0)
 
     const fetchLogs = async (page = 1) => {
+        const requestId = Date.now()
+        lastRequestId.current = requestId
+        setLoading(true)
+        setError(null)
+
         try {
             const token = localStorage.getItem("adminToken")
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: "30",
-                ...(actionFilter !== "all" && { action: actionFilter }),
-                ...(targetFilter !== "all" && { targetType: targetFilter }),
-            })
+            const params = new URLSearchParams()
+            params.append("page", page.toString())
+            params.append("limit", "30")
+            
+            if (actionFilter !== "all") params.append("action", actionFilter)
+            if (targetFilter !== "all") params.append("targetType", targetFilter)
 
-            const res = await fetch(`http://localhost:5000/api/admin/audit-logs?${params}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/audit-logs?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
 
             if (res.ok) {
+                if (requestId === lastRequestId.current) {
+                    const data = await res.json()
+                    setLogs(data.logs || [])
+                    setPagination(data.pagination || { page: 1, pages: 1, total: 0 })
+                }
+            } else {
                 const data = await res.json()
-                setLogs(data.logs)
-                setPagination(data.pagination)
+                throw new Error(data.error || "Failed to fetch logs")
             }
-        } catch (err) {
-            console.error("Error fetching logs:", err)
+        } catch (err: any) {
+            if (requestId === lastRequestId.current) {
+                console.error("Error fetching logs:", err)
+                setError(err.message || "Failed to load audit logs")
+            }
         } finally {
-            setLoading(false)
+            if (requestId === lastRequestId.current) {
+                setLoading(false)
+            }
         }
     }
 
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch("http://localhost:5000/api/admin/audit-logs/stats", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/audit-logs/stats`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             if (res.ok) {
@@ -92,7 +111,7 @@ export default function AdminAuditLogs() {
     const fetchActions = async () => {
         try {
             const token = localStorage.getItem("adminToken")
-            const res = await fetch("http://localhost:5000/api/admin/audit-logs/actions", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/audit-logs/actions`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             if (res.ok) {
@@ -105,7 +124,7 @@ export default function AdminAuditLogs() {
     }
 
     useEffect(() => {
-        fetchLogs()
+        fetchLogs(1) // Always reset to page 1 when filters change
         fetchStats()
         fetchActions()
     }, [actionFilter, targetFilter])
@@ -152,7 +171,7 @@ export default function AdminAuditLogs() {
                             </div>
                             <div>
                                 <p className="text-2xl font-bold text-white">{stats.todayCount}</p>
-                                <p className="text-sm text-gray-400">Today's Events</p>
+                                <p className="text-sm text-gray-400">Today&apos;s Events</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -200,8 +219,11 @@ export default function AdminAuditLogs() {
                                     <SelectItem value="user">User</SelectItem>
                                     <SelectItem value="job">Job</SelectItem>
                                     <SelectItem value="contract">Contract</SelectItem>
+                                    <SelectItem value="proposal">Proposal</SelectItem>
+                                    <SelectItem value="transaction">Transaction</SelectItem>
                                     <SelectItem value="dispute">Dispute</SelectItem>
                                     <SelectItem value="settings">Settings</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -222,6 +244,14 @@ export default function AdminAuditLogs() {
                             <div className="flex justify-center py-8">
                                 <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
                             </div>
+                        ) : error ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-red-400 gap-2">
+                                <AlertCircle className="w-8 h-8" />
+                                <p>{error}</p>
+                                <Button onClick={() => fetchLogs(pagination.page)} variant="outline" size="sm" className="mt-2 border-red-500/30 hover:bg-red-500/10">
+                                    Retry
+                                </Button>
+                            </div>
                         ) : logs.length === 0 ? (
                             <p className="text-gray-400 text-center py-8">No audit logs found</p>
                         ) : (
@@ -240,7 +270,7 @@ export default function AdminAuditLogs() {
                                             </Badge>
                                             <div>
                                                 <p className="text-sm text-white">
-                                                    {log.performedBy?.fullName || log.performedByRole}
+                                                    {log.performedBy?.fullName || (typeof log.performedBy === 'string' ? log.performedBy : log.performedByRole)}
                                                 </p>
                                                 {log.targetType && (
                                                     <p className="text-xs text-gray-400">Target: {log.targetType}</p>

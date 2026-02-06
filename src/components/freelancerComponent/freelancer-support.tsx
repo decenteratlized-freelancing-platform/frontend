@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { HelpCircle, MessageSquare, Phone, Mail } from "lucide-react"
+import { HelpCircle, MessageSquare, Phone, Mail, Loader2 } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 
 const faqItems = [
   {
@@ -27,6 +30,77 @@ const faqItems = [
 ]
 
 export default function FreelancerSupport() {
+  const { data: session } = useSession()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    subject: "",
+    category: "other",
+    message: "",
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Get userId from session or localStorage
+    const userJson = typeof window !== "undefined" ? localStorage.getItem("currentUser") : null;
+    const userId = session?.user?.id || (userJson ? JSON.parse(userJson)?._id || JSON.parse(userJson)?.id : null);
+    
+    if (!userId) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to send a support message.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.subject || !formData.message) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in the subject and message.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/support/tickets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          subject: formData.subject,
+          category: formData.category,
+          message: formData.message,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "Message Sent",
+          description: "We've received your support ticket and will get back to you soon.",
+        })
+        setFormData({ subject: "", category: "other", message: "" })
+      } else {
+        throw new Error(data.error || "Failed to send message")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-8 py-8">
       {/* Header */}
@@ -132,28 +206,60 @@ export default function FreelancerSupport() {
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-white">Send us a message</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-300 mb-2 block">Name</label>
-                <Input className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Name</label>
+                  <Input 
+                    value={session?.user?.name || ""} 
+                    disabled 
+                    className="bg-white/5 border-white/10 text-gray-400 placeholder:text-gray-400 cursor-not-allowed" 
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Email</label>
+                  <Input 
+                    value={session?.user?.email || ""} 
+                    disabled 
+                    type="email" 
+                    className="bg-white/5 border-white/10 text-gray-400 placeholder:text-gray-400 cursor-not-allowed" 
+                  />
+                </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-300 mb-2 block">Email</label>
-                <Input type="email" className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Subject</label>
+                <Input 
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" 
+                  placeholder="What can we help you with?"
+                />
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">Subject</label>
-              <Input className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">Message</label>
-              <Textarea className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 min-h-32" />
-            </div>
-            <Button className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 w-full text-white">
-              Send Message
-            </Button>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Message</label>
+                <Textarea 
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 min-h-32" 
+                  placeholder="Describe your issue in detail..."
+                />
+              </div>
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 w-full text-white"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </motion.div>
