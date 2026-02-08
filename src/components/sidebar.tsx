@@ -187,7 +187,6 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
             </AnimatePresence>
 
             <div className="flex items-center gap-1">
-              <NotificationBell />
               <Button
                 variant="ghost"
                 size="sm"

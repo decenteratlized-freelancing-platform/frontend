@@ -26,6 +26,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
 import { Input } from "@/components/ui/input";
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner";
+import { NotificationList } from "@/components/shared/NotificationList";
 // removed server model import
 
 
@@ -770,29 +771,9 @@ export default function FreelancerDashboard() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
+            className="h-full"
           >
-            <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-white">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { action: "Proposal submitted", project: "E-commerce Website", time: "2 hours ago" },
-                  { action: "Project completed", project: "Logo Design", time: "1 day ago" },
-                  { action: "Payment received", project: "Mobile App UI", time: "2 days ago" },
-                  { action: "New message", project: "Content Writing", time: "3 days ago" },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{activity.action}</p>
-                      <p className="text-xs text-gray-400">{activity.project}</p>
-                    </div>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <NotificationList />
           </motion.div>
         </div>
       </div>

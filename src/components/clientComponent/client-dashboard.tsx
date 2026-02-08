@@ -26,6 +26,7 @@ import { AnimatePresence } from "framer-motion"
 import { JobDetailsModal } from "@/components/shared/job-details-modal"
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner"
 import { useToast } from "@/hooks/use-toast"
+import { NotificationList } from "@/components/shared/NotificationList"
 
 const recentActivity = [
   {
@@ -465,47 +466,9 @@ export default function ClientDashboard() {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
+          className="h-full"
         >
-          <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-white">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200"
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.type === "completion"
-                        ? "bg-gradient-to-br from-green-500 to-emerald-500"
-                        : activity.type === "message"
-                          ? "bg-gradient-to-br from-blue-500 to-cyan-500"
-                          : "bg-gradient-to-br from-orange-500 to-yellow-500"
-                        }`}
-                    >
-                      {activity.type === "completion" ? (
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      ) : activity.type === "message" ? (
-                        <MessageSquare className="w-4 h-4 text-white" />
-                      ) : (
-                        <TrendingUp className="w-4 h-4 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white">{activity.title}</p>
-                      <p className="text-xs text-zinc-400 mt-1">{activity.description}</p>
-                      <p className="text-xs text-zinc-500 mt-1">{activity.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <NotificationList />
         </motion.div>
       </div>
     </div>
