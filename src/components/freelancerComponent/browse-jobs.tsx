@@ -58,7 +58,6 @@ export default function BrowseJobs() {
   const [savedJobs, setSavedJobs] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedExperience, setSelectedExperience] = useState("all")
-  const [budgetTypeFilter, setBudgetType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [selectedJob, setSelectedJob] = useState<any>(null)
   const [showProposalDialog, setShowProposalDialog] = useState(false)
@@ -162,9 +161,8 @@ export default function BrowseJobs() {
 
     const matchesCategory = selectedCategory === "all" || job.category === selectedCategory
     const matchesExperience = selectedExperience === "all" || job.experienceLevel === selectedExperience
-    const matchesBudgetType = budgetTypeFilter === "all" || job.budgetType === budgetTypeFilter
 
-    return matchesSearch && matchesCategory && matchesExperience && matchesBudgetType
+    return matchesSearch && matchesCategory && matchesExperience
   })
 
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -267,20 +265,6 @@ export default function BrowseJobs() {
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                                     {experienceLevels.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Budget Type</label>
-                            <Select value={budgetTypeFilter} onValueChange={setBudgetType}>
-                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                    <SelectItem value="all">All Types</SelectItem>
-                                    <SelectItem value="fixed">Fixed Price</SelectItem>
-                                    <SelectItem value="hourly">Hourly</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

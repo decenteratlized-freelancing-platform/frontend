@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Calendar,
   MessageSquare,
+  Loader2,
 } from "lucide-react"
 import Link from "next/link"
 import AnimatedCounter from "@/components/homepageComponents/animated-counter"
@@ -24,6 +25,7 @@ import ChatWindow from "../chat/ChatWindow"
 import { AnimatePresence } from "framer-motion"
 import { JobDetailsModal } from "@/components/shared/job-details-modal"
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner"
+import { useToast } from "@/hooks/use-toast"
 
 const recentActivity = [
   {
@@ -52,9 +54,30 @@ const recentActivity = [
 export default function ClientDashboard() {
   const { data: session } = useSession();
   const user = useCurrentUser();
+  const { toast } = useToast();
   const [displayName, setDisplayName] = useState("Client");
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
+  
+  const ensureToken = async () => {
+    let token = localStorage.getItem("token");
+    if (!token && session?.user?.email) {
+        try {
+            const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            if (devRes.ok) {
+                const data = await devRes.json();
+                token = data.token;
+                localStorage.setItem("token", token || "");
+            }
+        } catch (e) { console.error("Auto-token failed", e); }
+    }
+    return token;
+  };
+
   const [dashboardSummary, setDashboardSummary] = useState({
     activeJobsCount: 0,
     totalSpent: 0,
@@ -67,6 +90,7 @@ export default function ClientDashboard() {
   const [activeChat, setActiveChat] = useState<{ id: string; name: string; image?: string } | null>(null);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   useEffect(() => {
     const nameFromSession = session?.user?.name;
@@ -77,12 +101,70 @@ export default function ClientDashboard() {
     setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client");
   }, [session, user]);
 
+  const fetchJobsList = async () => {
+    if (session?.user?.email) {
+      try {
+        const token = await ensureToken();
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${session.user.email}`,
+          {
+              headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setJobs(data);
+        }
+      } catch (error) {
+        console.error("Error fetching jobs list:", error);
+      } finally {
+        setJobsLoading(false);
+      }
+    }
+  };
+
+  const handlePublishJob = async (jobId: string) => {
+    try {
+        setPublishingId(jobId);
+        const token = await ensureToken();
+        
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/${jobId}/publish`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (res.ok) {
+            toast({ title: "Success", description: "Job published successfully!" });
+            fetchJobsList(); // Refresh list
+        } else {
+            const data = await res.json();
+            toast({ 
+                title: "Failed to Publish", 
+                description: data.error || "Please check your wallet and budget.", 
+                variant: "destructive" 
+            });
+        }
+    } catch (error) {
+        console.error("Error publishing job:", error);
+        toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
+    } finally {
+        setPublishingId(null);
+    }
+  };
+
   useEffect(() => {
     const fetchSummary = async () => {
       if (session?.user?.email) {
         try {
+          const token = await ensureToken();
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/summary?email=${session.user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/summary?email=${session.user.email}`,
+            {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            }
           );
           if (res.ok) {
             const data = await res.json();
@@ -105,8 +187,12 @@ export default function ClientDashboard() {
     const fetchJobsList = async () => {
       if (session?.user?.email) {
         try {
+          const token = await ensureToken();
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${session.user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${session.user.email}`,
+            {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            }
           );
           if (res.ok) {
             const data = await res.json();
@@ -315,16 +401,34 @@ export default function ClientDashboard() {
 
                       <div className="flex items-center justify-between mt-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === "completed"
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            job.status === "completed"
                             ? "bg-green-500/20 text-green-300"
                             : job.status === "in_progress"
                               ? "bg-blue-500/20 text-blue-300"
-                              : "bg-yellow-500/20 text-yellow-300"
+                              : job.status === "draft"
+                                ? "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"
+                                : "bg-yellow-500/20 text-yellow-300"
                             }`}
                         >
-                          {job.status.replace('_', ' ').toUpperCase()}
+                          {job.status === "draft" ? "DRAFT" : job.status.replace('_', ' ').toUpperCase()}
                         </span>
                         <div className="flex items-center gap-2">
+                          {job.status === "draft" && (
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white border-none"
+                              onClick={() => handlePublishJob(job._id)}
+                              disabled={publishingId === job._id}
+                            >
+                              {publishingId === job._id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5 mr-1" />
+                              )}
+                              Publish
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"

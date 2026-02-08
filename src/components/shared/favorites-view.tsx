@@ -59,7 +59,10 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
             })
             if (res.ok) {
                 const data = await res.json()
+                console.log("Fetched favorites data:", data);
                 setFavorites(data)
+            } else {
+                console.error("Failed to fetch favorites:", res.status, await res.text());
             }
         } catch (error) {
             console.error("Error fetching favorites:", error)
@@ -114,13 +117,15 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
 
     const filteredFreelancers = (favorites.freelancers || []).filter(f => {
         if (!f) return false;
-        const nameMatch = f.fullName?.toLowerCase().includes(searchQuery.toLowerCase());
+        const nameMatch = (f.fullName || "").toLowerCase().includes(searchQuery.toLowerCase());
         
         let skillsMatch = false;
-        if (typeof f.settings?.skills === "string") {
-            skillsMatch = f.settings.skills.toLowerCase().includes(searchQuery.toLowerCase());
-        } else if (Array.isArray(f.settings?.skills)) {
-            skillsMatch = f.settings.skills.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+        // The freelancer settings might have skills as a comma-separated string or an array
+        const skills = f.settings?.skills;
+        if (typeof skills === "string") {
+            skillsMatch = skills.toLowerCase().includes(searchQuery.toLowerCase());
+        } else if (Array.isArray(skills)) {
+            skillsMatch = skills.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         
         return nameMatch || skillsMatch;
@@ -207,18 +212,25 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
                                             </div>
                                             
                                             <div className="flex flex-wrap gap-1.5 mb-4 h-7 overflow-hidden">
-                                                {(freelancer.settings?.skills || "").split(",").slice(0, 3).map((skill: string) => (
-                                                    skill.trim() && (
-                                                        <Badge key={skill} variant="secondary" className="bg-white/10 text-zinc-300 text-[10px] uppercase border-none">
-                                                            {skill.trim()}
-                                                        </Badge>
-                                                    )
-                                                ))}
+                                                {(() => {
+                                                    const skills = freelancer.settings?.skills;
+                                                    const skillsArray = Array.isArray(skills) 
+                                                        ? skills 
+                                                        : (typeof skills === "string" ? skills.split(",") : []);
+                                                    
+                                                    return skillsArray.slice(0, 3).map((skill: string) => (
+                                                        skill.trim() && (
+                                                            <Badge key={skill} variant="secondary" className="bg-white/10 text-zinc-300 text-[10px] uppercase border-none">
+                                                                {skill.trim()}
+                                                            </Badge>
+                                                        )
+                                                    ));
+                                                })()}
                                             </div>
 
                                             <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                                 <div className="text-sm font-bold text-white">
-                                                    {getConvertedAmount(freelancer.settings?.hourlyRate || 0)}/hr
+                                                    {/* Rate hidden for fixed-price model */}
                                                 </div>
                                                 <Link href={`/${userRole}/messages?receiverId=${freelancer._id}`}>
                                                     <Button variant="outline" size="sm" className="border-white/10 text-white hover:bg-white hover:text-black transition-all">

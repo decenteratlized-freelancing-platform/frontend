@@ -40,6 +40,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { WalletSidebarButton } from "./WalletSidebarButton";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 interface SidebarProps {
   userType: "client" | "freelancer";
@@ -185,14 +186,17 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
               )}
             </AnimatePresence>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 h-auto min-w-0"
-            >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </Button>
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 h-auto min-w-0"
+              >
+                {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
 
           {/* Menu */}

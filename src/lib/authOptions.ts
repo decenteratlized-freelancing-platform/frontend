@@ -139,13 +139,11 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && session?.user) {
         const userData = session.user as any;
         return {
-          email: token.email,
+          ...token,
           name: userData.name?.substring(0, 50) ?? token.name,
-          sub: (token as any).sub,
-          id: (token as any).id,
           role: userData.role ?? (token as any).role,
-          walletAddress: userData.walletAddress ?? (token as any).walletAddress,
-          walletLinkedAt: userData.walletLinkedAt ?? (token as any).walletLinkedAt,
+          walletAddress: userData.hasOwnProperty('walletAddress') ? userData.walletAddress : (token as any).walletAddress,
+          walletLinkedAt: userData.hasOwnProperty('walletLinkedAt') ? userData.walletLinkedAt : (token as any).walletLinkedAt,
         };
       }
 

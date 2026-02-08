@@ -56,11 +56,29 @@ export default function PostJobForm() {
   const [showSkillSuggestions, setShowSkillSuggestions] = useState(false)
   const { getConvertedAmount } = useCurrency();
 
+  const ensureToken = async () => {
+    let token = localStorage.getItem("token");
+    if (!token && session?.user?.email) {
+        try {
+            const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            if (devRes.ok) {
+                const data = await devRes.json();
+                token = data.token;
+                localStorage.setItem("token", token || "");
+            }
+        } catch (e) { console.error("Auto-token failed", e); }
+    }
+    return token;
+  };
+
   const [formData, setFormData] = useState({
     title: "",
     category: "",
     description: "",
-    budgetType: "",
     budgetAmount: "",
     duration: "",
     paymentMode: "hourly",
@@ -94,9 +112,9 @@ export default function PostJobForm() {
     setIsSubmitting(true)
     try {
         const budget = parseFloat(formData.budgetAmount) || 0;
-        const token = localStorage.getItem("token");
+        const token = await ensureToken();
         
-        const res = await fetch("/api/jobs", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -110,7 +128,6 @@ export default function PostJobForm() {
                 email: session.user.email,
                 category: formData.category,
                 experienceLevel: formData.experienceLevel,
-                budgetType: formData.budgetType,
                 duration: formData.duration,
                 paymentCurrency: formData.paymentCurrency,
                 status: "draft" // Explicitly set status to draft
@@ -119,7 +136,7 @@ export default function PostJobForm() {
 
         if (res.ok) {
             toast({ title: "Success", description: "Job saved as draft!" })
-            // Optional: Redirect to a drafts page or keep user here
+            router.push("/client/dashboard")
         } else {
             const error = await res.json()
             toast({ title: "Error", description: error.error || "Failed to save draft", variant: "destructive" })
@@ -146,7 +163,7 @@ export default function PostJobForm() {
     setIsSubmitting(true)
     try {
       const budget = parseFloat(formData.budgetAmount);
-      const token = localStorage.getItem("token");
+      const token = await ensureToken();
       if (isNaN(budget)) {
         toast({ title: "Error", description: "Invalid budget amount", variant: "destructive" });
         return;
@@ -155,7 +172,7 @@ export default function PostJobForm() {
         toast({ title: "Error", description: "Budget amount must be greater than 0", variant: "destructive" });
         return;
       }
-      const res = await fetch("/api/jobs", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`, {
         method: "POST",
         headers: { 
             "Content-Type": "application/json",
@@ -169,7 +186,6 @@ export default function PostJobForm() {
           email: session.user.email,
           category: formData.category,
           experienceLevel: formData.experienceLevel,
-          budgetType: formData.budgetType,
           duration: formData.duration,
           paymentCurrency: formData.paymentCurrency,
           status: "open" // Default to open for published jobs
@@ -253,35 +269,19 @@ export default function PostJobForm() {
             />
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <label className="text-sm font-medium text-gray-300">Budget Type</label>
-              <Select onValueChange={(val) => setFormData({ ...formData, budgetType: val })}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Select budget type" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/10">
-                  <SelectItem value="fixed">Fixed Price</SelectItem>
-                  <SelectItem value="hourly">Hourly Rate</SelectItem>
-                </SelectContent>
-              </Select>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <motion.div
               className="space-y-2"
               initial={{ opacity: 0, x: 0 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <label className="text-sm font-medium text-gray-300">Budget Amount</label>
+              <label className="text-sm font-medium text-gray-300">Fixed Price (ETH)</label>
               <Input
-                placeholder="e.g. 2500"
+                placeholder="e.g. 2.5"
                 type="number"
                 min="0"
+                step="0.01"
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-blue-500/50 focus:ring-blue-500/20"
                 value={formData.budgetAmount}
                 onChange={(e) => setFormData({ ...formData, budgetAmount: e.target.value })}

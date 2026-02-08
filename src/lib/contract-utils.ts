@@ -1,4 +1,4 @@
-import { Activity, CheckCircle, Clock, FileText, X } from "lucide-react";
+import { Activity, CheckCircle, Clock, FileText, X, AlertTriangle } from "lucide-react";
 import React from "react";
 
 export const getStatusStyles = (status?: string) => {
@@ -10,10 +10,11 @@ export const getStatusStyles = (status?: string) => {
         case "pending": case "created": return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
         case "completed": case "paid": return "bg-green-500/20 text-green-300 border-green-500/30";
         case "cancelled": case "rejected": return "bg-red-500/20 text-red-300 border-red-500/30";
+        case "disputed": return "bg-red-500/20 text-red-400 border-red-500/30";
         default: return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     }
 };
-  
+
 export const getStatusIcon = (status?: string) => {
     const s = (status ?? "").toString().toLowerCase();
     switch (s) {
@@ -21,6 +22,7 @@ export const getStatusIcon = (status?: string) => {
         case "pending": case "created": return React.createElement(Clock, { className: "w-3 h-3" });
         case "completed": case "paid": return React.createElement(CheckCircle, { className: "w-3 h-3" });
         case "cancelled": case "rejected": return React.createElement(X, { className: "w-3 h-3" });
+        case "disputed": return React.createElement(AlertTriangle, { className: "w-3 h-3" });
         default: return React.createElement(FileText, { className: "w-3 h-3" });
     }
 };

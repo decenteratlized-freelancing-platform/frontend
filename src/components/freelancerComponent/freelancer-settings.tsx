@@ -42,7 +42,6 @@ export default function FreelancerSettings() {
     portfolioWebsite: "",
     location: "",
     image: "",
-    hourlyRate: 0,
   })
 
   const [notifications, setNotifications] = useState({
@@ -112,7 +111,6 @@ export default function FreelancerSettings() {
       portfolioWebsite: stored?.settings?.portfolioWebsite || stored?.portfolioWebsite || prev.portfolioWebsite,
       location: stored?.settings?.location || stored?.location || prev.location,
       image: stored?.image || prev.image,
-      hourlyRate: stored?.settings?.hourlyRate || prev.hourlyRate,
       skills: Array.isArray(stored?.settings?.skills) ? stored.settings.skills : (stored?.settings?.skills ? stored.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
     }))
   }, [session])
@@ -266,7 +264,6 @@ export default function FreelancerSettings() {
         privacy,
         preferences: {
             ...preferences,
-            hourlyRate: settings.hourlyRate
         },
         portfolioWebsite: settings.portfolioWebsite,
         location: settings.location,
@@ -507,20 +504,6 @@ export default function FreelancerSettings() {
                       </Badge>
                     ))}
                   </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5">
-                    <Label className="text-sm font-medium text-gray-300 mb-2 block">Hourly Rate (ETH)</Label>
-                    <div className="relative max-w-[200px]">
-                        <span className="absolute left-3 top-3 text-zinc-500 font-bold">Ξ</span>
-                        <Input 
-                            type="number" 
-                            min="0"
-                            value={settings.hourlyRate} 
-                            onChange={e => setSettings(prev => ({ ...prev, hourlyRate: parseFloat(e.target.value) || 0 }))} 
-                            className="bg-white/5 border-white/10 text-white pl-8" 
-                        />
-                    </div>
                 </div>
 
                 <Button onClick={handleSaveProfile} disabled={loading} className="bg-white hover:bg-gray-200 text-black w-full py-6 rounded-xl font-bold">

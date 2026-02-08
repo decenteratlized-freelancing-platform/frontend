@@ -134,7 +134,7 @@ export default function FreelancerSupport() {
           {
             icon: Phone,
             title: "Phone Support",
-            description: "Call us at +1 (555) 123-4567",
+            description: "Call us at +91 92270 45360",
             color: "from-green-500 to-emerald-500",
           },
           {

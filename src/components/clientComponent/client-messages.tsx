@@ -18,6 +18,7 @@ interface Message {
   senderId: string
   receiverId: string
   message: string
+  attachments?: Array<{ url: string, name: string, type: string }>
   createdAt: string
 }
 
@@ -41,12 +42,15 @@ export default function ClientMessages() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
+  const [attachments, setAttachments] = useState<any[]>([])
+  const [uploading, setUploading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [onlineFilter, setOnlineFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // URL params with Next.js hook for reactivity
   const searchParams = useSearchParams()
@@ -207,22 +211,58 @@ export default function ClientMessages() {
     }
   }
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setUploading(true)
+      
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/upload`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    file: reader.result, 
+                    fileName: file.name,
+                    fileType: file.type 
+                })
+            })
+            const data = await res.json()
+            if (res.ok) {
+                setAttachments(prev => [...prev, data])
+            } else {
+                console.error("Upload failed", data)
+            }
+        } catch (err) {
+            console.error("Upload error", err)
+        } finally {
+            setUploading(false)
+            if (fileInputRef.current) fileInputRef.current.value = ""
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation?.participant?._id) return
+    if ((!newMessage.trim() && attachments.length === 0) || !selectedConversation?.participant?._id) return
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${selectedConversation.participant._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: newMessage,
+          message: newMessage || "Sent an attachment",
           senderId: currentUserId,
+          attachments
         }),
       })
       const data = await res.json()
       if (!data.error) {
         setMessages([...messages, data])
         setNewMessage("")
+        setAttachments([])
         fetchConversations()
       }
     } catch (error) {
@@ -442,6 +482,25 @@ export default function ClientMessages() {
                           }`}
                       >
                         <p className="text-sm">{message.message}</p>
+                        
+                        {/* Attachments Rendering */}
+                        {message.attachments && message.attachments.length > 0 && (
+                            <div className="flex flex-col gap-2 mt-2">
+                                {message.attachments.map((att, i) => (
+                                    att.type.startsWith("image/") ? (
+                                        <div key={i} className="rounded-lg overflow-hidden border border-white/10">
+                                            <img src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${att.url}`} alt={att.name} className="max-w-full h-auto" />
+                                        </div>
+                                    ) : (
+                                        <a key={i} href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${att.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-black/20 p-2 rounded-lg text-xs hover:bg-black/30 transition-colors">
+                                            <Paperclip className="w-3 h-3 text-blue-300" /> 
+                                            <span className="truncate text-blue-200 underline">{att.name}</span>
+                                        </a>
+                                    )
+                                ))}
+                            </div>
+                        )}
+
                         <p
                           className={`text-xs mt-1 ${message.senderId === currentUserId ? "text-blue-100" : "text-gray-400"
                             }`}
@@ -460,8 +519,38 @@ export default function ClientMessages() {
 
               {/* Message Input */}
               <div className="p-4 border-t border-white/10">
+                
+                {/* Pending Attachments */}
+                {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {attachments.map((att, i) => (
+                            <div key={i} className="flex items-center gap-2 bg-blue-500/20 text-blue-200 text-xs px-2 py-1 rounded-full border border-blue-500/30">
+                                <span className="max-w-[150px] truncate">{att.name}</span>
+                                <button 
+                                    onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                                    className="hover:text-white"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handleFileSelect} 
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`text-white hover:bg-white/10 ${uploading ? 'opacity-50 animate-pulse' : ''}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
                     <Paperclip className="w-4 h-4" />
                   </Button>
                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
@@ -477,7 +566,7 @@ export default function ClientMessages() {
                   />
                   <Button
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
+                    disabled={(!newMessage.trim() && attachments.length === 0) || uploading}
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-4 h-4" />

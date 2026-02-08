@@ -84,10 +84,24 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
     // Can raise dispute on any contract that is not completed, cancelled, or refunded
     const excludedStatuses = ['completed', 'cancelled', 'refunded'];
     const canRaiseDispute = !excludedStatuses.includes(localContract.status?.toLowerCase());
+    const isDisputed = localContract.status?.toLowerCase() === 'disputed';
 
     const handleDisputeSuccess = () => {
         setShowDisputeModal(false);
         onDisputeCreated?.();
+        // Refresh contract to show disputed status
+        const fetchLatestContract = async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setLocalContract(data);
+                }
+            } catch (error) {
+                console.error("Failed to refresh contract data after dispute:", error);
+            }
+        };
+        fetchLatestContract();
     };
 
     const handleAccept = async () => {
@@ -200,6 +214,17 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
 
     const handleFund = async () => {
         if (!walletAddress) return;
+
+        // Check if the current wallet matches the client authority address registered on-chain
+        if (localContract.client?.walletAddress && walletAddress.toLowerCase() !== localContract.client.walletAddress.toLowerCase()) {
+            toast({ 
+                title: "Incorrect Wallet", 
+                description: `Please switch to your registered wallet: ${localContract.client.walletAddress.slice(0, 6)}...${localContract.client.walletAddress.slice(-4)}`, 
+                variant: "destructive" 
+            });
+            return;
+        }
+
         setIsProcessing(true);
         try {
             if (!(window as any).ethereum) throw new Error("No wallet found");
@@ -279,6 +304,17 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
 
     const handleRelease = async (index: number) => {
         if (!walletAddress) return;
+
+        // Check if the current wallet matches the client authority address registered on-chain
+        if (localContract.client?.walletAddress && walletAddress.toLowerCase() !== localContract.client.walletAddress.toLowerCase()) {
+            toast({ 
+                title: "Incorrect Wallet", 
+                description: `Please switch to your registered wallet: ${localContract.client.walletAddress.slice(0, 6)}...${localContract.client.walletAddress.slice(-4)}`, 
+                variant: "destructive" 
+            });
+            return;
+        }
+
         setIsProcessing(true);
         try {
             if (!(window as any).ethereum) throw new Error("No wallet found");
@@ -418,12 +454,13 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                             </Badge>
                             {canRaiseDispute && (
                                 <Button
-                                    onClick={() => setShowDisputeModal(true)}
+                                    onClick={() => !isDisputed && setShowDisputeModal(true)}
+                                    disabled={isDisputed}
                                     variant="outline"
-                                    className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                    className={`border-red-500/50 text-red-400 ${!isDisputed ? 'hover:bg-red-500/10 hover:text-red-300' : 'opacity-70'}`}
                                 >
                                     <AlertTriangle className="w-4 h-4 mr-2" />
-                                    Raise Dispute
+                                    {isDisputed ? "Dispute Raised" : "Raise Dispute"}
                                 </Button>
                             )}
 
@@ -545,11 +582,12 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                     If you&apos;re experiencing problems with this contract, you can raise a dispute for admin review.
                                 </p>
                                 <Button
-                                    onClick={() => setShowDisputeModal(true)}
+                                    onClick={() => !isDisputed && setShowDisputeModal(true)}
+                                    disabled={isDisputed}
                                     variant="outline"
-                                    className="w-full border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+                                    className={`w-full border-yellow-500/50 text-yellow-400 ${!isDisputed ? 'hover:bg-yellow-500/10' : 'opacity-70'}`}
                                 >
-                                    Raise a Dispute
+                                    {isDisputed ? "Dispute Raised" : "Raise a Dispute"}
                                 </Button>
                             </div>
                         </motion.div>

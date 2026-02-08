@@ -31,7 +31,7 @@ interface Freelancer {
   walletAddress?: string;
   skills: string[];
   bio: string;
-  hourlyRate: number;
+  hourlyRate?: number;
   status: "Available" | "Busy";
   location: string;
   responseTime: string;
@@ -126,7 +126,7 @@ const FreelancerCard = ({
 
       <div className="flex items-center justify-between mb-6">
          <div className="text-zinc-100 font-bold text-xl">
-            {getConvertedAmount(freelancer.hourlyRate)}<span className="text-xs text-zinc-500 font-medium ml-1">/hr</span>
+            {/* Rate removed as per fixed-price model */}
           </div>
           <div className="flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
@@ -186,19 +186,6 @@ const FilterBar = ({
           <SelectItem value="all">Any Status</SelectItem>
           <SelectItem value="Available">Available</SelectItem>
           <SelectItem value="Busy">Busy</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select value={filters.rateRange} onValueChange={(val) => onFilterChange('rateRange', val)}>
-        <SelectTrigger className="w-[140px] bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 text-xs font-bold uppercase tracking-wider h-auto">
-          <SelectValue placeholder="Hourly Rate" />
-        </SelectTrigger>
-        <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
-          <SelectItem value="all">Any Rate</SelectItem>
-          <SelectItem value="0-0.05">Under 0.05 ETH</SelectItem>
-          <SelectItem value="0.05-0.1">0.05 - 0.1 ETH</SelectItem>
-          <SelectItem value="0.1-0.5">0.1 - 0.5 ETH</SelectItem>
-          <SelectItem value="0.5+">0.5+ ETH</SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -301,7 +288,6 @@ const FreelancerProfileModal = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                   { label: "Rating", value: `${freelancer.averageRating || "N/A"}` },
-                  { label: "Rate", value: `${getConvertedAmount(freelancer.hourlyRate)}/h` },
                   { label: "Done", value: `${freelancer.projectsCompleted}` },
                   { label: "Earned", value: getConvertedAmount(freelancer.totalEarned) },
                 ].map((stat) => (
@@ -568,8 +554,7 @@ export default function DiscoverFreelancersPage() {
   
   // Filter States
   const [filters, setFilters] = useState({
-    status: 'all',
-    rateRange: 'all'
+    status: 'all'
   });
 
   const ensureToken = async () => {
@@ -617,7 +602,6 @@ export default function DiscoverFreelancersPage() {
             role: f.role || "freelancer",
             skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map((s: string) => s.trim()) : [],
             bio: settings.bio || "No bio provided.",
-            hourlyRate: settings.hourlyRate || 0,
             status: settings.availableForJobs ? "Available" : "Busy",
             location: settings.location || "Remote",
             responseTime: f.responseTime || "24 hours",
@@ -664,16 +648,6 @@ export default function DiscoverFreelancersPage() {
     // Status Filter
     if (filters.status !== 'all') {
         results = results.filter(f => f.status === filters.status);
-    }
-
-    // Rate Filter
-    if (filters.rateRange !== 'all') {
-        const [min, max] = filters.rateRange.split('-').map(Number);
-        if (filters.rateRange === '0.5+') {
-            results = results.filter(f => f.hourlyRate >= 0.5);
-        } else {
-            results = results.filter(f => f.hourlyRate >= min && f.hourlyRate <= max);
-        }
     }
 
     setFilteredFreelancers(results);

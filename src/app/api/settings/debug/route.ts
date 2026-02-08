@@ -9,13 +9,24 @@ export async function GET(req: Request) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
+    const id = searchParams.get("id");
     
+    if (id) {
+        const user = await User.findById(id).select("email fullName role favorites favoriteJobs");
+        return NextResponse.json({ found: !!user, source: "id", user });
+    }
+
     if (email) {
-      // Check specific email
-      const user = await User.findOne({ email }).select("email fullName role favorites favoriteJobs");
+      console.log(`Debug search for email: ${email}`);
+      // Check specific email (case-insensitive)
+      const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } }).select("email fullName role favorites favoriteJobs");
+      
       return NextResponse.json({ 
         found: !!user, 
+        source: "email",
+        queriedEmail: email,
         user: user ? { 
+            id: user._id,
             email: user.email, 
             fullName: user.fullName, 
             role: user.role,
@@ -26,11 +37,11 @@ export async function GET(req: Request) {
         } : null 
       });
     } else {
-      // List all users (be careful with this in production)
-      const users = await User.find({}).select("email fullName role").limit(10);
+      // List all users
+      const users = await User.find({}).select("email fullName role").limit(20);
       return NextResponse.json({ 
-        totalUsers: users.length, 
-        users: users.map(u => ({ email: u.email, fullName: u.fullName, role: u.role }))
+        totalUsersInSystem: await User.countDocuments(),
+        recentUsers: users.map(u => ({ id: u._id, email: u.email, fullName: u.fullName, role: u.role }))
       });
     }
   } catch (err: any) {

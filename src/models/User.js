@@ -60,6 +60,9 @@ const UserSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verifyToken: { type: String },
     verifyTokenExpires: { type: Date },
+
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    favoriteJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
   },
   { timestamps: true }
 );

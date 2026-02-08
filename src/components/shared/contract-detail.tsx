@@ -178,6 +178,17 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
     const handleFund = async () => {
         if (!walletAddress || !contract) return;
+
+        // Check if the current wallet matches the client authority address registered on-chain
+        if (contract.client.walletAddress && walletAddress.toLowerCase() !== contract.client.walletAddress.toLowerCase()) {
+            toast({ 
+                title: "Incorrect Wallet", 
+                description: `Please switch to your registered wallet: ${contract.client.walletAddress.slice(0, 6)}...${contract.client.walletAddress.slice(-4)}`, 
+                variant: "destructive" 
+            });
+            return;
+        }
+
         setIsProcessing(true);
         try {
             if (!(window as any).ethereum) throw new Error("No wallet found");
@@ -204,6 +215,17 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
     const handleRelease = async (index: number) => {
         if (!walletAddress || !contract) return;
+
+        // Check if the current wallet matches the client authority address registered on-chain
+        if (contract.client.walletAddress && walletAddress.toLowerCase() !== contract.client.walletAddress.toLowerCase()) {
+            toast({ 
+                title: "Incorrect Wallet", 
+                description: `Please switch to your registered wallet: ${contract.client.walletAddress.slice(0, 6)}...${contract.client.walletAddress.slice(-4)}`, 
+                variant: "destructive" 
+            });
+            return;
+        }
+
         setIsProcessing(true);
         try {
             if (!(window as any).ethereum) throw new Error("No wallet found");
