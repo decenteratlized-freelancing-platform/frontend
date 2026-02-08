@@ -10,57 +10,86 @@ function AuthCallbackContent() {
     const searchParams = useSearchParams();
     const [hasChecked, setHasChecked] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [statusText, setStatusText] = useState("Authenticating...");
 
     useEffect(() => {
-        // Debug logging
-        // console.log("Auth Callback - Status:", status, "Session:", session);
-
         if (status === "loading" || processing) return;
 
         const processAuth = async () => {
             if (status === "authenticated" && session?.user) {
+                setProcessing(true);
                 let role = (session.user as any).role;
                 const intentRole = searchParams.get("intentRole");
+                const userEmail = session.user.email;
 
                 // If role is pending and we have an intent, update it
                 if ((!role || role === "pending") && intentRole) {
-                    setProcessing(true);
+                    setStatusText("Setting up your account...");
                     try {
                         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/update-role`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                                email: session.user.email, 
-                                role: intentRole 
+                            body: JSON.stringify({
+                                email: userEmail,
+                                role: intentRole
                             }),
                         });
 
                         if (res.ok) {
-                            // Force session update to reflect new role
                             await update({ role: intentRole });
                             role = intentRole;
                         }
                     } catch (err) {
                         console.error("Failed to update role from intent:", err);
-                    } finally {
-                        setProcessing(false);
                     }
                 }
 
-                console.log("Auth Callback - Final User role:", role);
+                // Send OTP for OAuth login
+                setStatusText("Sending verification code...");
+                try {
+                    const otpRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/send-otp`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email: userEmail,
+                            type: "oauth"
+                        }),
+                    });
 
-                if (role === "client") {
-                    router.replace("/client/dashboard");
-                } else if (role === "freelancer") {
-                    router.replace("/freelancer/dashboard");
-                } else {
-                    // Role is pending or not set - go to choose role
-                    router.replace("/choose-role");
+                    if (otpRes.ok) {
+                        // Redirect to OTP verification page
+                        const params = new URLSearchParams({
+                            email: userEmail || "",
+                            oauth: "true",
+                        });
+                        if (intentRole) params.set("intentRole", intentRole);
+
+                        router.replace(`/verify-otp?${params.toString()}`);
+                    } else {
+                        const data = await otpRes.json();
+                        console.error("Failed to send OTP:", data.message);
+                        // If OTP fails, still try to redirect based on role
+                        if (role === "client") {
+                            router.replace("/client/dashboard");
+                        } else if (role === "freelancer") {
+                            router.replace("/freelancer/dashboard");
+                        } else {
+                            router.replace("/choose-role");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error sending OTP:", err);
+                    // Fallback redirect
+                    if (role === "client") {
+                        router.replace("/client/dashboard");
+                    } else if (role === "freelancer") {
+                        router.replace("/freelancer/dashboard");
+                    } else {
+                        router.replace("/choose-role");
+                    }
                 }
             } else if (status === "unauthenticated" && !hasChecked) {
-                // Only redirect to login if we've confirmed unauthenticated
                 setHasChecked(true);
-                // console.log("Auth Callback - Unauthenticated, redirecting to login");
                 router.replace("/login");
             }
         };
@@ -73,9 +102,9 @@ function AuthCallbackContent() {
             <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                 <h2 className="text-white text-xl font-semibold animate-pulse">
-                    {processing ? "Setting up your account..." : "Authenticating..."}
+                    {statusText}
                 </h2>
-                <p className="text-zinc-500 text-sm">Status: {processing ? "Updating Role" : status}</p>
+                <p className="text-zinc-500 text-sm">Status: {processing ? "Processing" : status}</p>
             </div>
         </div>
     );
@@ -88,4 +117,3 @@ export default function AuthCallbackPage() {
         </Suspense>
     );
 }
-
