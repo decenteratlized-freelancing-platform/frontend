@@ -30,7 +30,7 @@ const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
 })
 
 export default function FreelancerSettings() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -106,35 +106,47 @@ export default function FreelancerSettings() {
   ]
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    const fetchFullProfile = async () => {
+      const email = session?.user?.email || localStorage.getItem("email");
+      if (!email) return;
 
-    const stored = (() => {
       try {
-        return JSON.parse(localStorage.getItem("currentUser") || "null")
-      } catch {
-        return null
+        const response = await fetch(`/api/settings?email=${email}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const profile = data.profile || {};
+          const s = data.settings || {};
+
+          setSettings({
+            fullName: profile.fullName || "",
+            email: profile.email || email,
+            phone: profile.phone || "",
+            professionalBio: profile.professionalBio || "",
+            skills: Array.isArray(profile.skills) ? profile.skills : [],
+            portfolioWebsite: profile.portfolioWebsite || "",
+            location: profile.location || "",
+            image: profile.image || "",
+            portfolio: profile.portfolio || [],
+            socialLinks: profile.socialLinks || { github: "", linkedin: "", twitter: "", website: "" },
+            verifiedSkills: profile.verifiedSkills || [],
+          });
+
+          if (data.settings) {
+            setNotifications(data.settings.notifications || notifications);
+            setPrivacy(data.settings.privacy || privacy);
+            setPreferences(data.settings.preferences || preferences);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching full profile:", error);
       }
-    })()
+    };
 
-    const initialEmail = stored?.email || session?.user?.email || localStorage.getItem("email") || ""
-    const initialFullName = stored?.fullName || (session?.user?.name as string) || localStorage.getItem("fullName") || ""
-
-    setSettings(prev => ({
-      ...prev,
-      email: initialEmail,
-      fullName: initialFullName,
-      phone: stored?.settings?.phone || stored?.phone || prev.phone,
-      professionalBio: stored?.settings?.bio || stored?.professionalBio || prev.professionalBio,
-      portfolioWebsite: stored?.settings?.portfolioWebsite || stored?.portfolioWebsite || prev.portfolioWebsite,
-      location: stored?.settings?.location || stored?.location || prev.location,
-      image: stored?.image || prev.image,
-      skills: Array.isArray(stored?.settings?.skills) ? stored.settings.skills : (stored?.settings?.skills ? stored.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
-      // Load new fields
-      portfolio: stored?.settings?.portfolio || prev.portfolio,
-      socialLinks: stored?.settings?.socialLinks || prev.socialLinks,
-      verifiedSkills: stored?.settings?.verifiedSkills || prev.verifiedSkills,
-    }))
-  }, [session])
+    if (status === "authenticated" || localStorage.getItem("email")) {
+      fetchFullProfile();
+    }
+  }, [session, status]);
 
   useEffect(() => {
     if (settings.skills && settings.skills.length > 0) {

@@ -282,6 +282,21 @@ export default function BrowseJobs() {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <div className="flex flex-col justify-end">
+                            <Button 
+                                variant="ghost" 
+                                onClick={() => {
+                                    setSearchTerm("");
+                                    setSelectedCategory("all");
+                                    setSelectedExperience("all");
+                                    setSortBy("newest");
+                                }}
+                                className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10 h-10 rounded-xl text-xs uppercase font-bold tracking-widest transition-all"
+                            >
+                                Reset Filters
+                            </Button>
+                        </div>
                     </div>
                 </motion.div>
             )}

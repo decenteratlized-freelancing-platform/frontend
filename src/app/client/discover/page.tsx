@@ -12,7 +12,11 @@ import {
   Sparkles,
   Loader2,
   MessageSquare,
-  Briefcase
+  Briefcase,
+  Github,
+  Linkedin,
+  Twitter,
+  Globe
 } from "lucide-react"
 import Link from "next/link";
 import Image from "next/image";
@@ -38,7 +42,9 @@ interface Freelancer {
   responseTime: string;
   isFavorite: boolean;
   image: string;
-  portfolio: { id: number; title: string; imageUrl?: string }[];
+  portfolio: { title: string; description: string; url: string }[];
+  socialLinks?: { github?: string; linkedin?: string; twitter?: string; website?: string };
+  verifiedSkills?: { skill: string; score: number }[];
   languages: string[];
   projectsCompleted: number;
   totalEarned: number;
@@ -272,8 +278,34 @@ const FreelancerProfileModal = ({
                 <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-6 h-6 rounded-full border-4 border-zinc-900 shadow-xl" />
               </div>
               <h3 className="text-2xl font-bold text-zinc-100 mb-1">{freelancer.fullName}</h3>
-              <p className="text-zinc-500 text-sm font-medium uppercase tracking-wider mb-8">{freelancer.role}</p>
+              <p className="text-zinc-500 text-sm font-medium uppercase tracking-wider mb-4">{freelancer.role}</p>
               
+              {/* Social Links */}
+              {freelancer.socialLinks && (
+                <div className="flex gap-3 justify-center mb-8">
+                  {freelancer.socialLinks.github && (
+                    <a href={`https://${freelancer.socialLinks.github.replace(/^https?:\/\//, '')}`} target="_blank" className="text-zinc-400 hover:text-white p-2 bg-zinc-800/50 rounded-lg transition-colors">
+                      <Github className="w-4 h-4" />
+                    </a>
+                  )}
+                  {freelancer.socialLinks.linkedin && (
+                    <a href={`https://${freelancer.socialLinks.linkedin.replace(/^https?:\/\//, '')}`} target="_blank" className="text-zinc-400 hover:text-white p-2 bg-zinc-800/50 rounded-lg transition-colors">
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  )}
+                  {freelancer.socialLinks.twitter && (
+                    <a href={`https://twitter.com/${freelancer.socialLinks.twitter.replace('@', '')}`} target="_blank" className="text-zinc-400 hover:text-white p-2 bg-zinc-800/50 rounded-lg transition-colors">
+                      <Twitter className="w-4 h-4" />
+                    </a>
+                  )}
+                  {freelancer.socialLinks.website && (
+                    <a href={freelancer.socialLinks.website} target="_blank" className="text-zinc-400 hover:text-white p-2 bg-zinc-800/50 rounded-lg transition-colors">
+                      <Globe className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div className="w-full flex flex-col gap-4">
                 <button 
                   onClick={() => onHire(freelancer)}
@@ -358,16 +390,25 @@ const FreelancerProfileModal = ({
                   {freelancer.portfolio.length > 0 ? (
                     freelancer.portfolio.map((item, index) => (
                       <div
-                        key={item.id || index}
+                        key={index}
                         className="bg-zinc-950/40 rounded-2xl p-4 border border-zinc-800 hover:border-zinc-700 transition-colors group cursor-pointer"
                       >
-                        <div className="aspect-video bg-zinc-950 rounded-xl mb-4 overflow-hidden border border-zinc-800">
-                          <div className="w-full h-full flex items-center justify-center text-zinc-800 bg-zinc-900 group-hover:scale-105 transition-transform duration-500 text-[10px] font-bold uppercase tracking-widest">
-                            No Preview
-                          </div>
+                        <div className="aspect-video bg-zinc-950 rounded-xl mb-4 overflow-hidden border border-zinc-800 relative">
+                          {item.url ? (
+                            <Image
+                              src={item.url}
+                              alt={item.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-800 bg-zinc-900 text-[10px] font-bold uppercase tracking-widest">
+                              No Preview
+                            </div>
+                          )}
                         </div>
                         <h5 className="font-bold text-zinc-200 text-sm truncate">{item.title}</h5>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-1">Web Development</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-1 line-clamp-1">{item.description}</p>
                       </div>
                     ))
                   ) : (
@@ -612,7 +653,9 @@ export default function DiscoverFreelancersPage() {
             responseTime: f.responseTime || "24 hours",
             isFavorite: f.isFavorite || false,
             image: f.image || "",
-            portfolio: settings.portfolioWebsite ? [{ id: 1, title: 'Portfolio Website', imageUrl: settings.portfolioWebsite }] : [],
+            portfolio: settings.portfolio || [],
+            socialLinks: settings.socialLinks || {},
+            verifiedSkills: settings.verifiedSkills || [],
             languages: f.languages || [],
             projectsCompleted: settings.projectsCompleted || 0,
             totalEarned: settings.totalEarned || 0,
