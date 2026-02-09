@@ -25,6 +25,26 @@ const SettingsSchema = new mongoose.Schema({
     currency: { type: String, default: "inr" },
     theme: { type: String, default: "dark" },
   },
+
+  // New Fields for Portfolio & Trust
+  portfolio: [{
+    title: String,
+    description: String,
+    url: String, // Image or PDF URL
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  socialLinks: {
+    github: { type: String, default: "" },
+    linkedin: { type: String, default: "" },
+    twitter: { type: String, default: "" },
+    website: { type: String, default: "" }
+  },
+  verifiedSkills: [{
+    skill: String,
+    score: Number,
+    verifiedAt: { type: Date, default: Date.now }
+  }],
+
   professionalTitle: { type: String, default: "" },
   titleLocked: { type: Boolean, default: false },
   hourlyRate: { type: Number, default: 0 },

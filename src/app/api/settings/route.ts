@@ -21,6 +21,9 @@ export async function POST(req: Request) {
       location,
       portfolioWebsite,
       professionalBio,
+      portfolio,
+      socialLinks,
+      verifiedSkills
     } = body;
 
     console.log("Received request with email:", email); // Debug log
@@ -53,6 +56,11 @@ export async function POST(req: Request) {
     if (titleLocked !== undefined) update["settings.titleLocked"] = Boolean(titleLocked);
     if (hourlyRate !== undefined) update["settings.hourlyRate"] = Number(hourlyRate || 0);
     if (availableForJobs !== undefined) update["settings.availableForJobs"] = availableForJobs !== false;
+    
+    // New Fields
+    if (portfolio !== undefined) update["settings.portfolio"] = portfolio;
+    if (socialLinks !== undefined) update["settings.socialLinks"] = socialLinks;
+    if (verifiedSkills !== undefined) update["settings.verifiedSkills"] = verifiedSkills;
 
     if (privacy) update["settings.privacy"] = privacy;
     if (notifications) update["settings.notifications"] = notifications;
@@ -140,10 +148,18 @@ export async function GET(req: Request) {
         portfolioWebsite: user.settings?.portfolioWebsite || "",
         professionalBio: user.settings?.bio || "",
         skills: skillsArray,
+        // New Fields
+        portfolio: user.settings?.portfolio || [],
+        socialLinks: user.settings?.socialLinks || { github: "", linkedin: "", twitter: "", website: "" },
+        verifiedSkills: user.settings?.verifiedSkills || [],
       },
       settings: {
         ...user.settings,
         skills: skillsArray, // Send as array to frontend
+        // Ensure settings object also has them if used directly
+        portfolio: user.settings?.portfolio || [],
+        socialLinks: user.settings?.socialLinks || { github: "", linkedin: "", twitter: "", website: "" },
+        verifiedSkills: user.settings?.verifiedSkills || [],
       },
       role: user.role,
     });

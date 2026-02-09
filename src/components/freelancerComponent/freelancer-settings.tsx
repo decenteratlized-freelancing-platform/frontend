@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,6 +43,10 @@ export default function FreelancerSettings() {
     portfolioWebsite: "",
     location: "",
     image: "",
+    // New Fields
+    portfolio: [] as any[],
+    socialLinks: { github: "", linkedin: "", twitter: "", website: "" },
+    verifiedSkills: [] as any[],
   })
 
   const [notifications, setNotifications] = useState({
@@ -75,6 +80,18 @@ export default function FreelancerSettings() {
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([])
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lon: number } | null>(null)
+
+  // Skill Verification Modal State
+  const [isSkillTestOpen, setIsSkillTestOpen] = useState(false)
+  const [currentSkillToVerify, setCurrentSkillToVerify] = useState<string | null>(null)
+  const [testScore, setTestScore] = useState(0)
+  const [testSubmitted, setTestSubmitted] = useState(false)
+  const [testAnswers, setTestAnswers] = useState<Record<number, string>>({})
+
+  // Portfolio Modal State
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
+  const [newPortfolioItem, setNewPortfolioItem] = useState({ title: "", description: "", url: "" })
+  const [uploadingPortfolio, setUploadingPortfolio] = useState(false)
 
   const availableSkills = [
     "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
@@ -112,6 +129,10 @@ export default function FreelancerSettings() {
       location: stored?.settings?.location || stored?.location || prev.location,
       image: stored?.image || prev.image,
       skills: Array.isArray(stored?.settings?.skills) ? stored.settings.skills : (stored?.settings?.skills ? stored.settings.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
+      // Load new fields
+      portfolio: stored?.settings?.portfolio || prev.portfolio,
+      socialLinks: stored?.settings?.socialLinks || prev.socialLinks,
+      verifiedSkills: stored?.settings?.verifiedSkills || prev.verifiedSkills,
     }))
   }, [session])
 
@@ -212,19 +233,28 @@ export default function FreelancerSettings() {
     }
   }
 
-  const handleLocationChange = async (value: string) => {
+  const handleLocationChange = (value: string) => {
     setSettings(prev => ({ ...prev, location: value }))
+    
+    // Clear previous timeout
+    if ((window as any).locationSearchTimeout) {
+      clearTimeout((window as any).locationSearchTimeout)
+    }
+
     if (value.length > 2) {
-      try {
-        const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`)
-        const data = await response.json()
-        if (data.predictions) {
-          setLocationSuggestions(data.predictions)
-          setShowLocationSuggestions(true)
+      // Set new timeout (debounce 500ms)
+      (window as any).locationSearchTimeout = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/location/search?query=${encodeURIComponent(value)}`)
+          const data = await response.json()
+          if (data.predictions) {
+            setLocationSuggestions(data.predictions)
+            setShowLocationSuggestions(true)
+          }
+        } catch (error) {
+          console.error("Error fetching location suggestions:", error)
         }
-      } catch (error) {
-        console.error("Error fetching location suggestions:", error)
-      }
+      }, 500)
     } else {
       setLocationSuggestions([])
       setShowLocationSuggestions(false)
@@ -238,6 +268,83 @@ export default function FreelancerSettings() {
     }
     setLocationSuggestions([])
     setShowLocationSuggestions(false)
+  }
+
+  const handlePortfolioImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingPortfolio(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+        const email = settings.email
+
+        const response = await fetch("/api/user/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: base64String, email }), // Reusing image upload endpoint for demo
+        })
+        const data = await response.json()
+        if (response.ok) {
+           setNewPortfolioItem(prev => ({ ...prev, url: data.image }))
+           toast({ title: "Image Uploaded", description: "Portfolio image ready." })
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (e) {
+      toast({ title: "Error", description: "Upload failed", variant: "destructive" })
+    } finally {
+      setUploadingPortfolio(false)
+    }
+  }
+
+  const addPortfolioItem = () => {
+    if (!newPortfolioItem.title || !newPortfolioItem.url) return
+    setSettings(prev => ({
+      ...prev,
+      portfolio: [...prev.portfolio, { ...newPortfolioItem, uploadedAt: new Date() }]
+    }))
+    setNewPortfolioItem({ title: "", description: "", url: "" })
+    setIsPortfolioModalOpen(false)
+  }
+
+  const removePortfolioItem = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      portfolio: prev.portfolio.filter((_, i) => i !== index)
+    }))
+  }
+
+  const startSkillTest = (skill: string) => {
+    setCurrentSkillToVerify(skill)
+    setTestSubmitted(false)
+    setTestAnswers({})
+    setIsSkillTestOpen(true)
+  }
+
+  const submitSkillTest = () => {
+    // Mock Scoring Logic (Demo Day)
+    const score = 85 // Mock score
+    setTestScore(score)
+    setTestSubmitted(true)
+
+    if (score >= 70 && currentSkillToVerify) {
+      setSettings(prev => {
+        const alreadyVerified = prev.verifiedSkills.find(v => v.skill === currentSkillToVerify)
+        if (alreadyVerified) return prev
+        return {
+          ...prev,
+          verifiedSkills: [...prev.verifiedSkills, { skill: currentSkillToVerify, score, verifiedAt: new Date() }]
+        }
+      })
+      toast({ title: "Congratulations!", description: `You passed the ${currentSkillToVerify} skill test!` })
+    } else {
+      toast({ title: "Test Failed", description: "You need 70% to pass.", variant: "destructive" })
+    }
+    
+    setTimeout(() => setIsSkillTestOpen(false), 2000)
   }
 
   const handleSaveProfile = async () => {
@@ -268,6 +375,9 @@ export default function FreelancerSettings() {
         portfolioWebsite: settings.portfolioWebsite,
         location: settings.location,
         image: settings.image,
+        portfolio: settings.portfolio,
+        socialLinks: settings.socialLinks,
+        verifiedSkills: settings.verifiedSkills
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/update-profile`, {
@@ -458,11 +568,104 @@ export default function FreelancerSettings() {
                   )}
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-300 mb-2 block">Portfolio Website</Label>
-                  <div className="relative">
-                    <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input type="url" value={settings.portfolioWebsite} onChange={e => setSettings(prev => ({ ...prev, portfolioWebsite: e.target.value }))} placeholder="https://yourportfolio.com" className="bg-white/5 border-white/10 text-white pl-10" />
+                {/* Social Links Section */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <h3 className="text-lg font-semibold text-white">Social Links</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <Label className="text-gray-300">GitHub</Label>
+                        <Input 
+                            value={settings.socialLinks.github} 
+                            onChange={e => setSettings(p => ({ ...p, socialLinks: { ...p.socialLinks, github: e.target.value } }))}
+                            className="bg-white/5 border-white/10 text-white" 
+                            placeholder="github.com/username"
+                        />
+                     </div>
+                     <div>
+                        <Label className="text-gray-300">LinkedIn</Label>
+                        <Input 
+                            value={settings.socialLinks.linkedin} 
+                            onChange={e => setSettings(p => ({ ...p, socialLinks: { ...p.socialLinks, linkedin: e.target.value } }))}
+                            className="bg-white/5 border-white/10 text-white" 
+                            placeholder="linkedin.com/in/username"
+                        />
+                     </div>
+                     <div>
+                        <Label className="text-gray-300">Twitter (X)</Label>
+                        <Input 
+                            value={settings.socialLinks.twitter} 
+                            onChange={e => setSettings(p => ({ ...p, socialLinks: { ...p.socialLinks, twitter: e.target.value } }))}
+                            className="bg-white/5 border-white/10 text-white" 
+                            placeholder="@username"
+                        />
+                     </div>
+                     <div>
+                        <Label className="text-gray-300">Personal Website</Label>
+                        <Input 
+                            value={settings.socialLinks.website} 
+                            onChange={e => setSettings(p => ({ ...p, socialLinks: { ...p.socialLinks, website: e.target.value } }))}
+                            className="bg-white/5 border-white/10 text-white" 
+                            placeholder="https://mysite.com"
+                        />
+                     </div>
+                  </div>
+                </div>
+
+                {/* Portfolio Section */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-white">Portfolio Gallery</h3>
+                    <Button variant="outline" onClick={() => setIsPortfolioModalOpen(true)} className="border-white/20 text-white hover:bg-white/10">
+                        + Add Project
+                    </Button>
+                  </div>
+                  
+                  {isPortfolioModalOpen && (
+                    <div className="bg-zinc-900 border border-white/10 p-4 rounded-xl space-y-3 mb-4">
+                        <Input 
+                            placeholder="Project Title" 
+                            value={newPortfolioItem.title}
+                            onChange={e => setNewPortfolioItem(p => ({ ...p, title: e.target.value }))}
+                            className="bg-zinc-800 border-zinc-700 text-white"
+                        />
+                        <Textarea 
+                            placeholder="Description"
+                            value={newPortfolioItem.description}
+                            onChange={e => setNewPortfolioItem(p => ({ ...p, description: e.target.value }))}
+                            className="bg-zinc-800 border-zinc-700 text-white"
+                        />
+                        <div className="flex gap-2">
+                            <Input type="file" onChange={handlePortfolioImageUpload} className="bg-zinc-800 text-white" />
+                            <Button onClick={addPortfolioItem} disabled={uploadingPortfolio}>
+                                {uploadingPortfolio ? "Uploading..." : "Add"}
+                            </Button>
+                        </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {settings.portfolio.map((item, idx) => (
+                        <div key={idx} className="relative group bg-zinc-900 rounded-xl overflow-hidden border border-white/10">
+                            <div className="relative w-full h-32">
+                                <Image src={item.url} alt={item.title} fill className="object-cover" />
+                            </div>
+                            <div className="p-3">
+                                <h4 className="font-bold text-white">{item.title}</h4>
+                                <p className="text-xs text-gray-400 truncate">{item.description}</p>
+                            </div>
+                            <button 
+                                onClick={() => removePortfolioItem(idx)}
+                                className="absolute top-2 right-2 bg-red-500/80 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <X className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+                    ))}
+                    {settings.portfolio.length === 0 && (
+                        <div className="col-span-full text-center py-8 text-gray-500 border border-dashed border-white/10 rounded-xl">
+                            No projects added yet.
+                        </div>
+                    )}
                   </div>
                 </div>
 
@@ -494,17 +697,78 @@ export default function FreelancerSettings() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {selectedSkills.map((skill, index) => (
-                      <Badge key={index} variant="secondary" className="bg-white/10 text-white cursor-pointer hover:bg-white/20 flex items-center gap-1" onClick={() => {
-                        const newSkills = selectedSkills.filter((_, i) => i !== index);
-                        setSelectedSkills(newSkills);
-                        setSettings(prev => ({ ...prev, skills: newSkills }));
-                      }}>
-                        {skill} <X className="w-3 h-3" />
+                    {selectedSkills.map((skill, index) => {
+                      const isVerified = settings.verifiedSkills?.some(v => v.skill === skill)
+                      return (
+                      <Badge key={index} variant="secondary" className={`bg-white/10 text-white cursor-pointer hover:bg-white/20 flex items-center gap-1 ${isVerified ? "border-emerald-500/50 border" : ""}`}>
+                        {skill} 
+                        {isVerified && <Shield className="w-3 h-3 text-emerald-400" />}
+                        {!isVerified && (
+                            <span 
+                                onClick={(e) => { e.stopPropagation(); startSkillTest(skill); }}
+                                className="text-[10px] ml-1 bg-blue-600 px-1 rounded hover:bg-blue-500"
+                            >
+                                Verify
+                            </span>
+                        )}
+                        <X className="w-3 h-3 ml-1" onClick={() => {
+                          const newSkills = selectedSkills.filter((_, i) => i !== index);
+                          setSelectedSkills(newSkills);
+                          setSettings(prev => ({ ...prev, skills: newSkills }));
+                        }} />
                       </Badge>
-                    ))}
+                    )})}
                   </div>
                 </div>
+                
+                {/* Skill Test Modal (Simple Overlay) */}
+                {isSkillTestOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle className="text-white flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-blue-500" />
+                                    Verify Skill: {currentSkillToVerify}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {!testSubmitted ? (
+                                    <>
+                                        <p className="text-gray-300 text-sm">Answer these questions to verify your skill.</p>
+                                        <div className="space-y-3">
+                                            <div className="bg-zinc-800 p-3 rounded-lg">
+                                                <p className="text-white text-sm mb-2">1. What is the complexity of binary search?</p>
+                                                <select className="w-full bg-zinc-900 text-white p-2 rounded border border-zinc-700">
+                                                    <option>O(n)</option>
+                                                    <option>O(log n)</option>
+                                                    <option>O(1)</option>
+                                                </select>
+                                            </div>
+                                            <div className="bg-zinc-800 p-3 rounded-lg">
+                                                <p className="text-white text-sm mb-2">2. Which is NOT a primitive type?</p>
+                                                <select className="w-full bg-zinc-900 text-white p-2 rounded border border-zinc-700">
+                                                    <option>String</option>
+                                                    <option>Object</option>
+                                                    <option>Boolean</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 justify-end pt-2">
+                                            <Button variant="ghost" onClick={() => setIsSkillTestOpen(false)}>Cancel</Button>
+                                            <Button onClick={submitSkillTest}>Submit Test</Button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-6">
+                                        <div className="text-4xl mb-2">🎉</div>
+                                        <h3 className="text-xl font-bold text-white mb-1">Test Passed!</h3>
+                                        <p className="text-gray-400 text-sm">Score: {testScore}%</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
 
                 <Button onClick={handleSaveProfile} disabled={loading} className="bg-white hover:bg-gray-200 text-black w-full py-6 rounded-xl font-bold">
                   <Save className="w-4 h-4 mr-2" />

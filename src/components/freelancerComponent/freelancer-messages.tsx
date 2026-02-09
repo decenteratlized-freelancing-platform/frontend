@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { useSocket } from "@/context/SocketContext"
 import { motion, AnimatePresence } from "framer-motion"
@@ -470,11 +471,12 @@ export default function FreelancerMessages() {
                                 {message.attachments && message.attachments.length > 0 && (
                                     <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-white/10">
                                         {message.attachments.map((att, i) => (
-                                                                                att.fileType.startsWith("image/") ? (
-                                                                                    <div key={i} className="rounded-lg overflow-hidden border border-white/10">
-                                                                                        <img src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${att.url}`} alt={att.name} className="max-w-full h-auto object-cover" />
-                                                                                    </div>
-                                                                                ) : (
+                                                                                                                                att.fileType.startsWith("image/") ? (
+                                                                                                                                    <div key={i} className="rounded-lg overflow-hidden border border-white/10 relative aspect-video w-full max-w-sm">
+                                                                                                                                        <Image src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${att.url}`} alt={att.name} fill className="object-cover" />
+                                                                                                                                    </div>
+                                                                                                                                ) : (
+                                                                                
                                                                                     <a key={i} href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${att.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-black/20 p-2 rounded-lg text-xs hover:bg-black/30 transition-colors">
                                                                                         <Paperclip className="w-3 h-3 text-blue-300" /> 
                                                                                         <span className="truncate text-blue-200 underline">{att.name}</span>

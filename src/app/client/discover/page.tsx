@@ -15,6 +15,7 @@ import {
   Briefcase
 } from "lucide-react"
 import Link from "next/link";
+import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -70,10 +71,12 @@ const FreelancerCard = ({
       
       <div className="flex items-center space-x-4 mb-5">
         {freelancer.image ? (
-          <img
+          <Image
             src={freelancer.image}
             alt={freelancer.fullName}
-            className="w-14 h-14 rounded-full border border-zinc-700 object-cover"
+            width={56}
+            height={56}
+            className="rounded-full border border-zinc-700 object-cover"
           />
         ) : (
           <div className="w-14 h-14 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center">
@@ -254,9 +257,11 @@ const FreelancerProfileModal = ({
             <div className="lg:col-span-4 flex flex-col items-center text-center">
               <div className="relative mb-6">
                 {freelancer.image ? (
-                  <img
+                  <Image
                     src={freelancer.image}
                     alt={freelancer.fullName}
+                    width={160}
+                    height={160}
                     className="w-40 h-40 rounded-3xl border border-zinc-700 object-cover"
                   />
                 ) : (

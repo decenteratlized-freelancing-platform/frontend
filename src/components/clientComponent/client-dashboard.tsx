@@ -392,9 +392,13 @@ export default function ClientDashboard() {
                           <span className="text-zinc-400">Status</span>
                           <span className="text-white font-semibold capitalize">{job.status.replace('_', ' ')}</span>
                         </div>
-                        <div className="w-full bg-white/10 rounded-full h-2">
+                        <div className="w-full bg-zinc-800 rounded-full h-2">
                           <div
-                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              job.status === 'completed' ? 'bg-emerald-500' : 
+                              job.status === 'in_progress' ? 'bg-blue-500' : 
+                              'bg-zinc-600'
+                            }`}
                             style={{ width: job.status === 'completed' ? '100%' : job.status === 'in_progress' ? '50%' : '10%' }}
                           />
                         </div>
