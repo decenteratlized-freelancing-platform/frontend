@@ -29,7 +29,7 @@ export default function Navigation() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <Image
-              src="/smarthire-logo-preview.png"
+              src="/logo-w-removebg-preview.png"
               alt="SmartHire Logo"
               width={70}
               height={60}

@@ -63,11 +63,13 @@ const FreelancerCard = ({
   onViewProfile,
   onHire,
   onToggleFavorite,
+  userRole,
 }: {
   freelancer: Freelancer;
   onViewProfile: (freelancer: Freelancer) => void;
   onHire: (freelancer: Freelancer) => void;
   onToggleFavorite: (id: string) => void;
+  userRole?: string | null;
 }) => {
   const { getConvertedAmount } = useCurrency();
   return (
@@ -95,14 +97,16 @@ const FreelancerCard = ({
               <h3 className="text-base font-semibold text-zinc-100 group-hover:text-white transition-colors">{freelancer.fullName}</h3>
               <p className="text-zinc-500 text-xs font-medium uppercase tracking-tight">{freelancer.role}</p>
             </div>
-            <button onClick={() => onToggleFavorite(freelancer._id)} className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors border border-transparent hover:border-zinc-700">
-              <Heart
-                className={`w-4 h-4 transition-colors ${freelancer.isFavorite
-                    ? "text-red-500 fill-current"
-                    : "text-zinc-500 hover:text-red-400"
-                  }`}
-              />
-            </button>
+            {userRole === "client" && (
+              <button onClick={() => onToggleFavorite(freelancer._id)} className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors border border-transparent hover:border-zinc-700">
+                <Heart
+                  className={`w-4 h-4 transition-colors ${freelancer.isFavorite
+                      ? "text-red-500 fill-current"
+                      : "text-zinc-500 hover:text-red-400"
+                    }`}
+                />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -814,6 +818,7 @@ export default function DiscoverFreelancersPage() {
                 onViewProfile={handleViewProfile}
                 onHire={handleHire}
                 onToggleFavorite={handleToggleFavorite}
+                userRole={session?.user?.role}
               />
             ))}
           </div>

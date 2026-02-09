@@ -13,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Settings, User, Shield, CreditCard, Globe, Camera, Save, 
   Upload, Trash2, Phone, MapPin, Link as LinkIcon, X, 
-  LogOut, AlertTriangle, Lock, Key, Mail, Bell, Eye, EyeOff
+  LogOut, AlertTriangle, Lock, Key, Mail, Bell, Eye, EyeOff,
+  CheckCheck, Loader2
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -87,6 +88,9 @@ export default function FreelancerSettings() {
   const [testScore, setTestScore] = useState(0)
   const [testSubmitted, setTestSubmitted] = useState(false)
   const [testAnswers, setTestAnswers] = useState<Record<number, string>>({})
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([])
+  const [generatingQuiz, setGeneratingQuiz] = useState(false)
+  const [cooldowns, setCooldowns] = useState<Record<string, number>>({})
 
   // Portfolio Modal State
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
@@ -104,6 +108,26 @@ export default function FreelancerSettings() {
     "Mobile Development", "iOS", "Android", "React Native", "Flutter",
     "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
   ]
+
+  useEffect(() => {
+    // Tick down cooldowns every second
+    const timer = setInterval(() => {
+      setCooldowns(prev => {
+        const next = { ...prev }
+        let changed = false
+        Object.keys(next).forEach(skill => {
+          if (next[skill] > Date.now()) {
+            changed = true
+          } else {
+            delete next[skill]
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const fetchFullProfile = async () => {
@@ -329,34 +353,74 @@ export default function FreelancerSettings() {
     }))
   }
 
-  const startSkillTest = (skill: string) => {
+  const startSkillTest = async (skill: string) => {
+    if (cooldowns[skill]) {
+      const remaining = Math.ceil((cooldowns[skill] - Date.now()) / 1000)
+      toast({ 
+        title: "Cooldown Active", 
+        description: `Please wait ${remaining}s before retrying ${skill}.`, 
+        variant: "destructive" 
+      })
+      return
+    }
+
     setCurrentSkillToVerify(skill)
+    setGeneratingQuiz(true)
+    setIsSkillTestOpen(true)
     setTestSubmitted(false)
     setTestAnswers({})
-    setIsSkillTestOpen(true)
+    setQuizQuestions([])
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/ai/generate-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skill })
+      })
+      const data = await res.json()
+      if (data.questions) {
+        setQuizQuestions(data.questions)
+      } else {
+        throw new Error("Failed to generate questions")
+      }
+    } catch (e) {
+      toast({ title: "Error", description: "Could not generate AI quiz. Try again later.", variant: "destructive" })
+      setIsSkillTestOpen(false)
+    } finally {
+      setGeneratingQuiz(false)
+    }
   }
 
   const submitSkillTest = () => {
-    // Mock Scoring Logic (Demo Day)
-    const score = 85 // Mock score
+    if (quizQuestions.length === 0) return
+
+    let correctCount = 0
+    quizQuestions.forEach((q, idx) => {
+      if (testAnswers[idx] === q.correctAnswer) {
+        correctCount++
+      }
+    })
+
+    const score = (correctCount / quizQuestions.length) * 100
     setTestScore(score)
     setTestSubmitted(true)
 
-    if (score >= 70 && currentSkillToVerify) {
-      setSettings(prev => {
-        const alreadyVerified = prev.verifiedSkills.find(v => v.skill === currentSkillToVerify)
-        if (alreadyVerified) return prev
-        return {
-          ...prev,
-          verifiedSkills: [...prev.verifiedSkills, { skill: currentSkillToVerify, score, verifiedAt: new Date() }]
-        }
-      })
-      toast({ title: "Congratulations!", description: `You passed the ${currentSkillToVerify} skill test!` })
+    if (score >= 80 && currentSkillToVerify) {
+      setSettings(prev => ({
+        ...prev,
+        verifiedSkills: [...prev.verifiedSkills, { skill: currentSkillToVerify, score, verifiedAt: new Date() }]
+      }))
+      toast({ title: "Congratulations!", description: `You passed the ${currentSkillToVerify} skill test with ${score}%!` })
+      // Auto-save the verification
+      setTimeout(() => handleSaveProfile(), 1000)
     } else {
-      toast({ title: "Test Failed", description: "You need 70% to pass.", variant: "destructive" })
+      toast({ title: "Test Failed", description: `You scored ${score}%. 80% is required. 5 min cooldown active.`, variant: "destructive" })
+      if (currentSkillToVerify) {
+        setCooldowns(prev => ({ ...prev, [currentSkillToVerify]: Date.now() + 5 * 60 * 1000 }))
+      }
     }
     
-    setTimeout(() => setIsSkillTestOpen(false), 2000)
+    setTimeout(() => setIsSkillTestOpen(false), 3000)
   }
 
   const handleSaveProfile = async () => {
@@ -733,48 +797,110 @@ export default function FreelancerSettings() {
                   </div>
                 </div>
                 
-                {/* Skill Test Modal (Simple Overlay) */}
+                {/* Skill Test Modal (AI powered) */}
                 {isSkillTestOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
-                            <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
-                                    <Shield className="w-5 h-5 text-blue-500" />
-                                    Verify Skill: {currentSkillToVerify}
+                        <Card className="w-full max-w-xl bg-zinc-900 border-zinc-800 shadow-2xl">
+                            <CardHeader className="border-b border-zinc-800 pb-4">
+                                <CardTitle className="text-white flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-blue-500" />
+                                        <span>AI Verification: {currentSkillToVerify}</span>
+                                    </div>
+                                    {!testSubmitted && !generatingQuiz && (
+                                        <Badge variant="outline" className="text-zinc-400">80% Passing Score</Badge>
+                                    )}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                {!testSubmitted ? (
-                                    <>
-                                        <p className="text-gray-300 text-sm">Answer these questions to verify your skill.</p>
-                                        <div className="space-y-3">
-                                            <div className="bg-zinc-800 p-3 rounded-lg">
-                                                <p className="text-white text-sm mb-2">1. What is the complexity of binary search?</p>
-                                                <select className="w-full bg-zinc-900 text-white p-2 rounded border border-zinc-700">
-                                                    <option>O(n)</option>
-                                                    <option>O(log n)</option>
-                                                    <option>O(1)</option>
-                                                </select>
-                                            </div>
-                                            <div className="bg-zinc-800 p-3 rounded-lg">
-                                                <p className="text-white text-sm mb-2">2. Which is NOT a primitive type?</p>
-                                                <select className="w-full bg-zinc-900 text-white p-2 rounded border border-zinc-700">
-                                                    <option>String</option>
-                                                    <option>Object</option>
-                                                    <option>Boolean</option>
-                                                </select>
-                                            </div>
+                            <CardContent className="pt-6">
+                                {generatingQuiz ? (
+                                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                                        <div className="text-center">
+                                            <p className="text-white font-medium">Generating Custom AI Quiz...</p>
+                                            <p className="text-zinc-500 text-sm mt-1">Analyzing depth for {currentSkillToVerify}</p>
                                         </div>
-                                        <div className="flex gap-2 justify-end pt-2">
-                                            <Button variant="ghost" onClick={() => setIsSkillTestOpen(false)}>Cancel</Button>
-                                            <Button onClick={submitSkillTest}>Submit Test</Button>
+                                    </div>
+                                ) : !testSubmitted ? (
+                                    <div className="space-y-6">
+                                        <div className="max-h-[400px] overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                                            {quizQuestions.map((q, qIdx) => (
+                                                <div key={qIdx} className="space-y-3 bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50">
+                                                    <p className="text-white text-sm font-medium flex gap-3">
+                                                        <span className="text-zinc-500">0{qIdx + 1}.</span>
+                                                        {q.question}
+                                                    </p>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                                                        {q.options.map((option: string, oIdx: number) => (
+                                                            <button
+                                                                key={oIdx}
+                                                                onClick={() => setTestAnswers(prev => ({ ...prev, [qIdx]: option }))}
+                                                                className={`text-left p-3 rounded-lg text-xs transition-all border ${
+                                                                    testAnswers[qIdx] === option
+                                                                        ? "bg-blue-600/20 border-blue-500 text-blue-100 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                                                                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800/50"
+                                                                }`}
+                                                            >
+                                                                {option}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    </>
+                                        <div className="flex gap-3 justify-end pt-4 border-t border-zinc-800">
+                                            <Button variant="ghost" onClick={() => setIsSkillTestOpen(false)} className="text-zinc-400 hover:text-white">Cancel</Button>
+                                            <Button 
+                                                onClick={submitSkillTest} 
+                                                disabled={Object.keys(testAnswers).length < quizQuestions.length}
+                                                className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-8"
+                                            >
+                                                Complete Verification
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ) : (
-                                    <div className="text-center py-6">
-                                        <div className="text-4xl mb-2">🎉</div>
-                                        <h3 className="text-xl font-bold text-white mb-1">Test Passed!</h3>
-                                        <p className="text-gray-400 text-sm">Score: {testScore}%</p>
+                                    <div className="space-y-6">
+                                        <div className="max-h-[400px] overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                                            {quizQuestions.map((q, qIdx) => (
+                                                <div key={qIdx} className="space-y-3 bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50">
+                                                    <p className="text-white text-sm font-medium flex gap-3">
+                                                        <span className="text-zinc-500">0{qIdx + 1}.</span>
+                                                        {q.question}
+                                                    </p>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                                                        {q.options.map((option: string, oIdx: number) => {
+                                                            const isUserChoice = testAnswers[qIdx] === option;
+                                                            const isCorrect = q.correctAnswer === option;
+                                                            
+                                                            let variantClass = "bg-zinc-900 border-zinc-800 text-zinc-500";
+                                                            if (isCorrect) variantClass = "bg-emerald-500/20 border-emerald-500 text-emerald-200";
+                                                            else if (isUserChoice && !isCorrect) variantClass = "bg-red-500/20 border-red-500 text-red-200";
+
+                                                            return (
+                                                                <div
+                                                                    key={oIdx}
+                                                                    className={`text-left p-3 rounded-lg text-xs border ${variantClass}`}
+                                                                >
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span>{option}</span>
+                                                                        {isCorrect && <CheckCheck className="w-3 h-3 text-emerald-500" />}
+                                                                        {isUserChoice && !isCorrect && <X className="w-3 h-3 text-red-500" />}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="text-center py-6 border-t border-zinc-800 space-y-4">
+                                            <h3 className={`text-2xl font-bold ${testScore >= 80 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {testScore >= 80 ? "Verification Successful!" : "Verification Failed"}
+                                            </h3>
+                                            <p className="text-zinc-400 mt-2">Final Score: <span className="text-white font-bold">{testScore}%</span></p>
+                                            <Button onClick={() => setIsSkillTestOpen(false)} className="bg-white text-black font-bold">Close Results</Button>
+                                        </div>
                                     </div>
                                 )}
                             </CardContent>

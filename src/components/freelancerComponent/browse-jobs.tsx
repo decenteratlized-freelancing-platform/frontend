@@ -87,8 +87,13 @@ export default function BrowseJobs() {
 
   useEffect(() => {
     fetchJobs()
-    fetchSavedJobs()
   }, [])
+
+  useEffect(() => {
+    if (session?.user) {
+        fetchSavedJobs()
+    }
+  }, [session])
 
   const fetchJobs = async () => {
     try {
@@ -325,14 +330,16 @@ export default function BrowseJobs() {
                           </Badge>
                           <span className="text-zinc-600 text-xs font-medium">#{job._id.slice(-6)}</span>
                         </div>
-                        <button
-                          onClick={() => toggleSaveJob(job._id)}
-                          className={`p-2 rounded-xl transition-colors ${
-                            savedJobs.includes(job._id) ? "bg-pink-500/10 text-pink-500" : "text-zinc-600 hover:text-zinc-400"
-                          }`}
-                        >
-                          <Heart className={`w-5 h-5 ${savedJobs.includes(job._id) ? "fill-current" : ""}`} />
-                        </button>
+                        {session?.user?.role === "freelancer" && (
+                          <button
+                            onClick={() => toggleSaveJob(job._id)}
+                            className={`p-2 rounded-xl transition-colors ${
+                              savedJobs.includes(job._id) ? "bg-pink-500/10 text-pink-500" : "text-zinc-600 hover:text-zinc-400"
+                            }`}
+                          >
+                            <Heart className={`w-5 h-5 ${savedJobs.includes(job._id) ? "fill-current" : ""}`} />
+                          </button>
+                        )}
                       </div>
 
                       <h3 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors mb-3 leading-tight">

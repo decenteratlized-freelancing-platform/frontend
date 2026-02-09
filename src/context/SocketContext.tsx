@@ -73,6 +73,15 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
                 }
             });
 
+            // Listen for general notifications (e.g. Proposals)
+            socketInstance.on("newNotification", (notification: any) => {
+                toast({
+                    title: notification.title,
+                    description: notification.message,
+                    duration: 5000,
+                });
+            });
+
             return () => {
                 socketInstance.close();
             };

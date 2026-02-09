@@ -12,13 +12,13 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const getFormattedAmount = (amount: number | string) => {
     const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount;
     if (isNaN(numericAmount)) return "0 ETH";
-    return `${numericAmount.toLocaleString()} ETH`;
+    return `${numericAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 })} ETH`;
   };
 
   const getConvertedAmount = (amount: number | string) => {
     const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount;
     if (isNaN(numericAmount)) return "Ξ0";
-    return `Ξ${numericAmount.toLocaleString()}`;
+    return `Ξ${numericAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 })}`;
   };
 
   return (
