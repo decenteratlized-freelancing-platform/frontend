@@ -1,13 +1,21 @@
 "use client";
+import dynamic from 'next/dynamic';
 import NewHomepage from "@/components/homepageComponents/new-homepage";
 import BenefitsSection from "@/components/homepageComponents/benefits-section";
 import RadialTimelineSection from "@/components/homepageComponents/radial-timeline-section";
 import HowItWorksSection from "@/components/homepageComponents/HowItWorksSection";
 import TestimonialsSection from "@/components/homepageComponents/TestimonialsSection";
-import CtaSection from "@/components/homepageComponents/CtaSection";
 import Footer from "@/components/homepageComponents/Footer";
 import Navigation from "@/components/homepageComponents/navigation";
-import { Scene } from "@/components/ui/hero-section";
+
+const Scene = dynamic(() => import("@/components/ui/hero-section").then(mod => mod.Scene), { 
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-zinc-950" />
+});
+
+const CtaSection = dynamic(() => import("@/components/homepageComponents/CtaSection"), {
+  ssr: false
+});
 
 export default function HomePage() {
   return (

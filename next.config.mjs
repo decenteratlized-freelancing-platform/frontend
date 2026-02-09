@@ -4,6 +4,7 @@ const nextConfig = {
     images: {
         domains: ['images.unsplash.com', 'plus.unsplash.com'],
     },
+    transpilePackages: ['three', '@react-three/fiber', '@paper-design/shaders-react'],
 };
 
 export default nextConfig;

@@ -28,12 +28,6 @@ export default function ClientLayout({
   }, [pathname, hideLoader])
   return (
     <>
-      {/* Only hide cursor on homepage */}
-      <style jsx global>{`
-        .homepage-cursor-hidden * {
-          cursor: none !important;
-        }
-      `}</style>
       {children}
     </>
   )
