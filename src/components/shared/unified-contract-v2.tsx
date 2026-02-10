@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Calendar } from "lucide-react";
 import { ContractDetailView } from "./contract-detail-view";
 import { ContractCard } from "./contract-card";
 import { HirableProposalCard } from "./hirable-proposal-card";
@@ -52,6 +56,17 @@ const fetchData = async (userRole: string, userEmail: string | undefined) => {
 const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreated }: any) => {
   const [isCreating, setIsCreating] = useState(false);
   const [milestones, setMilestones] = useState([{ description: "", amount: "" }]);
+  
+  // New State for Full Contract Terms
+  const [scopeOfWork, setScopeOfWork] = useState("");
+  const [deliverables, setDeliverables] = useState([""]);
+  const [revisionsAllowed, setRevisionsAllowed] = useState(0);
+  const [ownershipTransfer, setOwnershipTransfer] = useState("after_full_payment");
+  const [confidentialityRequired, setConfidentialityRequired] = useState(false);
+  const [terminationPolicy, setTerminationPolicy] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const totalAmount = useMemo(() => {
     return milestones.reduce((sum, m) => sum + parseFloat(m.amount || '0'), 0);
   }, [milestones]);
@@ -59,12 +74,15 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
   useEffect(() => {
     if (proposal) {
       setMilestones([{ description: "Initial milestone", amount: proposal.proposedRate.toString() }])
+      setScopeOfWork(proposal.job?.description || "");
     }
   }, [proposal]);
 
   const handleAddMilestone = () => {
     setMilestones([...milestones, { description: "", amount: "" }]);
   };
+
+  const handleAddDeliverable = () => setDeliverables([...deliverables, ""]);
 
   const handleCreate = async () => {
     const validMilestones = milestones.filter(m => m.description.trim() && m.amount.trim());
@@ -82,7 +100,17 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
           proposalId: proposal._id,
           milestones: validMilestones,
           totalAmount: totalAmount,
-          paymentType: proposal.paymentType,
+          paymentType: proposal.paymentType || "crypto",
+          // New Fields
+          title: proposal.job?.title,
+          scopeOfWork,
+          deliverables: deliverables.filter(d => d.trim()),
+          revisionsAllowed,
+          ownershipTransfer,
+          confidentialityRequired,
+          terminationPolicy,
+          startDate,
+          endDate
         }),
       });
       if (!response.ok) throw new Error((await response.json()).error || "Failed to create contract");
@@ -107,10 +135,93 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
             Finalize the terms for your project with <span className="font-semibold text-zinc-200">{proposal.freelancer.fullName}</span>.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-8 py-6">
-          <div>
+        <div className="space-y-6 py-6 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+          {/* Section 1: Scope & Deliverables */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-blue-400">1. Project Scope</h3>
+            <div className="space-y-2">
+                <Label>Detailed Scope of Work</Label>
+                <Textarea 
+                    placeholder="Describe exactly what will be done..."
+                    value={scopeOfWork}
+                    onChange={e => setScopeOfWork(e.target.value)}
+                    className="bg-zinc-900 border-zinc-800 h-24"
+                />
+            </div>
+            <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                    <Label>Key Deliverables</Label>
+                    <Button size="sm" variant="ghost" onClick={handleAddDeliverable} className="text-blue-400 h-6">+ Add</Button>
+                </div>
+                {deliverables.map((d, i) => (
+                    <Input 
+                        key={i} 
+                        placeholder={`Deliverable ${i+1}`}
+                        value={d}
+                        onChange={e => {
+                            const next = [...deliverables];
+                            next[i] = e.target.value;
+                            setDeliverables(next);
+                        }}
+                        className="bg-zinc-900 border-zinc-800"
+                    />
+                ))}
+            </div>
+          </div>
+
+          {/* Section 2: Terms & Policies */}
+          <div className="space-y-4 pt-4 border-t border-zinc-800">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-blue-400">2. Terms & Policies</h3>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-zinc-900 border-zinc-800" />
+                </div>
+                <div className="space-y-2">
+                    <Label>End Date (Optional)</Label>
+                    <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-zinc-900 border-zinc-800" />
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Revisions Allowed</Label>
+                    <Input type="number" value={revisionsAllowed} onChange={e => setRevisionsAllowed(parseInt(e.target.value))} className="bg-zinc-900 border-zinc-800" />
+                </div>
+                <div className="space-y-2">
+                    <Label>IP Ownership</Label>
+                    <Select value={ownershipTransfer} onValueChange={setOwnershipTransfer}>
+                        <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                            <SelectItem value="after_full_payment">After Full Payment</SelectItem>
+                            <SelectItem value="immediate">Immediate Transfer</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                <div className="space-y-0.5">
+                    <Label>Confidentiality (NDA)</Label>
+                    <p className="text-[10px] text-zinc-500 uppercase font-bold">Require freelancer to sign an NDA</p>
+                </div>
+                <Switch checked={confidentialityRequired} onCheckedChange={setConfidentialityRequired} />
+            </div>
+            <div className="space-y-2">
+                <Label>Termination Policy</Label>
+                <Input 
+                    placeholder="e.g. 7-day notice required..."
+                    value={terminationPolicy}
+                    onChange={e => setTerminationPolicy(e.target.value)}
+                    className="bg-zinc-900 border-zinc-800"
+                />
+            </div>
+          </div>
+
+          {/* Section 3: Milestones */}
+          <div className="pt-4 border-t border-zinc-800">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Milestones</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-blue-400">3. Milestones</h3>
               <Button
                 size="sm"
                 variant="outline"
@@ -150,9 +261,9 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
             </div>
           </div>
           
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-400">Total Contract Value</p>
-                                    <span className="text-2xl font-bold text-white">{totalAmount} ETH</span>
+                                <div className="space-y-1 pt-4 border-t border-zinc-800">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total Contract Value</p>
+                                    <span className="text-3xl font-black text-white">{totalAmount} ETH</span>
                                 </div>
         </div>
         <DialogFooter className="gap-2">

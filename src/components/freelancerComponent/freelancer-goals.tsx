@@ -168,7 +168,7 @@ export default function FreelancerGoals() {
       >
         <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2.5 mb-6">
           <Sparkles className="w-4 h-4 text-blue-400" />
-          <span className="text-sm font-medium text-zinc-300">Milestone Tracker</span>
+          <span className="text-sm font-medium text-zinc-300">Goals</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>

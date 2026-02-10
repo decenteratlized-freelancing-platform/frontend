@@ -148,7 +148,13 @@ export default function AdminLoginPage() {
 
                         <div className="mt-6 pt-6 border-t border-white/10 text-center">
                             <div className="flex items-center justify-center gap-2 text-gray-500">
-                                <Zap className="w-4 h-4" />
+                                <Image
+                                    src="/logo-w-removebg-preview.png"
+                                    alt="SmartHire Logo"
+                                    width={30}
+                                    height={30}
+                                    className="object-contain opacity-50"
+                                />
                                 <span className="text-sm">SmartHire Admin Portal</span>
                             </div>
                         </div>

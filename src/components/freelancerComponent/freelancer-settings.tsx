@@ -24,6 +24,14 @@ import { useToast } from "@/hooks/use-toast"
 import WalletManagement from "@/components/shared/wallet-management"
 import dynamic from "next/dynamic"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
   ssr: false,
@@ -96,6 +104,11 @@ export default function FreelancerSettings() {
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
   const [newPortfolioItem, setNewPortfolioItem] = useState({ title: "", description: "", url: "" })
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false)
+
+  // Confirmation Modals State
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleteing] = useState(false)
 
   const availableSkills = [
     "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
@@ -468,6 +481,21 @@ export default function FreelancerSettings() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || "Failed to update profile")
 
+      // Update localStorage for persistence
+      if (typeof window !== "undefined") {
+          localStorage.setItem("fullName", settings.fullName);
+          localStorage.setItem("email", email);
+          
+          // Dispatch event for sidebar to update immediately
+          window.dispatchEvent(new CustomEvent("userProfileUpdated", {
+              detail: {
+                  fullName: settings.fullName,
+                  email: settings.email,
+                  image: settings.image
+              }
+          }));
+      }
+
       toast({ title: "Success", description: "Profile updated successfully", variant: "default" })
       router.refresh()
     } catch (err: any) {
@@ -524,20 +552,26 @@ export default function FreelancerSettings() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure? This action cannot be undone.")) return;
     const email = settings.email || session?.user?.email || localStorage.getItem("email");
     if (!email) return;
 
+    setIsDeleteing(true);
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/delete`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email })
         });
-        if (res.ok) handleLogout();
-        else toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+        if (res.ok) {
+            handleLogout();
+        } else {
+            toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+        }
     } catch (e) {
         toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+    } finally {
+        setIsDeleteing(false);
+        setIsDeleteAccountDialogOpen(false);
     }
   };
 
@@ -575,9 +609,6 @@ export default function FreelancerSettings() {
                 <div className="flex items-center gap-6">
                   <div className="relative">
                     <UserAvatar user={settings} className="w-24 h-24 border-2 border-white/20 bg-gray-700" />
-                    <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
-                      <Camera className="w-4 h-4" />
-                    </Button>
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-2">Profile Picture</h3>
@@ -987,20 +1018,60 @@ export default function FreelancerSettings() {
                         <h3 className="text-lg font-medium text-white">Sign Out</h3>
                         <p className="text-sm text-gray-400">Securely end your current session</p>
                     </div>
-                    <Button onClick={handleLogout} variant="outline" className="border-white/10 text-gray-200 hover:bg-white/10"><LogOut className="w-4 h-4 mr-2" />Log Out</Button>
+                    <Button onClick={() => setIsLogoutDialogOpen(true)} variant="outline" className="border-white/10 text-gray-200 hover:bg-white/10"><LogOut className="w-4 h-4 mr-2" />Log Out</Button>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-red-500/10 rounded-lg border border-red-500/20">
                     <div>
                         <h3 className="text-lg font-medium text-red-400">Delete Account</h3>
                         <p className="text-sm text-red-300/70">Permanently erase your account and data. This is irreversible.</p>
                     </div>
-                    <Button onClick={handleDeleteAccount} variant="destructive" className="bg-red-500 hover:bg-red-600"><AlertTriangle className="w-4 h-4 mr-2" />Delete Account</Button>
+                    <Button onClick={() => setIsDeleteAccountDialogOpen(true)} variant="destructive" className="bg-red-500 hover:bg-red-600"><AlertTriangle className="w-4 h-4 mr-2" />Delete Account</Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Sign Out</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to sign out of your account?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setIsLogoutDialogOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900">Cancel</Button>
+            <Button onClick={handleLogout} className="bg-white text-black hover:bg-zinc-200">Sign Out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={isDeleteAccountDialogOpen} onOpenChange={setIsDeleteAccountDialogOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-red-500">Delete Account</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              This action is irreversible. All your profile data, history, and active contracts will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setIsDeleteAccountDialogOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900" disabled={isDeleting}>Cancel</Button>
+            <Button 
+              onClick={handleDeleteAccount} 
+              variant="destructive" 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
+              Delete Permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

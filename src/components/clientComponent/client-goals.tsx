@@ -750,7 +750,7 @@ export default function ClientGoals() {
 
                                     onClick={updateGoal}
 
-                                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                                    className="bg-white text-zinc-950 hover:bg-white hover:shadow-blue-500/25"
 
                                   >
 

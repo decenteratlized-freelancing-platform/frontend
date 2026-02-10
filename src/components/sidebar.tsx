@@ -36,6 +36,7 @@ import {
   FileText,
   Heart,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -128,13 +129,27 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
       }));
     };
 
+    const handleProfileUpdate = (event: Event) => {
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail) {
+            setUser(prev => ({
+                ...prev,
+                name: customEvent.detail.fullName || prev.name,
+                email: customEvent.detail.email || prev.email,
+                image: customEvent.detail.image || prev.image
+            }));
+        }
+    };
+
     window.addEventListener("userImageUpdated", handleImageUpdate);
+    window.addEventListener("userProfileUpdated", handleProfileUpdate);
 
     // Check once on mount to ensure we are in sync
     handleImageUpdate();
 
     return () => {
       window.removeEventListener("userImageUpdated", handleImageUpdate);
+      window.removeEventListener("userProfileUpdated", handleProfileUpdate);
     };
   }, [session]); // Depend on session so fallback works if session loads later
 
@@ -175,12 +190,13 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   transition={{ duration: 0.2 }}
                   className="flex items-center gap-2"
                 >
-                  <div
-                    className={`w-8 h-8 bg-gradient-to-br ${userType === "client" ? "from-blue-500 to-purple-600" : "from-green-500 to-blue-600"
-                      } rounded-lg flex items-center justify-center shadow-md`}
-                  >
-                    <Zap className="w-4 h-4 text-white" />
-                  </div>
+                  <Image
+                    src="/logo-w-removebg-preview.png"
+                    alt="SmartHire Logo"
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
                   <h2 className="text-lg font-bold text-white">SmartHire</h2>
                 </motion.div>
               )}

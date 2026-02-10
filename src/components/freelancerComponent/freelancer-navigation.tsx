@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Bell, Menu, X, Search, Briefcase, User, Settings, MessageSquare, Zap } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 export default function FreelancerNavigation() {
@@ -50,12 +51,13 @@ export default function FreelancerNavigation() {
           <div className="relative flex items-center gap-8 px-8 py-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 cursor-pointer">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center"
-              >
-                <Zap className="w-5 h-5 text-white" />
-              </motion.div>
+              <Image
+                src="/logo-w-removebg-preview.png"
+                alt="SmartHire Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
               <span className="text-white font-bold text-lg">SmartHire</span>
               <span className="text-green-300 text-sm font-medium">Freelancer</span>
             </Link>

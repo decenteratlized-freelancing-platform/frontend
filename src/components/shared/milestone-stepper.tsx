@@ -92,15 +92,9 @@ export function MilestoneStepper({ milestones, currency, userRole, contractStatu
                                         <span className="text-xs font-bold text-zinc-400 whitespace-nowrap bg-white/5 px-2 py-1 rounded">
                                             {milestone.amount} {currency || 'ETH'}
                                         </span>
-                                        {isCompleted && onDownloadInvoice && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => onDownloadInvoice(milestone, index)}
-                                                className="h-7 text-[10px] uppercase tracking-wider font-bold bg-blue-500/10 border-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all"
-                                            >
-                                                <FileText className="w-3 h-3 mr-1.5" />
-                                                Invoice
+                                        {isCompleted && (
+                                            <Button size="sm" disabled className="h-7 text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-emerald-500 opacity-100 rounded-lg">
+                                                Released
                                             </Button>
                                         )}
                                     </div>

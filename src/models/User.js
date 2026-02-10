@@ -64,7 +64,7 @@ const BankSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true },
+    fullName: { type: String }, // Made optional to support OAuth flows
     email: { type: String, required: true, unique: true },
     password: { type: String },
     role: { type: String, enum: ["freelancer", "client", "pending"], default: "pending" },

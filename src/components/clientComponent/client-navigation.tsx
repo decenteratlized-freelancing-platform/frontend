@@ -50,22 +50,18 @@ export default function ClientNavigation() {
           {/* Navigation content */}
           <div className="relative flex items-center gap-8 px-8 py-4">
             {/* Logo */}
-            {/* <Link href="/" className="flex items-center gap-2 cursor-pointer"> */}
-              {/* <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"
-              >
-                <Zap className="w-5 h-5 text-white" />
-              </motion.div> */}
-              {/* <span className="text-white font-bold text-lg">SmartHire</span> */}
-              {/* <span className="text-blue-300 text-sm font-medium">Client</span> */}
-            {/* </Link> */}
-            <Image 
-              src={'/smarthire-logo.png'}
-              alt={'Logo'}
-              width={300}
-              height={300}
-            />  
+            <Link href="/" className="flex items-center gap-2 cursor-pointer">
+              <Image 
+                src="/logo-w-removebg-preview.png"
+                alt="SmartHire Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />  
+              <span className="text-white font-bold text-lg">SmartHire</span>
+              <span className="text-blue-300 text-sm font-medium">Client</span>
+            </Link>
+
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
               <motion.div whileHover={{ y: -2 }}>

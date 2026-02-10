@@ -18,6 +18,15 @@ import { useToast } from "@/hooks/use-toast"
 import WalletManagement from "@/components/shared/wallet-management"
 import dynamic from "next/dynamic"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Loader2 } from "lucide-react"
 
 const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
   ssr: false,
@@ -70,6 +79,11 @@ export default function ClientSettings() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lon: number } | null>(null)
 
+  // Confirmation Modals State
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleteing] = useState(false)
+
   // Common skills list
   const availableSkills = [
     "React", "Node.js", "TypeScript", "JavaScript", "Python", "Java", "C++", "C#",
@@ -88,31 +102,44 @@ export default function ClientSettings() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    const fetchFullProfile = async () => {
+      const email = session?.user?.email || localStorage.getItem("email");
+      if (!email) return;
 
-    const stored = (() => {
       try {
-        return JSON.parse(localStorage.getItem("currentUser") || "null")
-      } catch {
-        return null
+        const response = await fetch(`/api/settings?email=${email}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const p = data.profile || {};
+          const s = data.settings || {};
+
+          setProfile({
+            fullName: p.fullName || "",
+            email: p.email || email,
+            phone: p.phone || "",
+            professionalBio: p.professionalBio || "",
+            skills: Array.isArray(p.skills) ? p.skills : [],
+            portfolioWebsite: p.portfolioWebsite || "",
+            location: p.location || "",
+            image: p.image || "",
+          });
+
+          if (data.settings) {
+            setNotifications(data.settings.notifications || notifications);
+            setPrivacy(data.settings.privacy || privacy);
+            setPreferences(data.settings.preferences || preferences);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching full profile:", error);
       }
-    })()
+    };
 
-    const initialEmail = stored?.email || session?.user?.email || localStorage.getItem("email") || ""
-    const initialFullName = stored?.fullName || (session?.user?.name as string) || localStorage.getItem("fullName") || ""
-
-    setProfile(prev => ({
-      ...prev,
-      email: initialEmail,
-      fullName: initialFullName,
-      phone: stored?.phone || prev.phone,
-      professionalBio: stored?.professionalBio || prev.professionalBio,
-      portfolioWebsite: stored?.portfolioWebsite || prev.portfolioWebsite,
-      location: stored?.location || prev.location,
-      image: stored?.image || prev.image,
-      skills: Array.isArray(stored?.skills) ? stored!.skills : (stored?.skills ? stored.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : prev.skills),
-    }))
-  }, [session])
+    if (session?.user?.email || localStorage.getItem("email")) {
+      fetchFullProfile();
+    }
+  }, [session]);
 
   useEffect(() => {
     if (profile.skills && profile.skills.length > 0) {
@@ -309,6 +336,15 @@ export default function ClientSettings() {
         localStorage.setItem("fullName", newName || "")
         localStorage.setItem("email", email)
         localStorage.setItem("currentUser", JSON.stringify(data.user || { email, fullName: newName }))
+        
+        // Dispatch event for sidebar to update
+        window.dispatchEvent(new CustomEvent("userProfileUpdated", {
+            detail: {
+                fullName: newName,
+                email: email,
+                image: data.user?.image || profile.image
+            }
+        }));
       }
 
       toast({ title: "Success", description: "Profile updated", variant: "default" })
@@ -371,11 +407,10 @@ export default function ClientSettings() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure? This action cannot be undone.")) return;
-    
     const email = localStorage.getItem("email") || session?.user?.email;
     if (!email) return;
 
+    setIsDeleteing(true);
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/delete`, {
             method: "DELETE",
@@ -390,6 +425,9 @@ export default function ClientSettings() {
         }
     } catch (e) {
         toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
+    } finally {
+        setIsDeleteing(false);
+        setIsDeleteAccountDialogOpen(false);
     }
   };
 
@@ -430,9 +468,6 @@ export default function ClientSettings() {
                       user={profile}
                       className="w-24 h-24 border-2 border-white/20 bg-gray-700"
                     />
-                    <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-blue-600 to-purple-600">
-                      <Camera className="w-4 h-4" />
-                    </Button>
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-2">Profile Picture</h3>
@@ -550,14 +585,14 @@ export default function ClientSettings() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Portfolio Website</label>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Company Website</label>
                   <div className="relative">
                     <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       type="url"
                       value={profile.portfolioWebsite}
                       onChange={e => setProfile(prev => ({ ...prev, portfolioWebsite: e.target.value }))}
-                      placeholder="https://yourportfolio.com"
+                      placeholder="https://companywebsite.com"
                       className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 pl-10"
                     />
                   </div>
@@ -664,7 +699,7 @@ export default function ClientSettings() {
                         <h3 className="text-lg font-medium text-white">Sign Out</h3>
                         <p className="text-sm text-gray-400">Securely log out of your session on this device.</p>
                     </div>
-                    <Button onClick={handleLogout} variant="outline" className="border-gray-600 text-gray-200 hover:bg-gray-700">
+                    <Button onClick={() => setIsLogoutDialogOpen(true)} variant="outline" className="border-gray-600 text-gray-200 hover:bg-gray-700">
                         <LogOut className="w-4 h-4 mr-2" />
                         Log Out
                     </Button>
@@ -675,7 +710,7 @@ export default function ClientSettings() {
                         <h3 className="text-lg font-medium text-red-400">Delete Account</h3>
                         <p className="text-sm text-red-300/70">Permanently delete your account and all data. This action cannot be undone.</p>
                     </div>
-                    <Button onClick={handleDeleteAccount} variant="destructive" className="bg-red-500 hover:bg-red-600">
+                    <Button onClick={() => setIsDeleteAccountDialogOpen(true)} variant="destructive" className="bg-red-500 hover:bg-red-600">
                         <AlertTriangle className="w-4 h-4 mr-2" />
                         Delete Account
                     </Button>
@@ -685,6 +720,46 @@ export default function ClientSettings() {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Sign Out</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to sign out of your account?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setIsLogoutDialogOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900">Cancel</Button>
+            <Button onClick={handleLogout} className="bg-white text-black hover:bg-zinc-200">Sign Out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={isDeleteAccountDialogOpen} onOpenChange={setIsDeleteAccountDialogOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-red-500">Delete Account</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              This action is irreversible. All your project history, posted jobs, and profile data will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setIsDeleteAccountDialogOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900" disabled={isDeleting}>Cancel</Button>
+            <Button 
+              onClick={handleDeleteAccount} 
+              variant="destructive" 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
+              Delete Permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

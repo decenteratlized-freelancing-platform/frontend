@@ -385,12 +385,6 @@ export default function SettingsPage() {
                           {settings.fullName?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <Button
-                        size="sm"
-                        className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-green-500 hover:bg-green-600 border-2 border-gray-800"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                   <div className="flex gap-2">

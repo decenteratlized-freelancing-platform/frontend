@@ -46,10 +46,12 @@ export async function POST(req: Request) {
     // Update basic user fields
     if (fullName !== undefined) update.fullName = fullName;
     if (role !== undefined) update.role = role;
-    if (phone !== undefined) update.phone = phone;
-    if (location !== undefined) update.location = location;
-    if (portfolioWebsite !== undefined) update.portfolioWebsite = portfolioWebsite;
-    if (professionalBio !== undefined) update.professionalBio = professionalBio;
+    
+    // Settings fields
+    if (phone !== undefined) update["settings.phone"] = phone;
+    if (location !== undefined) update["settings.location"] = location;
+    if (portfolioWebsite !== undefined) update["settings.portfolioWebsite"] = portfolioWebsite;
+    if (professionalBio !== undefined) update["settings.bio"] = professionalBio;
 
     // Update settings fields
     if (professionalTitle !== undefined) update["settings.professionalTitle"] = professionalTitle;

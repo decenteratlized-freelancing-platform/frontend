@@ -4,6 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, CheckCircle2, ArrowRight } from 'lucide-react';
 
+import Image from 'next/image';
+
 function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -72,9 +74,13 @@ function ResetPasswordForm() {
         <div className="w-full max-w-md mx-auto">
              <div className="mb-12">
                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                       <span className="text-black font-black text-xl tracking-tighter">S</span>
-                    </div>
+                    <Image
+                        src="/logo-w-removebg-preview.png"
+                        alt="SmartHire Logo"
+                        width={50}
+                        height={50}
+                        className="object-contain"
+                    />
                     <span className="text-2xl font-bold tracking-tight text-white">SmartHire</span>
                  </div>
                  

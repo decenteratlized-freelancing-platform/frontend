@@ -4,6 +4,8 @@ import { Zap, Twitter, Linkedin, Github, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import Image from "next/image";
+
 const footerLinks = [
     {
         title: "Platform",
@@ -60,9 +62,13 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-4 space-y-6">
             <Link href="/" className="flex items-center gap-2 inline-block">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                    <Zap className="w-6 h-6 text-white" />
-                </div>
+                <Image
+                    src="/logo-w-removebg-preview.png"
+                    alt="SmartHire Logo"
+                    width={60}
+                    height={60}
+                    className="object-contain"
+                />
                 <span className="text-white font-bold text-2xl tracking-tight">SmartHire</span>
             </Link>
             <p className="text-neutral-400 leading-relaxed max-w-sm">
