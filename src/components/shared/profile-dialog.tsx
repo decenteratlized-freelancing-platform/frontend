@@ -29,6 +29,11 @@ interface UserProfile {
     skills?: string[];
     portfolioWebsite?: string;
     role?: string;
+    // Privacy Flags
+    privacy?: {
+        showEmail: boolean;
+        showPhone: boolean;
+    };
     // New Fields
     portfolio?: { title: string; description: string; url: string }[];
     socialLinks?: { github?: string; linkedin?: string; twitter?: string; website?: string };
@@ -75,6 +80,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
 
             if (response.ok) {
                 const userData = data.profile || data.settings || data.user || {};
+                const settingsData = data.settings || {};
                 const profileId = data.user?._id || userData._id;
                 
                 const skillsArray = Array.isArray(userData.skills)
@@ -86,16 +92,20 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                     fullName: userData.fullName || data.user?.fullName || "Anonymous",
                     email: userData.email || email,
                     image: userData.image || data.user?.image,
-                    phone: userData.phone || "",
-                    location: userData.location || "",
+                    phone: userData.phone || settingsData.phone || "",
+                    location: userData.location || settingsData.location || "",
                     professionalBio: userData.professionalBio || data.profile?.professionalBio || "",
                     skills: skillsArray,
-                    portfolioWebsite: userData.portfolioWebsite || "",
-                    role: userType || "User",
+                    portfolioWebsite: userData.portfolioWebsite || settingsData.portfolioWebsite || "",
+                    role: userType || data.role || "User",
+                    privacy: {
+                        showEmail: settingsData.privacy?.showEmail ?? false,
+                        showPhone: settingsData.privacy?.showPhone ?? false,
+                    },
                     // New Fields
-                    portfolio: userData.portfolio || [],
-                    socialLinks: userData.socialLinks || {},
-                    verifiedSkills: userData.verifiedSkills || []
+                    portfolio: userData.portfolio || settingsData.portfolio || [],
+                    socialLinks: userData.socialLinks || settingsData.socialLinks || {},
+                    verifiedSkills: userData.verifiedSkills || settingsData.verifiedSkills || []
                 };
                 
                 setProfile(profileData);
@@ -189,9 +199,14 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
 
                             {/* Contact Grid - Sidebar */}
                             <div className="w-full space-y-3 text-left">
-                                {profile.email && (
+                                {profile.email && profile.privacy?.showEmail && (
                                     <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
                                         <Mail className="w-4 h-4" /> {profile.email}
+                                    </div>
+                                )}
+                                {profile.phone && profile.privacy?.showPhone && (
+                                    <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
+                                        <Phone className="w-4 h-4" /> {profile.phone}
                                     </div>
                                 )}
                                 {profile.location && (

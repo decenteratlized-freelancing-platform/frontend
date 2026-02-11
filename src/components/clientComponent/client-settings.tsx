@@ -297,7 +297,7 @@ export default function ClientSettings() {
 
     // Validate portfolio website URL
     if (profile.portfolioWebsite && !profile.portfolioWebsite.match(/^https?:\/\/.+/)) {
-      toast({ title: "Validation Error", description: "Portfolio website must be a valid URL (starting with http:// or https://)", variant: "destructive" })
+      toast({ title: "Validation Error", description: "Company website must be a valid URL (starting with http:// or https://)", variant: "destructive" })
       return
     }
 
