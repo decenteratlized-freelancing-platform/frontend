@@ -17,15 +17,21 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
     const { data: session } = useSession();
     const user = session?.user;
 
-    const { toast } = useToast(); // Needs import
+    const { toast } = useToast(); 
 
     useEffect(() => {
-        if (user) {
+        // Support both regular users (session) and admins (adminToken)
+        const adminEmail = typeof window !== 'undefined' ? localStorage.getItem("adminEmail") : null;
+        const adminToken = typeof window !== 'undefined' ? localStorage.getItem("adminToken") : null;
+        
+        const effectiveUser = user || (adminToken ? { id: adminEmail, email: adminEmail, role: 'admin' } : null);
+
+        if (effectiveUser) {
             // @ts-ignore
             const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
                 query: {
                     // @ts-ignore
-                    userId: user.id || user._id,
+                    userId: effectiveUser.id || effectiveUser._id,
                 },
             });
 
@@ -38,22 +44,7 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
 
             // Global message listener for notifications
             socketInstance.on("newMessage", async (message: any) => {
-                // Determine if we should show a notification
-                // For now, show it unless we could determine we are in the chat with this person
-                // (That check is complex globally, so showing toast is safer for "notification" feature)
-
-                // We might want to fetch sender name if not in message
-                // message usually has: message, senderId, receiverId
-
-                // Check if the current page is NOT the messages page or if it is, if the active convo is diff
-                // For simplicity in this context, we just show toast.
-
-                if (message.senderId !== (user.id || user._id)) {
-                    // Basic sound or visual cue
-
-                    // We need to fetch sender details to show a nice name if possible, 
-                    // or just show "New Message"
-
+                if (message.senderId !== (effectiveUser.id || (effectiveUser as any)._id)) {
                     try {
                         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/${message.senderId}`);
                         const senderData = await res.json();
@@ -80,6 +71,18 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
                     description: notification.message,
                     duration: 5000,
                 });
+            });
+
+            // Dispute Chat Listener
+            socketInstance.on("disputeMessage", (data: any) => {
+                // If we are not on the dispute page, show a notification
+                if (!window.location.pathname.includes(`/disputes/${data.disputeId}`)) {
+                    toast({
+                        title: "New Dispute Message",
+                        description: data.message.message.substring(0, 50) + "...",
+                        duration: 5000,
+                    });
+                }
             });
 
             return () => {

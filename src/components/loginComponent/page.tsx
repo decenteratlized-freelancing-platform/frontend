@@ -72,15 +72,41 @@ const LoginPage = () => {
 
         const data = await res.json();
 
-        if (res.ok && data.requiresOTP) {
-          // OTP sent - redirect to verification page
-          setAuthState({ loading: false, successUser: null, error: null });
-          setStatusMessage({ type: "success", text: "OTP generated! Redirecting to verification..." });
+        if (res.ok) {
+          if (data.requiresOTP) {
+            // OTP sent - redirect to verification page
+            setAuthState({ loading: false, successUser: null, error: null });
+            setStatusMessage({ type: "success", text: "OTP generated! Redirecting to verification..." });
 
-          setTimeout(() => {
-            router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-          }, 1200);
-        } else if (!res.ok) {
+            setTimeout(() => {
+              router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+            }, 1200);
+          } else {
+            // Verified User - Direct Login
+            setAuthState({ loading: false, successUser: data.user, error: null });
+            setStatusMessage({ type: "success", text: "Login successful! Redirecting..." });
+
+            // Store auth data (matching manual login logic in verify-otp)
+            localStorage.clear();
+            localStorage.setItem("loginType", "manual");
+            if (data.token) localStorage.setItem("token", data.token);
+            localStorage.setItem("fullName", data.user?.fullName || "");
+            localStorage.setItem("email", data.user?.email || "");
+            localStorage.setItem("role", data.user?.role || "");
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+            setTimeout(() => {
+              const role = data.user?.role;
+              if (role === "client") {
+                router.replace("/client/dashboard");
+              } else if (role === "freelancer") {
+                router.replace("/freelancer/dashboard");
+              } else {
+                router.replace("/choose-role");
+              }
+            }, 1000);
+          }
+        } else {
           throw new Error(data.message || "Login failed");
         }
       } else if (viewState === 'register') {

@@ -30,6 +30,7 @@ import {
     FileText,
 } from "lucide-react"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { useSocket } from "@/context/SocketContext"
 
 interface Dispute {
     _id: string
@@ -76,6 +77,7 @@ const REASON_LABELS: Record<string, string> = {
 
 export default function ClientDisputes() {
     const { data: session } = useSession()
+    const { socket } = useSocket()
     const [disputes, setDisputes] = useState<Dispute[]>([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState("all")
@@ -105,6 +107,40 @@ export default function ClientDisputes() {
     useEffect(() => {
         if (userId) fetchDisputes()
     }, [userId])
+
+    // Real-time listener
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessage = (data: { disputeId: string, message: any }) => {
+            // Update the list if necessary
+            setDisputes(prev => prev.map(d => {
+                if (d._id === data.disputeId) {
+                    return { ...d, messages: [...d.messages, data.message] };
+                }
+                return d;
+            }));
+
+            // Update the selected dispute if it's the one receiving the message
+            setSelectedDispute(prev => {
+                if (prev && prev._id === data.disputeId) {
+                    // Avoid duplicate if the user sent it themselves
+                    const isDuplicate = prev.messages.some(m => 
+                        m.sentAt === data.message.sentAt && m.message === data.message.message
+                    );
+                    if (isDuplicate) return prev;
+                    
+                    return { ...prev, messages: [...prev.messages, data.message] };
+                }
+                return prev;
+            });
+        };
+
+        socket.on("disputeMessage", handleNewMessage);
+        return () => {
+            socket.off("disputeMessage", handleNewMessage);
+        };
+    }, [socket]);
 
     const filteredDisputes = statusFilter === "all"
         ? disputes

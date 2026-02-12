@@ -39,11 +39,13 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { useSocket } from "@/context/SocketContext";
 
 export default function DisputeDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { socket } = useSocket();
   const [dispute, setDispute] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -59,6 +61,35 @@ export default function DisputeDetailsPage() {
   useEffect(() => {
     fetchDispute();
   }, [id]);
+
+  // Real-time listener
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (data: { disputeId: string, message: any }) => {
+        if (data.disputeId === id) {
+            setDispute((prev: any) => {
+                if (!prev) return prev;
+                
+                // Avoid duplicate
+                const isDuplicate = prev.messages.some((m: any) => 
+                    m.sentAt === data.message.sentAt && m.message === data.message.message
+                );
+                if (isDuplicate) return prev;
+
+                return {
+                    ...prev,
+                    messages: [...prev.messages, data.message]
+                };
+            });
+        }
+    };
+
+    socket.on("disputeMessage", handleNewMessage);
+    return () => {
+        socket.off("disputeMessage", handleNewMessage);
+    };
+  }, [socket, id]);
 
   useEffect(() => {
     scrollToBottom();
