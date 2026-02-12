@@ -34,47 +34,12 @@ import {
     FileText,
 } from "lucide-react"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { useRouter } from "next/navigation"
 
-interface Dispute {
-    _id: string
-    disputeId: string
-    reason: string
-    description: string
-    status: string
-    priority: string
-    createdAt: string
-    contract?: { contractId: string; totalAmount: string }
-    job?: { title: string }
-    raisedBy?: { fullName: string; email: string; image?: string }
-    againstUser?: { fullName: string; email: string; image?: string }
-    messages?: Array<{ message: string; senderRole: string; sentAt: string }>
-}
-
-const STATUS_COLORS: Record<string, string> = {
-    open: "bg-red-500/20 text-red-400 border-red-500/30",
-    under_review: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    resolved: "bg-green-500/20 text-green-400 border-green-500/30",
-    closed: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-}
-
-const PRIORITY_COLORS: Record<string, string> = {
-    low: "bg-blue-500/20 text-blue-400",
-    medium: "bg-yellow-500/20 text-yellow-400",
-    high: "bg-orange-500/20 text-orange-400",
-    critical: "bg-red-500/20 text-red-400",
-}
-
-const REASON_LABELS: Record<string, string> = {
-    payment_issue: "Payment Issue",
-    quality_issue: "Quality Issue",
-    deadline_missed: "Deadline Missed",
-    scope_creep: "Scope Creep",
-    communication_issue: "Communication Issue",
-    fraud: "Fraud",
-    other: "Other",
-}
+// ... types and constants ...
 
 export default function AdminDisputes() {
+    const router = useRouter()
     const [disputes, setDisputes] = useState<Dispute[]>([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState("all")
@@ -348,12 +313,15 @@ export default function AdminDisputes() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    onClick={() => handleUpdateStatus(dispute._id, "under_review")}
+                                                    onClick={() => {
+                                                        handleUpdateStatus(dispute._id, "under_review");
+                                                        router.push(`/admin/disputes/${dispute._id}`);
+                                                    }}
                                                     className="border-white/20 text-white hover:bg-white/10"
                                                     disabled={dispute.status === "resolved"}
                                                 >
-                                                    <Eye className="w-4 h-4 mr-1" />
-                                                    Review
+                                                    <MessageSquare className="w-4 h-4 mr-1" />
+                                                    Open Chat
                                                 </Button>
                                                 <Dialog open={resolveDialogOpen && selectedDispute?._id === dispute._id} onOpenChange={(open) => {
                                                     setResolveDialogOpen(open)
