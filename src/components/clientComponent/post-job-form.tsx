@@ -155,23 +155,41 @@ export default function PostJobForm() {
       return
     }
 
-    if (!formData.title || !formData.description || !formData.budgetAmount) {
-      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" })
+    // 1. Validation
+    if (formData.title.trim().length < 10) {
+      toast({ title: "Validation Error", description: "Job title must be at least 10 characters.", variant: "destructive" })
       return
+    }
+
+    if (!formData.category) {
+      toast({ title: "Validation Error", description: "Please select a project category.", variant: "destructive" })
+      return
+    }
+
+    if (formData.description.trim().length < 50) {
+      toast({ title: "Validation Error", description: "Job description must be at least 50 characters to attract quality talent.", variant: "destructive" })
+      return
+    }
+
+    const budget = parseFloat(formData.budgetAmount);
+    if (isNaN(budget) || budget <= 0) {
+      toast({ title: "Validation Error", description: "Please provide a valid budget amount greater than 0.", variant: "destructive" });
+      return;
+    }
+
+    if (skills.length === 0) {
+      toast({ title: "Validation Error", description: "Please add at least one required skill.", variant: "destructive" });
+      return;
+    }
+
+    if (!formData.duration) {
+      toast({ title: "Validation Error", description: "Please select an estimated project duration.", variant: "destructive" });
+      return;
     }
 
     setIsSubmitting(true)
     try {
-      const budget = parseFloat(formData.budgetAmount);
       const token = await ensureToken();
-      if (isNaN(budget)) {
-        toast({ title: "Error", description: "Invalid budget amount", variant: "destructive" });
-        return;
-      }
-      if (budget <= 0) {
-        toast({ title: "Error", description: "Budget amount must be greater than 0", variant: "destructive" });
-        return;
-      }
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`, {
         method: "POST",
         headers: { 

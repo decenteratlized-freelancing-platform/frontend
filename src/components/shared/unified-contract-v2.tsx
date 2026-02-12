@@ -23,6 +23,7 @@ import { ContractCard } from "./contract-card";
 import { HirableProposalCard } from "./hirable-proposal-card";
 import { LoadingButton } from "./loading-button";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 const fetchData = async (userRole: string, userEmail: string | undefined) => {
   // Build URL with appropriate email filter based on role
@@ -85,9 +86,51 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
   const handleAddDeliverable = () => setDeliverables([...deliverables, ""]);
 
   const handleCreate = async () => {
+    // 1. Basic Validation
+    if (!scopeOfWork || scopeOfWork.trim().length < 20) {
+      toast({ title: "Validation Error", description: "Please provide a detailed scope of work (min 20 characters).", variant: "destructive" });
+      return;
+    }
+
+    const validDeliverables = deliverables.filter(d => d.trim().length > 0);
+    if (validDeliverables.length === 0) {
+      toast({ title: "Validation Error", description: "Please add at least one deliverable.", variant: "destructive" });
+      return;
+    }
+
+    if (!startDate) {
+      toast({ title: "Validation Error", description: "Please select a project start date.", variant: "destructive" });
+      return;
+    }
+
+    if (endDate && new Date(endDate) <= new Date(startDate)) {
+      toast({ title: "Validation Error", description: "End date must be after the start date.", variant: "destructive" });
+      return;
+    }
+
+    // 2. Milestone Validation
     const validMilestones = milestones.filter(m => m.description.trim() && m.amount.trim());
-    if (!proposal?._id || validMilestones.length === 0) {
-      alert("Please define at least one valid milestone.");
+    
+    if (validMilestones.length === 0) {
+      toast({ title: "Validation Error", description: "Please define at least one valid milestone.", variant: "destructive" });
+      return;
+    }
+
+    for (const m of validMilestones) {
+      if (parseFloat(m.amount) <= 0) {
+        toast({ title: "Validation Error", description: `Milestone "${m.description}" must have a positive amount.`, variant: "destructive" });
+        return;
+      }
+    }
+
+    // 3. Negotiated Rate Check
+    const negotiatedRate = parseFloat(proposal.proposedRate.toString());
+    if (Math.abs(totalAmount - negotiatedRate) > 0.000001) {
+      toast({ 
+        title: "Rate Mismatch", 
+        description: `Total milestones (${totalAmount} ETH) must match negotiated rate (${negotiatedRate} ETH).`, 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -104,7 +147,7 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
           // New Fields
           title: proposal.job?.title,
           scopeOfWork,
-          deliverables: deliverables.filter(d => d.trim()),
+          deliverables: validDeliverables,
           revisionsAllowed,
           ownershipTransfer,
           confidentialityRequired,
@@ -116,9 +159,10 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
       if (!response.ok) throw new Error((await response.json()).error || "Failed to create contract");
 
       const result = await response.json();
+      toast({ title: "Contract Created", description: "The agreement has been sent to the freelancer." });
       onContractCreated(result.contract);
     } catch (error: any) {
-      alert(`Failed to create contract: ${error.message}`);
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsCreating(false);
     }

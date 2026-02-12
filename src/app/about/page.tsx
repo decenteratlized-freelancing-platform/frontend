@@ -57,7 +57,7 @@ export default function AboutPage() {
               className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed"
             >
               SmartHire was born out of a simple observation: the current freelance economy is broken. 
-              High fees, opaque feedback systems, and payment delays are the norm. We're using Web3 and AI to fix it.
+              High fees, opaque feedback systems, and payment delays are the norm. We&apos;re using Web3 and AI to fix it.
             </motion.p>
           </div>
 
@@ -71,8 +71,8 @@ export default function AboutPage() {
             >
               <h2 className="text-3xl font-bold">A New Paradigm of Work</h2>
               <p className="text-zinc-400 leading-relaxed">
-                We believe that the future of work isn't just remote—it's decentralized. 
-                Imagine a world where your reputation isn't tied to a single platform, where your 
+                We believe that the future of work isn&apos;t just remote—it&apos;s decentralized. 
+                Imagine a world where your reputation isn&apos;t tied to a single platform, where your 
                 contracts are self-executing, and where your skills are verified by neutral AI nodes rather than subjective reviews.
               </p>
               <div className="space-y-4">

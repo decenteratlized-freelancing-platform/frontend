@@ -75,11 +75,11 @@ const LoginPage = () => {
         if (res.ok && data.requiresOTP) {
           // OTP sent - redirect to verification page
           setAuthState({ loading: false, successUser: null, error: null });
-          setStatusMessage({ type: "success", text: "OTP sent to your email! Redirecting..." });
+          setStatusMessage({ type: "success", text: "OTP generated! Redirecting to verification..." });
 
           setTimeout(() => {
             router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-          }, 500);
+          }, 1200);
         } else if (!res.ok) {
           throw new Error(data.message || "Login failed");
         }

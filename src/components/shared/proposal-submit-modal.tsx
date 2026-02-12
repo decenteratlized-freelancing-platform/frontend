@@ -62,13 +62,20 @@ export function ProposalSubmitModal({
       return;
     }
 
-    if (!text || !budget || !delivery) {
-      toast({ title: "Error", description: "Please fill in all required fields.", variant: "destructive" });
+    // 1. Validation
+    if (!text || text.trim().length < 50) {
+      toast({ title: "Validation Error", description: "Your cover letter should be at least 50 characters to stand out.", variant: "destructive" });
       return;
     }
 
-    if (parseFloat(budget) <= 0) {
-      toast({ title: "Error", description: "Proposed rate must be greater than 0.", variant: "destructive" });
+    const proposedBudget = parseFloat(budget);
+    if (isNaN(proposedBudget) || proposedBudget <= 0) {
+      toast({ title: "Validation Error", description: "Please provide a valid proposed rate greater than 0.", variant: "destructive" });
+      return;
+    }
+
+    if (!delivery || delivery.trim().length < 3) {
+      toast({ title: "Validation Error", description: "Please provide a realistic delivery estimate.", variant: "destructive" });
       return;
     }
 
@@ -81,7 +88,7 @@ export function ProposalSubmitModal({
           jobId: job._id,
           email: userEmail,
           coverLetter: text,
-          proposedRate: parseFloat(budget),
+          proposedRate: proposedBudget,
           deliveryTime: delivery,
         }),
       });

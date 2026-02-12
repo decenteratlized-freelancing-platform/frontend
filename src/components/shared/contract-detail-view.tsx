@@ -87,7 +87,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
 
     // Edit State
     const [editData, setEditData] = useState({
-        title: localContract.job?.title || "",
+        title: localContract.job?.title || localContract.title || "",
         description: localContract.description || "",
         deliverables: localContract.deliverables || [""],
         milestones: localContract.milestones?.map((m: any) => ({ description: m.description, amount: m.amount })) || [{ description: "", amount: "" }],
@@ -95,18 +95,61 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         ownershipTransfer: localContract.ownershipTransfer || "after_full_payment",
         confidentialityRequired: localContract.confidentialityRequired || false,
         terminationPolicy: localContract.terminationPolicy || "",
+        startDate: localContract.startDate ? new Date(localContract.startDate).toISOString().split('T')[0] : "",
+        endDate: localContract.endDate ? new Date(localContract.endDate).toISOString().split('T')[0] : "",
     });
 
     const handleUpdateContract = async () => {
+        // 1. Validation
+        if (!editData.title?.trim()) {
+            toast({ title: "Validation Error", description: "Contract title is required.", variant: "destructive" });
+            return;
+        }
+        if (!editData.description || editData.description.trim().length < 20) {
+            toast({ title: "Validation Error", description: "Please provide a detailed scope of work (min 20 characters).", variant: "destructive" });
+            return;
+        }
+        const validDeliverables = editData.deliverables.filter((d: string) => d.trim().length > 0);
+        if (validDeliverables.length === 0) {
+            toast({ title: "Validation Error", description: "Please add at least one deliverable.", variant: "destructive" });
+            return;
+        }
+        const validMilestones = editData.milestones.filter((m: any) => m.description.trim() && m.amount.toString().trim());
+        if (validMilestones.length === 0) {
+            toast({ title: "Validation Error", description: "Please define at least one valid milestone.", variant: "destructive" });
+            return;
+        }
+        for (const m of validMilestones) {
+            if (parseFloat(m.amount) <= 0) {
+                toast({ title: "Validation Error", description: `Milestone "${m.description}" must have a positive amount.`, variant: "destructive" });
+                return;
+            }
+        }
+        if (editData.endDate && editData.startDate && new Date(editData.endDate) <= new Date(editData.startDate)) {
+            toast({ title: "Validation Error", description: "End date must be after the start date.", variant: "destructive" });
+            return;
+        }
+
+        // 2. Total Amount Calculation & Check (Optional: warn if it changed from initial)
+        const newTotal = validMilestones.reduce((sum: number, m: any) => sum + parseFloat(m.amount || '0'), 0);
+
         setIsProcessing(true);
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(editData)
+                body: JSON.stringify({
+                    ...editData,
+                    deliverables: validDeliverables,
+                    milestones: validMilestones,
+                    totalAmount: newTotal.toString()
+                })
             });
 
-            if (!res.ok) throw new Error("Update failed");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Update failed");
+            }
 
             toast({ title: "Contract Updated", description: "Terms have been saved and revision feedback cleared." });
             
@@ -1168,6 +1211,17 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                     </DialogHeader>
 
                     <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 custom-scrollbar">
+                        {/* Title */}
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Contract Title</Label>
+                            <Input 
+                                value={editData.title}
+                                onChange={e => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                                className="bg-zinc-900 border-zinc-800 rounded-2xl h-12"
+                                placeholder="e.g. Website Development Project"
+                            />
+                        </div>
+
                         {/* Scope */}
                         <div className="space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Project Scope</Label>
@@ -1175,6 +1229,71 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                 value={editData.description}
                                 onChange={e => setEditData(prev => ({ ...prev, description: e.target.value }))}
                                 className="bg-zinc-900 border-zinc-800 min-h-[120px] rounded-2xl focus:ring-blue-500/20"
+                            />
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Start Date</Label>
+                                <Input 
+                                    type="date" 
+                                    value={editData.startDate} 
+                                    onChange={e => setEditData(prev => ({ ...prev, startDate: e.target.value }))} 
+                                    className="bg-zinc-900 border-zinc-800 rounded-xl h-11" 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">End Date</Label>
+                                <Input 
+                                    type="date" 
+                                    value={editData.endDate} 
+                                    onChange={e => setEditData(prev => ({ ...prev, endDate: e.target.value }))} 
+                                    className="bg-zinc-900 border-zinc-800 rounded-xl h-11" 
+                                />
+                            </div>
+                        </div>
+
+                        {/* Policies */}
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revisions Allowed</Label>
+                                <Input 
+                                    type="number" 
+                                    value={editData.revisionsAllowed} 
+                                    onChange={e => setEditData(prev => ({ ...prev, revisionsAllowed: parseInt(e.target.value) || 0 }))} 
+                                    className="bg-zinc-900 border-zinc-800 rounded-xl h-11" 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">IP Ownership</Label>
+                                <Select value={editData.ownershipTransfer} onValueChange={(val) => setEditData(prev => ({ ...prev, ownershipTransfer: val }))}>
+                                    <SelectTrigger className="bg-zinc-900 border-zinc-800 rounded-xl h-11">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                        <SelectItem value="after_full_payment">After Full Payment</SelectItem>
+                                        <SelectItem value="immediate">Immediate Transfer</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800">
+                            <div className="space-y-0.5">
+                                <Label className="text-zinc-300">Confidentiality (NDA)</Label>
+                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Require freelancer to sign an NDA</p>
+                            </div>
+                            <Switch checked={editData.confidentialityRequired} onCheckedChange={(v) => setEditData(p => ({ ...p, confidentialityRequired: v }))} />
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Termination Policy</Label>
+                            <Input 
+                                placeholder="e.g. 7-day notice required..."
+                                value={editData.terminationPolicy}
+                                onChange={e => setEditData(prev => ({ ...prev, terminationPolicy: e.target.value }))}
+                                className="bg-zinc-900 border-zinc-800 rounded-2xl h-12"
                             />
                         </div>
 

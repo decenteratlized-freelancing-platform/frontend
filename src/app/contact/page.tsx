@@ -25,7 +25,7 @@ export default function ContactPage() {
                 <h1 className="text-5xl md:text-6xl font-bold mb-6">Get in <span className="text-blue-500">Touch</span></h1>
                 <p className="text-xl text-zinc-400 leading-relaxed">
                   Have questions about the protocol? Need support with a contract? Or just want to say hello? 
-                  We're here to help the decentralized community thrive.
+                  We&apos;re here to help the decentralized community thrive.
                 </p>
               </div>
 

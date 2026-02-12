@@ -95,7 +95,7 @@ export default function SupportPage() {
             <AlertTriangle className="text-yellow-500 mx-auto mb-6 w-10 h-10" />
             <h2 className="text-2xl font-bold mb-4">Having an issue with a contract?</h2>
             <p className="text-zinc-400 mb-8 max-w-lg mx-auto">
-              If you're experiencing a technical bug or need to escalate a dispute, please open a formal support ticket.
+              If you&apos;re experiencing a technical bug or need to escalate a dispute, please open a formal support ticket.
             </p>
             <Button className="bg-white text-black hover:bg-neutral-200 rounded-xl px-8 py-6 font-bold" onClick={() => window.location.href='/support/tickets'}>
               Open Support Ticket

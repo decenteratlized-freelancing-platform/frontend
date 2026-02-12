@@ -288,6 +288,12 @@ export default function ClientSettings() {
       return
     }
 
+    // 1. Validation
+    if (!profile.fullName || profile.fullName.trim().split(" ").length < 2) {
+      toast({ title: "Validation Error", description: "Please provide your full name (First and Last name).", variant: "destructive" })
+      return
+    }
+
     // Validate phone number
     if (profile.phone && !validatePhone(profile.phone)) {
       setPhoneError("Phone number must be exactly 10 digits")

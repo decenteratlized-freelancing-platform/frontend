@@ -443,8 +443,24 @@ export default function FreelancerSettings() {
       return
     }
 
+    // 1. Validation
+    if (!settings.fullName || settings.fullName.trim().split(" ").length < 2) {
+      toast({ title: "Validation Error", description: "Please provide your full name (First and Last name).", variant: "destructive" })
+      return
+    }
+
     if (settings.phone && settings.phone.length !== 10) {
       toast({ title: "Validation Error", description: "Phone number must be exactly 10 digits", variant: "destructive" })
+      return
+    }
+
+    if (!settings.professionalBio || settings.professionalBio.trim().length < 50) {
+      toast({ title: "Validation Error", description: "Please provide a professional bio (min 50 characters) to help clients know you better.", variant: "destructive" })
+      return
+    }
+
+    if (selectedSkills.length < 3) {
+      toast({ title: "Validation Error", description: "Please select at least 3 skills to showcase your expertise.", variant: "destructive" })
       return
     }
 

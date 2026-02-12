@@ -42,7 +42,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-bold mb-4">3. AI Verification</h2>
               <p className="text-zinc-400 leading-relaxed">
                 Our AI systems provide skill verification and contract generation. While we strive 
-                for 100% accuracy, these systems are provided "as-is". Users should review all 
+                for 100% accuracy, these systems are provided &quot;as-is&quot;. Users should review all 
                 AI-generated contract terms before funding a job.
               </p>
             </section>

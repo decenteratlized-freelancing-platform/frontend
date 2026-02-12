@@ -55,7 +55,7 @@ export default function CareersPage() {
               className="text-xl text-zinc-400 max-w-3xl mx-auto mb-10"
             >
               Join a team of builders, researchers, and designers creating the decentralized future of work. 
-              We're fully remote, results-oriented, and obsessed with user experience.
+              We&apos;re fully remote, results-oriented, and obsessed with user experience.
             </motion.p>
             <Button size="lg" className="rounded-full px-8 py-6 bg-blue-600 hover:bg-blue-700 text-lg font-bold">
               View Openings
@@ -130,9 +130,9 @@ export default function CareersPage() {
 
           {/* Spontaneous Application */}
           <div className="p-12 rounded-3xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 border border-white/10 text-center">
-            <h2 className="text-2xl font-bold mb-4">Don't see a role that fits?</h2>
+            <h2 className="text-2xl font-bold mb-4">Don&apos;t see a role that fits?</h2>
             <p className="text-zinc-400 mb-8 max-w-lg mx-auto">
-              We're always looking for talented engineers, designers, and thinkers who are passionate about decentralization.
+              We&apos;re always looking for talented engineers, designers, and thinkers who are passionate about decentralization.
             </p>
             <Button className="bg-white text-black hover:bg-neutral-200 rounded-xl px-8 py-6 font-bold">
               Send a Spontaneous Application
