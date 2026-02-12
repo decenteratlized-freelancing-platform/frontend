@@ -29,7 +29,7 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <div className="relative w-full bg-transparent text-white py-24 px-8 z-10">
+    <div id="how-it-works" className="relative w-full bg-transparent text-white py-24 px-8 z-10">
       <ParticleCanvas />
       <div className="max-w-7xl mx-auto">
         <motion.div
