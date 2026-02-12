@@ -993,28 +993,57 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                         </div>
                     </motion.div>
 
-                    {/* Dispute Warning */}
+                    {/* Dispute Warning / Mediation Link */}
                     {canRaiseDispute && (
                         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-                            <div className="bg-red-500/5 border border-red-500/10 rounded-3xl p-6">
+                            <div className={`rounded-3xl p-6 ${isDisputed ? 'bg-blue-500/5 border border-blue-500/10' : 'bg-red-500/5 border border-red-500/10'}`}>
                                 <div className="flex items-center gap-3 mb-3">
-                                    <AlertTriangle className="w-4 h-4 text-red-400" />
-                                    <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest">Arbitration</h3>
+                                    {isDisputed ? (
+                                        <MessageSquare className="w-4 h-4 text-blue-400" />
+                                    ) : (
+                                        <AlertTriangle className="w-4 h-4 text-red-400" />
+                                    )}
+                                    <h3 className={`text-xs font-bold uppercase tracking-widest ${isDisputed ? 'text-blue-400' : 'text-red-400'}`}>
+                                        {isDisputed ? "Mediation Active" : "Arbitration"}
+                                    </h3>
                                 </div>
                                 <p className="text-[11px] text-zinc-500 leading-relaxed mb-4">
-                                    Experiencing problems? You can raise a formal dispute for admin review.
+                                    {isDisputed 
+                                        ? "A formal dispute is open. Use the mediation room to speak with the other party and the administrator."
+                                        : "Experiencing problems? You can raise a formal dispute for admin review."}
                                 </p>
-                                <Button
-                                    onClick={() => !isDisputed && setShowDisputeModal(true)}
-                                    disabled={isDisputed}
-                                    variant="outline"
-                                    className={`w-full h-10 border-red-500/20 text-red-400 text-[10px] uppercase font-bold tracking-widest ${!isDisputed ? 'hover:bg-red-500/10 hover:border-red-500/40' : 'opacity-50'}`}
-                                >
-                                    {isDisputed ? "Dispute Raised" : "Raise a Dispute"}
-                                </Button>
+                                {isDisputed ? (
+                                    <Button
+                                        onClick={() => window.location.href = `/${userRole}/disputes`}
+                                        className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white text-[10px] uppercase font-bold tracking-widest rounded-xl transition-all"
+                                    >
+                                        <MessageSquare className="w-3.5 h-3.5 mr-2" />
+                                        Enter Mediation Chat
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => setShowDisputeModal(true)}
+                                        variant="outline"
+                                        className="w-full h-10 border-red-500/20 text-red-400 text-[10px] uppercase font-bold tracking-widest hover:bg-red-500/10 hover:border-red-500/40"
+                                    >
+                                        Raise a Dispute
+                                    </Button>
+                                )}
                             </div>
                         </motion.div>
                     )}
+
+                    {/* General Chat Button */}
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 }}>
+                        <Button
+                            onClick={() => window.location.href = `/chat?receiverId=${againstUserId}`}
+                            variant="outline"
+                            className="w-full h-12 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 font-bold text-[10px] uppercase tracking-widest rounded-xl mt-4"
+                        >
+                            <Send className="w-3.5 h-3.5 mr-2" />
+                            Direct Message {userRole === 'client' ? 'Freelancer' : 'Client'}
+                        </Button>
+                    </motion.div>
                 </div>
             </div>
 
