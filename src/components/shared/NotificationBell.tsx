@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useSocket } from "@/context/SocketContext";
 
 interface Notification {
   _id: string;
@@ -27,6 +28,7 @@ interface Notification {
 
 export function NotificationBell() {
   const { data: session } = useSession();
+  const socket = useSocket();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -52,10 +54,32 @@ export function NotificationBell() {
   useEffect(() => {
     if (session) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+      const interval = setInterval(fetchNotifications, 60000); // Fallback polling
       return () => clearInterval(interval);
     }
   }, [session]);
+
+  // Real-time socket listener
+  useEffect(() => {
+    if (socket) {
+      socket.on("newNotification", (notification: Notification) => {
+        setNotifications(prev => [notification, ...prev].slice(0, 50));
+        setUnreadCount(prev => prev + 1);
+        
+        // Browser notification if permitted
+        if (Notification.permission === "granted") {
+            new Notification(notification.title, {
+                body: notification.message,
+                icon: "/favicon.ico"
+            });
+        }
+      });
+
+      return () => {
+        socket.off("newNotification");
+      };
+    }
+  }, [socket]);
 
   const markAllRead = async () => {
     try {
