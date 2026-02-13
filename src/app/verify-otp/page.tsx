@@ -8,6 +8,12 @@ import { ArrowLeft, RefreshCw, CheckCircle2, Shield } from "lucide-react";
 function VerifyOTPContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    
+    // 🚀 OTP Bypass: Redirect to login as this page is no longer used
+    useEffect(() => {
+        router.replace("/login");
+    }, [router]);
+
     const email = searchParams.get("email") || "";
     const isOAuth = searchParams.get("oauth") === "true";
     const intentRole = searchParams.get("intentRole") || "";

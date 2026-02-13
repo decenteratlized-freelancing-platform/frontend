@@ -44,50 +44,16 @@ function AuthCallbackContent() {
                     }
                 }
 
-                // Send OTP for OAuth login
-                setStatusText("Sending verification code...");
-                try {
-                    const otpRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/send-otp`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            email: userEmail,
-                            type: "oauth"
-                        }),
-                    });
-
-                    if (otpRes.ok) {
-                        // Redirect to OTP verification page
-                        const params = new URLSearchParams({
-                            email: userEmail || "",
-                            oauth: "true",
-                        });
-                        if (intentRole) params.set("intentRole", intentRole);
-
-                        router.replace(`/verify-otp?${params.toString()}`);
-                    } else {
-                        const data = await otpRes.json();
-                        console.error("Failed to send OTP:", data.message);
-                        // If OTP fails, still try to redirect based on role
-                        if (role === "client") {
-                            router.replace("/client/dashboard");
-                        } else if (role === "freelancer") {
-                            router.replace("/freelancer/dashboard");
-                        } else {
-                            router.replace("/choose-role");
-                        }
-                    }
-                } catch (err) {
-                    console.error("Error sending OTP:", err);
-                    // Fallback redirect
-                    if (role === "client") {
-                        router.replace("/client/dashboard");
-                    } else if (role === "freelancer") {
-                        router.replace("/freelancer/dashboard");
-                    } else {
-                        router.replace("/choose-role");
-                    }
+                // 🚀 Direct Redirect (OTP Removed)
+                setStatusText("Redirecting to dashboard...");
+                if (role === "client") {
+                    router.replace("/client/dashboard");
+                } else if (role === "freelancer") {
+                    router.replace("/freelancer/dashboard");
+                } else {
+                    router.replace("/choose-role");
                 }
+                
             } else if (status === "unauthenticated" && !hasChecked) {
                 setHasChecked(true);
                 router.replace("/login");
