@@ -65,7 +65,7 @@ export default function ClientGoals() {
     category: "",
     deadline: "",
     priority: "medium" as "low" | "medium" | "high",
-    milestones: [{ title: "", dueDate: "" }],
+    milestones: [{ title: "", dueDate: "", completed: false }],
   })
   const { getConvertedAmount } = useCurrency();
 
@@ -125,7 +125,7 @@ export default function ClientGoals() {
           category: "",
           deadline: "",
           priority: "medium",
-          milestones: [{ title: "", dueDate: "" }],
+          milestones: [{ title: "", dueDate: "", completed: false }],
         })
         setIsAddDialogOpen(false)
       }
