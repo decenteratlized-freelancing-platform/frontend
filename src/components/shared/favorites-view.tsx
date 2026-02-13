@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useCurrency } from "@/context/CurrencyContext"
 import { useSession } from "next-auth/react"
+import { JobDetailsModal } from "./job-details-modal"
 
 interface FavoritesViewProps {
     userRole: "client" | "freelancer";
@@ -22,6 +23,8 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
     const [favorites, setFavorites] = useState<{ freelancers: any[], jobs: any[] }>({ freelancers: [], jobs: [] })
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+    const [selectedJob, setSelectedJob] = useState<any>(null)
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
     const { getConvertedAmount } = useCurrency()
 
     const fetchFavorites = async () => {
@@ -147,6 +150,12 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
 
     return (
         <div className="space-y-8">
+            <JobDetailsModal
+                job={selectedJob}
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+            />
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-white mb-2">My <span className="text-pink-500">Favorites</span></h1>
@@ -304,11 +313,15 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
                                                             <p className="text-white text-sm">{job.client?.fullName || "Client"}</p>
                                                         </div>
                                                     </div>
-                                                    <Link href={`/${userRole}/jobs/${job._id}`}>
-                                                        <Button className="bg-white text-black hover:bg-zinc-200">
-                                                            View Job <ArrowRight className="w-4 h-4 ml-2" />
-                                                        </Button>
-                                                    </Link>
+                                                    <Button 
+                                                        className="bg-white text-black hover:bg-zinc-200"
+                                                        onClick={() => {
+                                                            setSelectedJob(job);
+                                                            setIsDetailsModalOpen(true);
+                                                        }}
+                                                    >
+                                                        View Job <ArrowRight className="w-4 h-4 ml-2" />
+                                                    </Button>
                                                 </div>
                                             </CardContent>
                                         </Card>

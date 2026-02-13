@@ -19,15 +19,15 @@ interface ActionItem {
 
 export default function QuickActionsWidget({ userType }: QuickActionsWidgetProps) {
   const clientActions: ActionItem[] = [
-    { label: "Post Job", href: "/client/post-job", icon: Briefcase, color: "bg-blue-600", isSolid: true },
-    { label: "Messages", href: "/client/messages", icon: MessageSquare, color: "from-green-500 to-blue-500" },
-    { label: "Settings", href: "/client/settings", icon: Settings, color: "from-orange-500 to-red-500" },
+    { label: "Post Job", href: "/client/post-job", icon: Briefcase, color: "bg-indigo-600", isSolid: true },
+    { label: "Messages", href: "/client/messages", icon: MessageSquare, color: "bg-violet-600", isSolid: true },
+    { label: "Settings", href: "/client/settings", icon: Settings, color: "bg-zinc-600", isSolid: true },
   ]
 
   const freelancerActions: ActionItem[] = [
-    { label: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Search, color: "from-green-500 to-blue-600" },
-    { label: "Messages", href: "/freelancer/messages", icon: MessageSquare, color: "from-blue-500 to-purple-600" },
-    { label: "Settings", href: "/freelancer/settings", icon: Settings, color: "from-orange-500 to-red-500" },
+    { label: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Search, color: "bg-indigo-600", isSolid: true },
+    { label: "Messages", href: "/freelancer/messages", icon: MessageSquare, color: "bg-violet-600", isSolid: true },
+    { label: "Settings", href: "/freelancer/settings", icon: Settings, color: "bg-zinc-600", isSolid: true },
   ]
 
   const actions = userType === "client" ? clientActions : freelancerActions
@@ -48,10 +48,10 @@ export default function QuickActionsWidget({ userType }: QuickActionsWidgetProps
           >
             <Link href={action.href}>
               <Button
-                className={`w-full ${action.isSolid ? action.color : `bg-gradient-to-r ${action.color}`} hover:scale-105 transition-all duration-200 group`}
+                className={`w-full ${action.color} hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group border-none text-white font-bold`}
                 size="sm"
               >
-                <action.icon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                <action.icon className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-200" />
                 {action.label}
               </Button>
             </Link>

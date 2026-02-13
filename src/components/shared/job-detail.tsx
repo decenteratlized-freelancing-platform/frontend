@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
     Briefcase, Calendar, Clock, MapPin, User,
     ArrowLeft, Tag, Users, CheckCircle, AlertCircle, Loader2,
-    FileText, Send, Heart, Target
+    FileText, Send, Heart, Target, Zap, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -216,106 +216,131 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-5xl mx-auto p-6 space-y-6"
+            className="max-w-5xl mx-auto p-6 space-y-8"
         >
-            {/* Back Button */}
-            <Button onClick={() => router.back()} variant="ghost" className="text-white/70 hover:text-white">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
+            {/* Header / Navigation */}
+            <div className="flex items-center justify-between">
+                <Button onClick={() => router.back()} variant="ghost" className="text-zinc-400 hover:text-white hover:bg-white/5 border border-zinc-800 rounded-xl px-4 py-2 transition-all">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Search
+                </Button>
+                
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={toggleFavorite}
+                        disabled={isTogglingFav}
+                        className={`rounded-xl border-zinc-800 transition-all h-10 w-10 ${isFavorite ? "bg-pink-500/10 border-pink-500/50 text-pink-500" : "bg-zinc-900/50 text-zinc-500 hover:text-pink-400 hover:border-pink-500/30"}`}
+                    >
+                        <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+                    </Button>
+                    <Button variant="outline" size="icon" className="rounded-xl border-zinc-800 h-10 w-10 bg-zinc-900/50 text-zinc-500">
+                        <Send className="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
 
-            {/* Job Header */}
-            <Card className="bg-white/5 border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-600" />
-                <CardHeader className="pt-8">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3 mb-2">
-                                <Badge variant={job.status === "open" ? "default" : "secondary"} className={job.status === "open" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : ""}>
-                                    {job.status}
-                                </Badge>
-                                <span className="text-zinc-600 text-xs">/</span>
-                                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">#{job._id.slice(-6)}</span>
-                            </div>
-                            <CardTitle className="text-3xl font-bold text-white">{job.title}</CardTitle>
-                            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-gray-400 pt-2">
-                                <span className="flex items-center gap-1.5 group cursor-pointer">
-                                    <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold border border-zinc-700">
-                                        {job.client?.fullName?.[0]}
-                                    </div>
-                                    <span className="group-hover:text-zinc-200 transition-colors">{job.client?.fullName || "Unknown Client"}</span>
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                    <Calendar className="w-4 h-4 text-zinc-500" />
-                                    Posted {new Date(job.createdAt).toLocaleDateString()}
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                    <Users className="w-4 h-4 text-zinc-500" />
-                                    {job.proposalsCount} Proposals
-                                </span>
+            {/* Main Job Card */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <div className="p-8 md:p-12 space-y-10">
+                    {/* Title and Client Section */}
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Badge className="bg-indigo-600 hover:bg-indigo-600 text-white border-none px-4 py-1 text-[10px] font-black tracking-widest uppercase rounded-full">
+                                {job.category || "Project"}
+                            </Badge>
+                            <span className="text-zinc-700 text-sm font-bold">/</span>
+                            <div className="flex items-center gap-2 text-zinc-500 text-xs font-bold uppercase tracking-widest">
+                                <ShieldCheck className="w-4 h-4 text-blue-500" />
+                                Verified Opportunity
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="icon" 
-                                onClick={toggleFavorite}
-                                disabled={isTogglingFav}
-                                className={`rounded-xl border-zinc-800 transition-all ${isFavorite ? "bg-pink-500/10 border-pink-500/50 text-pink-500" : "bg-zinc-900/50 text-zinc-500 hover:text-pink-400 hover:border-pink-500/30"}`}
-                            >
-                                <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
-                            </Button>
+                        
+                        <h1 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tight">
+                            {job.title}
+                        </h1>
+
+                        <div className="flex flex-wrap items-center gap-6 pt-4">
+                            <div className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 px-5 py-2.5 rounded-2xl">
+                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-black border border-zinc-700 text-white">
+                                    {job.client?.fullName?.[0]}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none mb-1">Posted By</p>
+                                    <p className="text-sm text-white font-bold">{job.client?.fullName || "Verified Client"}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                    <Calendar className="w-5 h-5 text-zinc-500" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none mb-1">Posted On</p>
+                                    <p className="text-sm text-white font-bold">{new Date(job.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {/* Description */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-                        <p className="text-gray-300 whitespace-pre-wrap">{job.description}</p>
-                    </div>
 
-                    {/* Job Details Grid */}
+                    {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white/5 rounded-lg p-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <Target className="w-4 h-4" /> Budget
+                        <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all">
+                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20 mb-4">
+                                <Target className="w-5 h-5 text-white" />
                             </div>
-                            <p className="text-white font-semibold">
-                                {job.budget} ETH
-                            </p>
-                            <p className="text-xs text-gray-500">{job.budgetType}</p>
+                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Budget</p>
+                            <p className="text-xl font-black text-white">{job.budget} ETH</p>
                         </div>
-                        <div className="bg-white/5 rounded-lg p-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <Clock className="w-4 h-4" /> Duration
+
+                        <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all">
+                            <div className="w-10 h-10 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-900/20 mb-4">
+                                <Clock className="w-5 h-5 text-white" />
                             </div>
-                            <p className="text-white font-semibold">{job.duration || "Not specified"}</p>
+                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Duration</p>
+                            <p className="text-xl font-black text-white">{job.duration || "Not specified"}</p>
                         </div>
-                        <div className="bg-white/5 rounded-lg p-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <Calendar className="w-4 h-4" /> Deadline
+
+                        <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all">
+                            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/20 mb-4">
+                                <Users className="w-5 h-5 text-white" />
                             </div>
-                            <p className="text-white font-semibold">
-                                {job.deadline ? new Date(job.deadline).toLocaleDateString() : "Flexible"}
-                            </p>
+                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Proposals</p>
+                            <p className="text-xl font-black text-white">{job.proposalsCount}</p>
                         </div>
-                        <div className="bg-white/5 rounded-lg p-4">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                                <Briefcase className="w-4 h-4" /> Experience
+
+                        <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all">
+                            <div className="w-10 h-10 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/20 mb-4">
+                                <Briefcase className="w-5 h-5 text-white" />
                             </div>
-                            <p className="text-white font-semibold">{job.experienceLevel || "Any"}</p>
+                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Experience</p>
+                            <p className="text-xl font-black text-white">{job.experienceLevel || "Any"}</p>
                         </div>
                     </div>
 
-                    {/* Skills */}
+                    {/* Description Section */}
+                    <div className="space-y-6">
+                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-3">
+                            <div className="h-px w-8 bg-zinc-800" />
+                            Project Scope & Goals
+                        </h3>
+                        <div className="bg-zinc-900/20 border border-zinc-800/50 rounded-[2rem] p-8 md:p-10">
+                            <p className="text-zinc-300 text-lg leading-relaxed whitespace-pre-wrap font-medium">
+                                {job.description}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Skills Section */}
                     {job.skills && job.skills.length > 0 && (
-                        <div>
-                            <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                                <Tag className="w-5 h-5" /> Required Skills
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-3">
+                                <div className="h-px w-8 bg-zinc-800" />
+                                Required Technical Skills
                             </h3>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-3">
                                 {job.skills.map((skill, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-400">
+                                    <Badge key={idx} variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-300 px-5 py-2.5 text-xs font-bold rounded-2xl hover:border-zinc-600 transition-all">
                                         {skill}
                                     </Badge>
                                 ))}
@@ -323,88 +348,90 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
                         </div>
                     )}
 
-                    {/* Action Buttons */}
+                    {/* Action Footer */}
                     {userRole === "freelancer" && job.status === "open" && (
-                        <div className="pt-4 border-t border-white/10">
+                        <div className="pt-10 border-t border-zinc-800 flex justify-center">
                             <Link href={`/freelancer/browse-jobs?apply=${job._id}`}>
-                                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90">
-                                    <Send className="w-4 h-4 mr-2" /> Submit Proposal
+                                <Button className="h-16 px-12 bg-white hover:bg-zinc-200 text-black text-lg font-black rounded-3xl shadow-2xl shadow-white/5 transition-all flex items-center gap-3">
+                                    <Send className="w-5 h-5" /> Submit Proposal for Project
                                 </Button>
                             </Link>
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Proposals Section (Client Only) */}
             {userRole === "client" && proposals.length > 0 && (
-                <Card className="bg-white/5 border-white/10">
-                    <CardHeader>
-                        <CardTitle className="text-xl text-white flex items-center gap-2">
-                            <FileText className="w-5 h-5" /> Proposals ({proposals.length})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                <div className="space-y-6 pt-8">
+                    <h2 className="text-3xl font-black text-white flex items-center gap-4">
+                        Received Proposals
+                        <span className="text-sm bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full font-bold">{proposals.length}</span>
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4">
                         {proposals.map((proposal) => (
                             <div
                                 key={proposal._id}
-                                className="bg-white/5 rounded-lg p-4 border border-white/10"
+                                className="bg-zinc-900/20 border border-zinc-800 rounded-3xl p-8 hover:bg-zinc-900/40 transition-all group"
                             >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-black text-xl">
                                             {proposal.freelancer?.fullName?.[0] || "?"}
                                         </div>
                                         <div>
-                                            <h4 className="text-white font-medium">{proposal.freelancer?.fullName}</h4>
-                                            <p className="text-sm text-gray-400">{proposal.freelancer?.email}</p>
+                                            <h4 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{proposal.freelancer?.fullName}</h4>
+                                            <p className="text-sm text-zinc-500 font-medium">{proposal.freelancer?.email}</p>
                                         </div>
                                     </div>
-                                    <Badge variant={
-                                        proposal.status === "accepted" ? "default" :
-                                            proposal.status === "rejected" ? "destructive" : "secondary"
-                                    }>
+                                    <Badge className={`px-4 py-1.5 rounded-xl font-black text-[10px] tracking-widest uppercase border-none ${
+                                        proposal.status === "accepted" ? "bg-emerald-600 text-white" :
+                                            proposal.status === "rejected" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-400"
+                                    }`}>
                                         {proposal.status}
                                     </Badge>
                                 </div>
-                                <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8 pb-8 border-b border-zinc-800/50">
                                     <div>
-                                        <span className="text-gray-400">Proposed Rate:</span>
-                                        <span className="text-white ml-2 font-medium">
-                                            {proposal.proposedRate} ETH
-                                        </span>
+                                        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Proposed Rate</p>
+                                        <p className="text-lg font-bold text-white">{proposal.proposedRate} ETH</p>
                                     </div>
                                     <div>
-                                        <span className="text-gray-400">Delivery:</span>
-                                        <span className="text-white ml-2 font-medium">{proposal.deliveryTime}</span>
+                                        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Delivery Time</p>
+                                        <p className="text-lg font-bold text-white">{proposal.deliveryTime}</p>
                                     </div>
                                 </div>
-                                <p className="mt-3 text-gray-300 text-sm line-clamp-3">{proposal.coverLetter}</p>
+
+                                <div className="space-y-3">
+                                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Cover Letter</p>
+                                    <p className="text-zinc-300 leading-relaxed line-clamp-4">{proposal.coverLetter}</p>
+                                </div>
+
                                 {proposal.status === "pending" && (
-                                    <div className="mt-4 flex gap-2">
+                                    <div className="mt-8 flex flex-wrap gap-3">
                                         <Button
-                                            size="sm"
                                             onClick={() => handleAcceptProposal(proposal._id)}
-                                            className="bg-green-600 hover:bg-green-700"
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl px-6"
                                         >
-                                            <CheckCircle className="w-4 h-4 mr-1" /> Accept
+                                            <CheckCircle className="w-4 h-4 mr-2" /> Accept Proposal
                                         </Button>
                                         <Button
-                                            size="sm"
-                                            variant="destructive"
+                                            variant="ghost"
                                             onClick={() => handleRejectProposal(proposal._id)}
+                                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold rounded-2xl px-6"
                                         >
                                             Reject
                                         </Button>
                                         <Link href={`/${userRole}/proposals/${proposal._id}`}>
-                                            <Button size="sm" variant="outline">View Details</Button>
+                                            <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-white rounded-2xl px-6">View Details</Button>
                                         </Link>
                                     </div>
                                 )}
                             </div>
                         ))}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
         </motion.div>
     );

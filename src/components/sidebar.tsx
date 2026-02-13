@@ -36,6 +36,7 @@ import {
   FileText,
   Heart,
   Briefcase,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -60,30 +61,30 @@ interface MenuItem {
 }
 
 const clientMenuItems: MenuItem[] = [
-  { name: "Dashboard", href: "/client/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
-  { name: "Contracts", href: "/client/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
-  { name: "Discover", href: "/client/discover", icon: Users, color: "from-cyan-400 to-sky-400" },
-  { name: "Favorites", href: "/client/favorites", icon: Heart, color: "from-pink-500 to-rose-500" },
-  { name: "Post Job", href: "/client/post-job", icon: Briefcase, color: "blue-600", isSolid: true },
-  { name: "Goals", href: "/client/goals", icon: Target, color: "from-pink-400 to-rose-400" },
-  { name: "Disputes", href: "/client/disputes", icon: AlertTriangle, color: "from-red-400 to-orange-400" },
-  { name: "Settings", href: "/client/settings", icon: Settings, color: "from-gray-400 to-slate-400" },
-  { name: "Messages", href: "/client/messages", icon: MessageSquare, color: "from-purple-400 to-violet-400" },
-  { name: "Analytics", href: "/client/analytics", icon: TrendingUp, color: "from-indigo-400 to-blue-400" },
-  { name: "Support", href: "/client/support", icon: HelpCircle, color: "from-red-400 to-pink-400" },
+  { name: "Dashboard", href: "/client/dashboard", icon: Home, color: "bg-indigo-600", isSolid: true },
+  { name: "Contracts", href: "/client/contracts", icon: FileText, color: "bg-emerald-600", isSolid: true },
+  { name: "Discover", href: "/client/discover", icon: Users, color: "bg-blue-600", isSolid: true },
+  { name: "Favorites", href: "/client/favorites", icon: Heart, color: "bg-rose-600", isSolid: true },
+  { name: "Post Job", href: "/client/post-job", icon: Briefcase, color: "bg-slate-700", isSolid: true },
+  { name: "Goals", href: "/client/goals", icon: Target, color: "bg-amber-600", isSolid: true },
+  { name: "Disputes", href: "/client/disputes", icon: AlertTriangle, color: "bg-red-600", isSolid: true },
+  { name: "Settings", href: "/client/settings", icon: Settings, color: "bg-zinc-600", isSolid: true },
+  { name: "Messages", href: "/client/messages", icon: MessageSquare, color: "bg-violet-600", isSolid: true },
+  { name: "Analytics", href: "/client/analytics", icon: TrendingUp, color: "bg-cyan-600", isSolid: true },
+  { name: "Support", href: "/client/support", icon: HelpCircle, color: "bg-orange-600", isSolid: true },
 ];
 
 const freelancerMenuItems: MenuItem[] = [
-  { name: "Dashboard", href: "/freelancer/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
-  { name: "Contracts", href: "/freelancer/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
-  { name: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Calendar, color: "from-blue-400 to-cyan-400" },
-  { name: "Favorites", href: "/freelancer/favorites", icon: Heart, color: "from-pink-500 to-rose-500" },
-  { name: "Goals", href: "/freelancer/goals", icon: Target, color: "from-pink-400 to-rose-400" },
-  { name: "Disputes", href: "/freelancer/disputes", icon: AlertTriangle, color: "from-orange-400 to-red-400" },
-  { name: "Settings", href: "/freelancer/settings", icon: Settings, color: "from-gray-400 to-slate-400" },
-  { name: "Messages", href: "/freelancer/messages", icon: MessageSquare, color: "from-purple-400 to-violet-400" },
-  { name: "Portfolio", href: "/freelancer/portfolio", icon: TrendingUp, color: "from-indigo-400 to-blue-400" },
-  { name: "Support", href: "/freelancer/support", icon: HelpCircle, color: "from-red-400 to-pink-400" },
+  { name: "Dashboard", href: "/freelancer/dashboard", icon: Home, color: "bg-indigo-600", isSolid: true },
+  { name: "Contracts", href: "/freelancer/contracts", icon: FileText, color: "bg-emerald-600", isSolid: true },
+  { name: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Search, color: "bg-blue-600", isSolid: true },
+  { name: "Favorites", href: "/freelancer/favorites", icon: Heart, color: "bg-rose-600", isSolid: true },
+  { name: "Goals", href: "/freelancer/goals", icon: Target, color: "bg-amber-600", isSolid: true },
+  { name: "Disputes", href: "/freelancer/disputes", icon: AlertTriangle, color: "bg-red-600", isSolid: true },
+  { name: "Settings", href: "/freelancer/settings", icon: Settings, color: "bg-zinc-600", isSolid: true },
+  { name: "Messages", href: "/freelancer/messages", icon: MessageSquare, color: "bg-violet-600", isSolid: true },
+  { name: "Portfolio", href: "/freelancer/portfolio", icon: TrendingUp, color: "bg-cyan-600", isSolid: true },
+  { name: "Support", href: "/freelancer/support", icon: HelpCircle, color: "bg-orange-600", isSolid: true },
 ];
 
 export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }: SidebarProps) {

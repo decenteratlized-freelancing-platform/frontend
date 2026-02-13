@@ -348,7 +348,7 @@ export default function FreelancerDashboard() {
 
           icon: CoinsIcon,
 
-          color: "from-green-500 to-emerald-500",
+          color: "bg-emerald-600",
 
         },
 
@@ -362,7 +362,7 @@ export default function FreelancerDashboard() {
 
           icon: Briefcase,
 
-          color: "from-blue-500 to-cyan-500",
+          color: "bg-blue-600",
 
         },
 
@@ -376,7 +376,7 @@ export default function FreelancerDashboard() {
 
           icon: Award,
 
-          color: "from-purple-500 to-pink-500",
+          color: "bg-indigo-600",
 
         },
 
@@ -390,7 +390,7 @@ export default function FreelancerDashboard() {
 
                           icon: Star,
 
-                          color: "from-orange-500 to-red-500",
+                          color: "bg-amber-600",
 
                         },
 
@@ -428,7 +428,7 @@ export default function FreelancerDashboard() {
 
                   <div
 
-                    className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
+                    className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-lg shadow-black/20`}
 
                   >
 

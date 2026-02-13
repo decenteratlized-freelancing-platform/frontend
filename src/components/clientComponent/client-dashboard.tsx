@@ -217,26 +217,26 @@ export default function ClientDashboard() {
       title: "Active Jobs",
       value: jobs.length,
       icon: Eye,
-      color: "from-blue-500 to-cyan-500",
+      color: "bg-blue-600",
     },
     {
       title: "Total Spent",
       value: dashboardSummary.totalSpent,
       displayValue: `${dashboardSummary.totalSpent} ETH`,
       icon: TrendingUp,
-      color: "from-green-500 to-emerald-500",
+      color: "bg-emerald-600",
     },
     {
       title: "Freelancers Hired",
       value: dashboardSummary.freelancersHiredCount,
       icon: Users,
-      color: "from-purple-500 to-pink-500",
+      color: "bg-indigo-600",
     },
     {
       title: "Response Time",
       value: dashboardSummary.averageResponseTimeHours,
       icon: Clock,
-      color: "from-orange-500 to-red-500",
+      color: "bg-amber-600",
       suffix: "h",
     },
   ];
@@ -330,7 +330,7 @@ export default function ClientDashboard() {
                     )}
                   </div>
                   <div
-                    className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}
+                    className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center shadow-lg shadow-black/20`}
                   >
                     <stat.icon className="w-6 h-6 text-white" />
                   </div>

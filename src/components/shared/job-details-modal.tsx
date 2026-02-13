@@ -9,22 +9,24 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { X, Briefcase, Target, Clock, BarChart, Layers, Tag } from "lucide-react"
+import { Briefcase, Clock, BarChart, Layers, Tag, Calendar, User, Zap } from "lucide-react"
 
-// Define a comprehensive Job interface based on what we expect from the backend
 interface Job {
     _id: string;
     title: string;
     description: string;
     category: string;
-    budgetType: 'fixed' | 'hourly';
-    budget: number;
+    budgetType: string;
+    budget: number | string;
     skills: string[];
-    experienceLevel: 'entry' | 'intermediate' | 'expert';
+    experienceLevel: string;
     duration: string;
-    paymentCurrency: 'INR' | 'ETH';
+    paymentCurrency?: string;
     createdAt: string;
-    // ... any other fields
+    client?: {
+        fullName: string;
+        image?: string;
+    }
 }
 
 interface JobDetailsModalProps {
@@ -33,14 +35,14 @@ interface JobDetailsModalProps {
     onClose: () => void
 }
 
-const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: React.ReactNode }) => (
-    <div className="flex items-center gap-3 text-sm">
-        <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-800">
-            <Icon className="w-4 h-4 text-zinc-400" />
+const StatCard = ({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) => (
+    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-3">
+        <div className={`w-8 h-8 ${color} rounded-lg flex items-center justify-center shadow-lg shadow-black/20`}>
+            <Icon className="w-4 h-4 text-white" />
         </div>
-        <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">{label}</span>
-            <span className="text-zinc-200 font-medium">{value}</span>
+        <div>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-0.5">{label}</p>
+            <p className="text-sm font-semibold text-zinc-200">{value || "Not specified"}</p>
         </div>
     </div>
 );
@@ -50,72 +52,97 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 gap-0 shadow-2xl">
-                <DialogHeader className="p-6 border-b border-zinc-800 bg-zinc-950/50">
-                    <div className="flex items-start justify-between">
-                        <div className="space-y-1.5">
-                            <DialogTitle className="text-2xl font-bold text-white flex items-center gap-3">
-                                {job.title}
-                            </DialogTitle>
-                            <DialogDescription className="text-zinc-500 text-xs font-medium uppercase tracking-wide">
-                                Posted on {new Date(job.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
-                            </DialogDescription>
-                        </div>
+            <DialogContent className="max-w-2xl max-h-[85vh] bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 gap-0 shadow-2xl overflow-hidden rounded-3xl">
+                {/* Premium Header */}
+                <div className="relative p-8 pb-6 border-b border-zinc-800 bg-zinc-900/20">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Badge className="bg-indigo-600 hover:bg-indigo-600 text-white border-none px-3 py-1 text-[10px] font-bold tracking-widest uppercase">
+                            {job.category || "Project"}
+                        </Badge>
+                        <div className="h-4 w-px bg-zinc-800" />
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(job.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
                     </div>
-                </DialogHeader>
+                    <DialogTitle className="text-3xl font-black text-white leading-tight mb-2">
+                        {job.title}
+                    </DialogTitle>
+                    <div className="flex items-center gap-2 text-zinc-400 text-sm font-medium">
+                        <div className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[8px] font-bold">
+                            {job.client?.fullName?.[0] || "C"}
+                        </div>
+                        {job.client?.fullName || "Verified Client"}
+                    </div>
+                </div>
 
-                <ScrollArea className="flex-grow p-6">
-                    <div className="space-y-8">
-                        {/* Overview Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <DetailRow icon={Layers} label="Category" value={job.category} />
-                            <DetailRow icon={BarChart} label="Experience" value={job.experienceLevel} />
-                            <DetailRow icon={Clock} label="Duration" value={job.duration} />
+                <ScrollArea className="flex-grow">
+                    <div className="p-8 space-y-10">
+                        {/* Quick Stats Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <StatCard icon={BarChart} label="Experience" value={job.experienceLevel} color="bg-blue-600" />
+                            <StatCard icon={Clock} label="Duration" value={job.duration} color="bg-purple-600" />
+                            <StatCard icon={Layers} label="Type" value={job.budgetType || "Fixed Price"} color="bg-orange-600" />
                         </div>
 
                         {/* Description Section */}
-                        <div className="space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Job Description</h3>
-                            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-5">
-                                <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap text-sm">
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                                <Briefcase className="w-3 h-3 text-indigo-500" />
+                                Project Overview
+                            </h3>
+                            <div className="prose prose-invert max-w-none">
+                                <p className="text-zinc-300 leading-relaxed text-base bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/50">
                                     {job.description}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Budget & Payment Section */}
-                        <div className="space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Financials</h3>
-                            <div className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 p-5 rounded-xl">
-                    <div className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-                      <Tag className="w-5 h-5 text-emerald-500" />
-                      <span className="font-semibold text-lg">
-                        {job.budget} ETH
-                      </span>
-                    </div>
-                                <Badge className={`text-xs font-bold px-3 py-1 rounded-lg border ${job.paymentCurrency === 'ETH' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
-                                    {job.paymentCurrency} Payment
+                        {/* Budget Highlight */}
+                        <div className="bg-emerald-600 rounded-3xl p-6 flex items-center justify-between shadow-xl shadow-emerald-900/10">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                    <Tag className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-0.5">Project Budget</p>
+                                    <p className="text-2xl font-black text-white">{job.budget} ETH</p>
+                                </div>
+                            </div>
+                            <div className="hidden sm:block">
+                                <Badge className="bg-white/20 text-white border-none font-bold backdrop-blur-md">
+                                    Guaranteed Payment
                                 </Badge>
                             </div>
                         </div>
 
                         {/* Skills Section */}
-                        <div className="space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Required Skills</h3>
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                                <Zap className="w-3 h-3 text-amber-500" />
+                                Tech Stack & Skills
+                            </h3>
                             <div className="flex flex-wrap gap-2">
-                                {job.skills.map((skill) => (
-                                    <Badge key={skill} variant="outline" className="text-xs bg-zinc-900 text-zinc-300 border-zinc-800 px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
+                                {job.skills?.map((skill) => (
+                                    <span key={skill} className="px-4 py-2 bg-zinc-900 text-zinc-300 text-xs font-bold rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors">
                                         {skill}
-                                    </Badge>
+                                    </span>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </ScrollArea>
 
-                <div className="p-6 border-t border-zinc-800 bg-zinc-950/50 flex justify-end">
-                    <button onClick={onClose} className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-white/5 text-sm">
-                        Close Details
+                {/* Footer Action */}
+                <div className="p-8 border-t border-zinc-800 bg-zinc-900/20 flex gap-4">
+                    <button 
+                        onClick={onClose} 
+                        className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-4 rounded-2xl transition-all text-sm"
+                    >
+                        Dismiss
+                    </button>
+                    <button className="flex-1 bg-white hover:bg-zinc-200 text-black font-black py-4 rounded-2xl transition-all text-sm shadow-xl shadow-white/5">
+                        Apply Now
                     </button>
                 </div>
             </DialogContent>
