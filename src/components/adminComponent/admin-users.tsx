@@ -223,7 +223,7 @@ export default function AdminUsers() {
                                                 {user.role}
                                             </Badge>
                                             <div className="text-sm text-gray-400 flex items-center gap-1">
-                                                <Calendar className="w-3 h-3" />
+                                                <Calendar className="w-3 h-3 text-zinc-100" />
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </div>
                                             <DropdownMenu>

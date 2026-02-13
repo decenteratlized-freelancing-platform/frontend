@@ -726,7 +726,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                         </div>
                         <div className="bg-zinc-950/20 rounded-2xl p-5 border border-zinc-800/50">
                             <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">
-                                <Calendar className="w-3.5 h-3.5 text-purple-500" /> Final Deadline
+                                <Calendar className="w-3.5 h-3.5 text-zinc-100" /> Final Deadline
                             </div>
                             <p className="text-white font-bold text-2xl">
                                 {contract.job?.deadline

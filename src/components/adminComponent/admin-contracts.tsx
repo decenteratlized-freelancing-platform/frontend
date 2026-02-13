@@ -210,7 +210,7 @@ export default function AdminContracts() {
                                         )}
 
                                         <div className="flex items-center gap-1 text-xs text-gray-500 mt-3">
-                                            <Calendar className="w-3 h-3" />
+                                            <Calendar className="w-3 h-3 text-zinc-100" />
                                             Created {new Date(contract.createdAt).toLocaleDateString()}
                                         </div>
                                     </motion.div>

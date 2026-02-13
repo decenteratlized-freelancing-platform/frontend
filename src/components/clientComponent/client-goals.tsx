@@ -560,7 +560,7 @@ export default function ClientGoals() {
 
                               <span className="flex items-center gap-2">
 
-                                <Calendar className="w-4 h-4" />
+                                <Calendar className="w-4 h-4 text-zinc-100" />
 
                                 Due: {new Date(goal.targetDate).toLocaleDateString()}
 

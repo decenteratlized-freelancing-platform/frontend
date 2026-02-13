@@ -193,7 +193,7 @@ export default function AdminTransactions() {
                                                 <span className="text-gray-500">To:</span> {tx.freelancer?.fullName || "Unknown"}
                                             </div>
                                             <div className="ml-auto flex items-center gap-1 text-gray-500">
-                                                <Calendar className="w-3 h-3" />
+                                                <Calendar className="w-3 h-3 text-zinc-100" />
                                                 {new Date(tx.createdAt).toLocaleDateString()}
                                             </div>
                                         </div>

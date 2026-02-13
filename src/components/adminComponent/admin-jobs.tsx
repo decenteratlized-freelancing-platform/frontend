@@ -267,12 +267,12 @@ export default function AdminJobs() {
                                             </div>
                                             {job.deadline && (
                                                 <div className="flex items-center gap-1 text-gray-400">
-                                                    <Calendar className="w-4 h-4" />
+                                                    <Calendar className="w-4 h-4 text-zinc-100" />
                                                     <span>{new Date(job.deadline).toLocaleDateString()}</span>
                                                 </div>
                                             )}
                                             <div className="flex items-center gap-1 text-gray-400">
-                                                <Calendar className="w-4 h-4" />
+                                                <Calendar className="w-4 h-4 text-zinc-100" />
                                                 <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                             </div>
                                         </div>

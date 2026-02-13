@@ -229,8 +229,8 @@ export default function AdminProposals() {
                                             <div className="text-gray-400">
                                                 Mode: {proposal.paymentMode}
                                             </div>
-                                            <div className="flex items-center gap-1 text-gray-500">
-                                                <Calendar className="w-3 h-3" />
+                                            <div className="flex items-center gap-1 text-gray-500 ml-auto">
+                                                <Calendar className="w-3 h-3 text-zinc-100" />
                                                 {new Date(proposal.createdAt).toLocaleDateString()}
                                             </div>
                                         </div>

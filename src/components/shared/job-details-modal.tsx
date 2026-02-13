@@ -61,7 +61,7 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                         </Badge>
                         <div className="h-4 w-px bg-zinc-800" />
                         <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3" />
+                            <Calendar className="w-3 h-3 text-zinc-100" />
                             {new Date(job.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                     </div>

@@ -335,7 +335,7 @@ export default function AdminDisputes() {
                                                     <UserAvatar user={{ name: dispute.againstUser?.fullName, image: dispute.againstUser?.image }} className="w-6 h-6" />
                                                 </div>
                                                 <div className="flex items-center gap-1 text-xs text-gray-500">
-                                                    <Calendar className="w-3 h-3" />
+                                                    <Calendar className="w-3 h-3 text-zinc-100" />
                                                     {new Date(dispute.createdAt).toLocaleDateString()}
                                                 </div>
                                                 {dispute.contract && (
