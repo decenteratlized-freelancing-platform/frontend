@@ -448,6 +448,100 @@ export default function FreelancerGoals() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Goal Dialog */}
+      <Dialog open={showEditGoal} onOpenChange={setShowEditGoal}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Edit Objective</DialogTitle>
+          </DialogHeader>
+          {editingGoal && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Goal Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editingGoal.title}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
+                  className="bg-zinc-900 border-zinc-800 text-white focus:ring-blue-500/20 h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Brief Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editingGoal.description}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
+                  className="bg-zinc-900 border-zinc-800 text-white focus:ring-blue-500/20 min-h-[100px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-category" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Category</Label>
+                  <Select value={editingGoal.category} onValueChange={(value) => setEditingGoal({ ...editingGoal, category: value })}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white h-12">
+                      <SelectValue placeholder="Select path" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      <SelectItem value="Financial">Financial</SelectItem>
+                      <SelectItem value="Professional">Professional</SelectItem>
+                      <SelectItem value="Skill Development">Skill Development</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Personal">Personal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-target" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Target Value</Label>
+                  <Input
+                    id="edit-target"
+                    type="number"
+                    min="0"
+                    value={editingGoal.target}
+                    onChange={(e) => {
+                      const newTarget = Number.parseFloat(e.target.value);
+                      const newCurrent = (editingGoal.progress / 100) * newTarget;
+                      setEditingGoal({ ...editingGoal, target: newTarget, current: parseFloat(newCurrent.toFixed(4)) });
+                    }}
+                    className="bg-zinc-900 border-zinc-800 text-white h-12"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-deadline" className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Target Date</Label>
+                <Input
+                  id="edit-deadline"
+                  type="date"
+                  value={editingGoal.deadline}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, deadline: e.target.value })}
+                  className="bg-zinc-900 border-zinc-800 text-white h-12"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowEditGoal(false)}
+                  className="text-zinc-500 hover:text-white hover:bg-zinc-900"
+                >
+                  Discard
+                </Button>
+                <Button
+                  onClick={handleEditGoal}
+                  className="bg-white text-zinc-950 font-bold px-8 hover:bg-zinc-200"
+                  disabled={!editingGoal.title || !editingGoal.target || !editingGoal.deadline}
+                >
+                  Update Goal
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
