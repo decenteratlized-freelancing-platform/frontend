@@ -45,6 +45,19 @@ export async function POST(req: Request) {
 
     await connectDB();
 
+    // 🚫 Blocked Wallet Check
+    const blockedUser = await User.findOne({ 
+      walletAddress: address.toLowerCase(), 
+      isBlocked: true 
+    });
+
+    if (blockedUser) {
+      return NextResponse.json(
+        { error: "This wallet address has been blacklisted due to platform violations." },
+        { status: 403 }
+      );
+    }
+
     const updatedUser = await User.findOneAndUpdate(
       { email: userEmail },
       {

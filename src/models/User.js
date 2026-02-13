@@ -81,6 +81,10 @@ const UserSchema = new mongoose.Schema(
     verifyToken: { type: String },
     verifyTokenExpires: { type: Date },
 
+    // 🚫 Admin Controls
+    isBlocked: { type: Boolean, default: false },
+    blockedReason: { type: String, default: null },
+
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     favoriteJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
   },

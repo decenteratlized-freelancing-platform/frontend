@@ -76,7 +76,7 @@ const LoginPage = () => {
           if (data.requiresOTP) {
             // OTP sent - redirect to verification page
             setAuthState({ loading: false, successUser: null, error: null });
-            setStatusMessage({ type: "success", text: "OTP generated! Redirecting to verification..." });
+            setStatusMessage({ type: "success", text: "OTP sent! Redirecting to verification..." });
 
             setTimeout(() => {
               router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
@@ -125,7 +125,7 @@ const LoginPage = () => {
 
         if (res.ok) {
           setAuthState({ loading: false, successUser: null, error: null });
-          setStatusMessage({ type: "success", text: "Account created! Please login to continue." });
+          setStatusMessage({ type: "success", text: "Account created! Please login to verify your email." });
           // Switch to login view after successful registration
           setTimeout(() => setViewState('login'), 1500);
         } else {
