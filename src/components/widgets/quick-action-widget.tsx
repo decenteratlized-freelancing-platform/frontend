@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Plus, Search, MessageSquare, Settings } from "lucide-react"
+import { Plus, Search, MessageSquare, Settings, Briefcase } from "lucide-react"
 import Link from "next/link"
 
 interface QuickActionsWidgetProps {
@@ -11,7 +11,7 @@ interface QuickActionsWidgetProps {
 
 export default function QuickActionsWidget({ userType }: QuickActionsWidgetProps) {
   const clientActions = [
-    { label: "Post Job", href: "/client/post-job", icon: Plus, color: "from-blue-500 to-purple-600" },
+    { label: "Post Job", href: "/client/post-job", icon: Briefcase, color: "bg-blue-600", isSolid: true },
     { label: "Messages", href: "/client/messages", icon: MessageSquare, color: "from-green-500 to-blue-500" },
     { label: "Settings", href: "/client/settings", icon: Settings, color: "from-orange-500 to-red-500" },
   ]
@@ -40,7 +40,7 @@ export default function QuickActionsWidget({ userType }: QuickActionsWidgetProps
           >
             <Link href={action.href}>
               <Button
-                className={`w-full bg-gradient-to-r ${action.color} hover:scale-105 transition-all duration-200 group`}
+                className={`w-full ${action.isSolid ? action.color : `bg-gradient-to-r ${action.color}`} hover:scale-105 transition-all duration-200 group`}
                 size="sm"
               >
                 <action.icon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />

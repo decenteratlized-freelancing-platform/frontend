@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   FileText,
   Heart,
+  Briefcase,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,7 +56,7 @@ const clientMenuItems = [
   { name: "Contracts", href: "/client/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
   { name: "Discover", href: "/client/discover", icon: Users, color: "from-cyan-400 to-sky-400" },
   { name: "Favorites", href: "/client/favorites", icon: Heart, color: "from-pink-500 to-rose-500" },
-  { name: "Post Job", href: "/client/post-job", icon: Calendar, color: "from-blue-400 to-cyan-400" },
+  { name: "Post Job", href: "/client/post-job", icon: Briefcase, color: "blue-600", isSolid: true },
   { name: "Goals", href: "/client/goals", icon: Target, color: "from-pink-400 to-rose-400" },
   { name: "Disputes", href: "/client/disputes", icon: AlertTriangle, color: "from-red-400 to-orange-400" },
   { name: "Settings", href: "/client/settings", icon: Settings, color: "from-gray-400 to-slate-400" },
@@ -233,7 +234,7 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                         } ${isCollapsed ? "justify-center" : "gap-3"}`}
                     >
                       <div
-                        className={`relative w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center flex-shrink-0`}
+                        className={`relative w-8 h-8 ${item.isSolid ? item.color : `bg-gradient-to-br ${item.color}`} rounded-lg flex items-center justify-center flex-shrink-0`}
                       >
                         <item.icon className="w-4 h-4 text-white" />
                       </div>
