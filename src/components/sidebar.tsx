@@ -51,7 +51,15 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const clientMenuItems = [
+interface MenuItem {
+  name: string;
+  href: string;
+  icon: any; // Using any for Lucide icons to avoid complex type issues
+  color: string;
+  isSolid?: boolean;
+}
+
+const clientMenuItems: MenuItem[] = [
   { name: "Dashboard", href: "/client/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
   { name: "Contracts", href: "/client/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
   { name: "Discover", href: "/client/discover", icon: Users, color: "from-cyan-400 to-sky-400" },
@@ -65,7 +73,7 @@ const clientMenuItems = [
   { name: "Support", href: "/client/support", icon: HelpCircle, color: "from-red-400 to-pink-400" },
 ];
 
-const freelancerMenuItems = [
+const freelancerMenuItems: MenuItem[] = [
   { name: "Dashboard", href: "/freelancer/dashboard", icon: Home, color: "from-orange-400 to-red-400" },
   { name: "Contracts", href: "/freelancer/contracts", icon: FileText, color: "from-teal-400 to-emerald-400" },
   { name: "Browse Jobs", href: "/freelancer/browse-jobs", icon: Calendar, color: "from-blue-400 to-cyan-400" },
