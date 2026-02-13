@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -15,29 +15,39 @@ interface ProfileDialogProps {
     isOpen: boolean;
     onClose: () => void;
     email: string;
-    userType?: "client" | "freelancer";
+    userType?: string;
 }
 
 interface UserProfile {
-    id?: string;
+    id: string;
     fullName: string;
     email: string;
     image?: string;
     phone?: string;
     location?: string;
     professionalBio?: string;
-    skills?: string[];
+    skills: string[];
     portfolioWebsite?: string;
-    role?: string;
-    // Privacy Flags
-    privacy?: {
+    role: string;
+    privacy: {
         showEmail: boolean;
         showPhone: boolean;
     };
-    // New Fields
-    portfolio?: { title: string; description: string; url: string }[];
-    socialLinks?: { github?: string; linkedin?: string; twitter?: string; website?: string };
-    verifiedSkills?: { skill: string; score: number }[];
+    portfolio: Array<{
+        title: string;
+        description: string;
+        url?: string;
+    }>;
+    socialLinks: {
+        github?: string;
+        linkedin?: string;
+        twitter?: string;
+        website?: string;
+    };
+    verifiedSkills: Array<{
+        skill: string;
+        level: string;
+    }>;
 }
 
 export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialogProps) {
@@ -66,13 +76,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
         return token;
     };
 
-    useEffect(() => {
-        if (isOpen && email) {
-            fetchProfile();
-        }
-    }, [isOpen, email, session]); 
-
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         setLoading(true);
         try {
             const response = await fetch(`/api/settings?email=${email}`);
@@ -129,7 +133,15 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
         } finally {
             setLoading(false);
         }
-    };
+    }, [email, userType, session]);
+
+    useEffect(() => {
+        if (isOpen && email) {
+            fetchProfile();
+        }
+    }, [isOpen, email, fetchProfile]); 
+
+    // ... toggleFavorite and render ...
 
     const toggleFavorite = async () => {
         if (!profile?.id) return;

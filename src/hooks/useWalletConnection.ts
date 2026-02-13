@@ -178,7 +178,7 @@ export function useWalletConnection() {
     } finally {
       setIsConnecting(false);
     }
-  }, [session, update, toast]);
+  }, [session, update]);
 
   const disconnectWallet = useCallback(async () => {
     const userEmail = session?.user?.email || (typeof window !== "undefined" ? localStorage.getItem("email") : null);
@@ -247,7 +247,7 @@ export function useWalletConnection() {
         variant: "destructive",
       });
     }
-  }, [session, update, toast]);
+  }, [session, update]);
 
   return {
     address,

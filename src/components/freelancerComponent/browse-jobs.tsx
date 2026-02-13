@@ -16,7 +16,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export default function BrowseJobs() {
   const [showFilters, setShowFilters] = useState(false);
   const { getConvertedAmount } = useCurrency();
 
-  const ensureToken = async () => {
+  const ensureToken = useCallback(async () => {
     let token = localStorage.getItem("token");
     if (!token && session?.user?.email) {
         try {
@@ -83,19 +83,9 @@ export default function BrowseJobs() {
         } catch (e) { console.error("Auto-token failed", e); }
     }
     return token;
-  };
+  }, [session]);
 
-  useEffect(() => {
-    fetchJobs()
-  }, [])
-
-  useEffect(() => {
-    if (session?.user) {
-        fetchSavedJobs()
-    }
-  }, [session])
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs`)
       if (res.ok) {
@@ -107,9 +97,9 @@ export default function BrowseJobs() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchSavedJobs = async () => {
+  const fetchSavedJobs = useCallback(async () => {
     try {
         const token = await ensureToken();
         if (!token) return
@@ -123,7 +113,17 @@ export default function BrowseJobs() {
     } catch (error) {
         console.error("Error fetching saved jobs:", error)
     }
-  }
+  }, [ensureToken])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
+
+  useEffect(() => {
+    if (session?.user) {
+        fetchSavedJobs()
+    }
+  }, [session, fetchSavedJobs])
 
   const toggleSaveJob = async (jobId: string) => {
     const isSaved = savedJobs.includes(jobId)

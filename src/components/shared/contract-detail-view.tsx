@@ -268,6 +268,16 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
     };
 
     const handleAccept = () => {
+        if (userRole === 'freelancer' && !walletAddress) {
+            toast({
+                title: "Wallet Required",
+                description: "You must connect your wallet before you can accept contract terms.",
+                variant: "destructive",
+            });
+            connectWallet();
+            return;
+        }
+
         setConfirmModal({
             isOpen: true,
             type: "accept",
@@ -304,6 +314,16 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             connectWallet();
             return;
         }
+
+        if (!localContract.freelancer?.walletAddress) {
+            toast({ 
+                title: "Freelancer Wallet Missing", 
+                description: "The freelancer hasn't linked a wallet to their profile yet. They must link a wallet before the contract can be registered on-chain.", 
+                variant: "destructive" 
+            });
+            return;
+        }
+
         setIsProcessing(true);
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/contracts/${localContract._id}/publish`, {
@@ -640,42 +660,72 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
     const generateInvoicePDF = () => {
         const doc = new jsPDF();
         const date = new Date().toLocaleDateString();
+        const pageWidth = doc.internal.pageSize.width;
 
         // --- Header ---
         doc.setFillColor(16, 185, 129); // Emerald background for Invoice
-        doc.rect(0, 0, 210, 40, "F");
+        doc.rect(0, 0, 210, 45, "F");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("FINAL INVOICE", 20, 25);
+        doc.setFontSize(26);
+        doc.setFont("helvetica", "bold");
+        doc.text("FINAL INVOICE", 20, 30);
+        
         doc.setFontSize(10);
-        doc.text(`Invoice #: INV-${localContract.contractId.slice(0, 8).toUpperCase()}`, 150, 20);
-        doc.text(`Date: ${date}`, 150, 25);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Invoice #: INV-${localContract.contractId.slice(0, 8).toUpperCase()}`, pageWidth - 80, 25);
+        doc.text(`Date: ${date}`, pageWidth - 80, 32);
 
-        // --- Parties ---
+        // --- Parties Section (Stacked to prevent overlap) ---
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
+        
+        // Client Info
+        let currentY = 65;
+        doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
-        doc.text("Billed To (Client):", 20, 55);
+        doc.text("BILLED TO (CLIENT):", 20, currentY);
+        
         doc.setFont("helvetica", "normal");
-        doc.text(`${localContract.client.fullName}`, 20, 62);
-        doc.text(`${localContract.client.email}`, 20, 67);
-        doc.text(`Wallet: ${localContract.client.walletAddress || "N/A"}`, 20, 72);
+        doc.setFontSize(10);
+        currentY += 7;
+        doc.text(`${localContract.client.fullName}`, 20, currentY);
+        currentY += 5;
+        doc.text(`${localContract.client.email}`, 20, currentY);
+        currentY += 5;
+        const clientWallet = localContract.client.walletAddress || "N/A";
+        doc.text(`Wallet: ${clientWallet}`, 20, currentY, { maxWidth: 170 });
 
+        // Freelancer Info
+        currentY += 15;
+        doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
-        doc.text("From (Freelancer):", 120, 55);
+        doc.text("FROM (FREELANCER):", 20, currentY);
+        
         doc.setFont("helvetica", "normal");
-        doc.text(`${localContract.freelancer.fullName}`, 120, 62);
-        doc.text(`${localContract.freelancer.email}`, 120, 67);
-        doc.text(`Wallet: ${localContract.freelancer.walletAddress || "N/A"}`, 120, 72);
+        doc.setFontSize(10);
+        currentY += 7;
+        doc.text(`${localContract.freelancer.fullName}`, 20, currentY);
+        currentY += 5;
+        doc.text(`${localContract.freelancer.email}`, 20, currentY);
+        currentY += 5;
+        const freelancerWallet = localContract.freelancer.walletAddress || "N/A";
+        doc.text(`Wallet: ${freelancerWallet}`, 20, currentY, { maxWidth: 170 });
 
         // --- Summary ---
-        doc.setFontSize(14);
+        currentY += 15;
+        doc.setDrawColor(230);
+        doc.line(20, currentY, pageWidth - 20, currentY);
+        currentY += 10;
+        
+        doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
-        doc.text("Project Summary", 20, 95);
+        doc.text("PROJECT SUMMARY", 20, currentY);
+        
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.text(`Project Title: ${localContract.job?.title || 'N/A'}`, 20, 102);
-        doc.text(`Status: COMPLETED & RELEASED`, 20, 107);
+        currentY += 7;
+        doc.text(`Project Title: ${localContract.job?.title || localContract.title || 'N/A'}`, 20, currentY);
+        currentY += 5;
+        doc.text(`Status: COMPLETED & RELEASED`, 20, currentY);
 
         // --- Items Table ---
         const milestoneData = localContract.milestones.map((m: any, i: number) => [
@@ -686,31 +736,32 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         ]);
 
         autoTable(doc, {
-            startY: 115,
+            startY: currentY + 10,
             head: [['Item', 'Description', 'Completion', 'Amount']],
             body: milestoneData,
             theme: 'striped',
-            headStyles: { fillColor: [16, 185, 129] }
+            headStyles: { fillColor: [16, 185, 129] },
+            margin: { left: 20, right: 20 }
         });
 
         // --- Total ---
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        const finalY = (doc as any).lastAutoTable.finalY + 15;
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text(`Total Paid: ${localContract.totalAmount} ETH`, 190, finalY, { align: "right" });
+        doc.text(`Total Paid: ${localContract.totalAmount} ETH`, pageWidth - 20, finalY, { align: "right" });
 
         // --- Paid Stamp ---
         doc.setDrawColor(16, 185, 129);
         doc.setLineWidth(1);
-        doc.rect(140, finalY + 15, 50, 20);
+        doc.rect(pageWidth - 70, finalY + 10, 50, 20);
         doc.setTextColor(16, 185, 129);
         doc.setFontSize(18);
-        doc.text("PAID", 153, finalY + 29);
+        doc.text("PAID", pageWidth - 57, finalY + 24);
 
         // --- Footer ---
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text("This invoice was automatically generated upon successful completion of the blockchain-secured contract.", 105, 285, { align: "center" });
+        doc.text("This invoice was automatically generated upon successful completion of the blockchain-secured contract.", pageWidth / 2, 285, { align: "center" });
 
         doc.save(`Invoice_${localContract.contractId.slice(0, 8)}.pdf`);
         toast({ title: "Invoice Downloaded", description: "Your final invoice has been generated." });
@@ -815,17 +866,27 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                 <p className="text-[10px] uppercase tracking-widest font-black text-zinc-500 mb-1">Total Contract Value</p>
                                 <p className="text-4xl font-black text-white">{formatCurrency(parseFloat(localContract.totalAmount), currency)}</p>
                             </div>
-                            <Button 
-                                onClick={generateContractPDF}
-                                variant="outline" 
-                                className="bg-transparent border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold text-[10px] uppercase tracking-[0.2em] h-10 px-6 rounded-xl transition-all"
-                            >
-                                <Download className="w-3.5 h-3.5 mr-2" /> Download Contract PDF
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={generateContractPDF}
+                                    variant="outline" 
+                                    className="bg-transparent border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold text-[10px] uppercase tracking-[0.2em] h-10 px-6 rounded-xl transition-all"
+                                >
+                                    <Download className="w-3.5 h-3.5 mr-2" /> Download Contract PDF
+                                </Button>
+                                {localContract.status === 'Completed' && (
+                                    <Button 
+                                        onClick={generateInvoicePDF}
+                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-[0.2em] h-10 px-6 rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+                                    >
+                                        <FileText className="w-3.5 h-3.5 mr-2" /> Final Invoice
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <h1 className="text-5xl font-bold text-white leading-tight mb-4">
-                        {localContract.job?.title || 'Contract'}
+                        {localContract.job?.title || localContract.title || 'Contract'}
                     </h1>
                     
                     {/* Contract Overview Grid */}
@@ -980,14 +1041,6 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                     >
                                         Ask AI Assistant
                                     </Button>
-                                    {localContract.status === 'Completed' && (
-                                        <Button 
-                                            onClick={generateInvoicePDF}
-                                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-[0.2em] h-12 rounded-xl shadow-lg shadow-emerald-900/20 transition-all mt-4"
-                                        >
-                                            <FileText className="w-3 h-3 mr-2" /> Final Invoice
-                                        </Button>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1036,7 +1089,13 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                     {/* General Chat Button */}
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 }}>
                         <Button
-                            onClick={() => window.location.href = `/chat?receiverId=${againstUserId}`}
+                            onClick={() => {
+                                if (againstUserId) {
+                                    window.location.href = `/chat?receiverId=${againstUserId}`;
+                                } else {
+                                    toast({ title: "Error", description: "Could not identify the other party for chat.", variant: "destructive" });
+                                }
+                            }}
                             variant="outline"
                             className="w-full h-12 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 font-bold text-[10px] uppercase tracking-widest rounded-xl mt-4"
                         >

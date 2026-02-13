@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -16,7 +16,8 @@ import {
   Github,
   Linkedin,
   Twitter,
-  Globe
+  Globe,
+  Wallet
 } from "lucide-react"
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +27,8 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast, toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 // Define the Freelancer interface to match backend data
 interface Freelancer {
@@ -141,9 +144,14 @@ const FreelancerCard = ({
          <div className="text-zinc-100 font-bold text-xl">
             {/* Rate removed as per fixed-price model */}
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{freelancer.status}</span>
+          <div className="flex items-center gap-3">
+            {!freelancer.walletAddress && (
+                <Badge variant="outline" className="text-[9px] border-red-500/50 text-red-400 bg-red-500/5 px-2 py-0">No Wallet</Badge>
+            )}
+            <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{freelancer.status}</span>
+            </div>
           </div>
       </div>
 
@@ -331,10 +339,17 @@ const FreelancerProfileModal = ({
                   { label: "Rating", value: `${freelancer.averageRating || "N/A"}` },
                   { label: "Done", value: `${freelancer.projectsCompleted}` },
                   { label: "Earned", value: getConvertedAmount(freelancer.totalEarned) },
+                  { 
+                    label: "Wallet", 
+                    value: freelancer.walletAddress 
+                        ? `${freelancer.walletAddress.slice(0, 6)}...${freelancer.walletAddress.slice(-4)}` 
+                        : "Not Linked",
+                    isWarning: !freelancer.walletAddress
+                  },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-4">
                     <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold mb-1">{stat.label}</p>
-                    <p className="text-zinc-200 font-bold text-base truncate">{stat.value}</p>
+                    <p className={`font-bold text-base truncate ${stat.isWarning ? 'text-red-400' : 'text-zinc-200'}`}>{stat.value}</p>
                   </div>
                 ))}
               </div>
@@ -443,13 +458,37 @@ const HireFreelancerModal = ({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const ensureToken = useCallback(async () => {
+    let token = localStorage.getItem("token");
+    if (!token && session?.user?.email) {
+        try {
+            const devRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/dev-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            if (devRes.ok) {
+                const data = await devRes.json();
+                token = data.token;
+                localStorage.setItem("token", token || "");
+            }
+        } catch (e) { console.error("Auto-token failed", e); }
+    }
+    return token;
+  }, [session]);
+
   useEffect(() => {
     const fetchJobs = async () => {
       const email = session?.user?.email;
       if (!email) return;
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${email}`);
+        const token = await ensureToken();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
         if (res.ok) {
           const data = await res.json();
           // Filter only open jobs
@@ -465,11 +504,20 @@ const HireFreelancerModal = ({
     };
 
     fetchJobs();
-  }, [session]);
+  }, [session, ensureToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedJobId) return;
+
+    if (!freelancer?.walletAddress) {
+        toast({
+            title: "Cannot Hire",
+            description: "This freelancer hasn't linked a wallet yet. They must link a wallet before they can be hired.",
+            variant: "destructive"
+        });
+        return;
+    }
 
     setCreating(true);
     try {
@@ -484,7 +532,8 @@ const HireFreelancerModal = ({
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create contract");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create contract");
       }
 
       const data = await res.json();
@@ -492,7 +541,7 @@ const HireFreelancerModal = ({
       onClose();
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Something went wrong");
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setCreating(false);
     }
@@ -514,6 +563,17 @@ const HireFreelancerModal = ({
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+            </div>
+          ) : !freelancer.walletAddress ? (
+            <div className="text-center py-6">
+              <Wallet className="w-12 h-12 text-red-500/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-zinc-200 mb-2">No Wallet Linked</h3>
+              <p className="text-zinc-500 mb-6 text-sm">
+                This freelancer hasn&apos;t linked a crypto wallet to their profile. Blockchain-secured contracts require both parties to have linked wallets.
+              </p>
+              <Button onClick={onClose} variant="outline" className="border-zinc-800 text-zinc-300">
+                Close
+              </Button>
             </div>
           ) : jobs.length === 0 ? (
             <div className="text-center py-6">
@@ -607,7 +667,7 @@ export default function DiscoverFreelancersPage() {
     status: 'all'
   });
 
-  const ensureToken = async () => {
+  const ensureToken = useCallback(async () => {
     let token = localStorage.getItem("token");
     if (!token && session?.user?.email) {
         try {
@@ -624,7 +684,7 @@ export default function DiscoverFreelancersPage() {
         } catch (e) { console.error("Auto-token failed", e); }
     }
     return token;
-  };
+  }, [session]);
 
   useEffect(() => {
     const fetchFreelancers = async () => {
@@ -650,7 +710,7 @@ export default function DiscoverFreelancersPage() {
             fullName: f.fullName || "N/A",
             email: f.email || "N/A",
             role: f.role || "freelancer",
-            skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map((s: string) => s.trim()) : [],
+            skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map((s: string = "") => s.trim()) : [],
             bio: settings.bio || "No bio provided.",
             status: settings.availableForJobs ? "Available" : "Busy",
             location: settings.location || "Remote",
@@ -678,7 +738,7 @@ export default function DiscoverFreelancersPage() {
       }
     };
     fetchFreelancers();
-  }, [session]);
+  }, [session, ensureToken]);
 
   // Filter Logic
   useEffect(() => {
@@ -748,6 +808,14 @@ export default function DiscoverFreelancersPage() {
   };
 
   const handleHire = (freelancer: Freelancer) => {
+    if (!session?.user?.walletAddress) {
+        toast({
+            title: "Wallet Required",
+            description: "You must link a crypto wallet to your profile before you can hire freelancers. Please go to Settings to link your wallet.",
+            variant: "destructive"
+        });
+        return;
+    }
     setSelectedFreelancer(freelancer);
     setIsProfileModalOpen(false); // Close profile first
     setIsHireModalOpen(true);

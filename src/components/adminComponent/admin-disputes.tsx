@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,44 @@ import {
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { useRouter } from "next/navigation"
 
-// ... types and constants ...
+interface Dispute {
+    _id: string
+    disputeId: string
+    reason: string
+    description: string
+    status: string
+    priority: string
+    createdAt: string
+    contract?: { contractId: string; totalAmount: string }
+    job?: { title: string }
+    raisedBy?: { fullName: string; email: string; image?: string }
+    againstUser?: { fullName: string; email: string; image?: string }
+    messages?: Array<{ message: string; senderRole: string; sentAt: string }>
+}
+
+const STATUS_COLORS: Record<string, string> = {
+    open: "bg-red-500/20 text-red-400 border-red-500/30",
+    under_review: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    resolved: "bg-green-500/20 text-green-400 border-green-500/30",
+    closed: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+    low: "bg-blue-500/20 text-blue-400",
+    medium: "bg-yellow-500/20 text-yellow-400",
+    high: "bg-orange-500/20 text-orange-400",
+    critical: "bg-red-500/20 text-red-400",
+}
+
+const REASON_LABELS: Record<string, string> = {
+    payment_issue: "Payment Issue",
+    quality_issue: "Quality Issue",
+    deadline_missed: "Deadline Missed",
+    scope_creep: "Scope Creep",
+    communication_issue: "Communication Issue",
+    fraud: "Fraud",
+    other: "Other",
+}
 
 export default function AdminDisputes() {
     const router = useRouter()
@@ -50,7 +87,7 @@ export default function AdminDisputes() {
     const [resolution, setResolution] = useState({ type: "", amount: "", notes: "" })
     const [stats, setStats] = useState({ total: 0, open: 0, underReview: 0, resolved: 0 })
 
-    const fetchDisputes = async (page = 1) => {
+    const fetchDisputes = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -74,9 +111,9 @@ export default function AdminDisputes() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [statusFilter, priorityFilter])
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const token = localStorage.getItem("adminToken")
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/disputes/stats/overview`, {
@@ -89,12 +126,12 @@ export default function AdminDisputes() {
         } catch (err) {
             console.error("Error fetching stats:", err)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchDisputes()
         fetchStats()
-    }, [statusFilter, priorityFilter])
+    }, [fetchDisputes, fetchStats])
 
     const handleUpdateStatus = async (disputeId: string, status: string, priority?: string) => {
         try {

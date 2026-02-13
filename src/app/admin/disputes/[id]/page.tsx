@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useSocket } from "@/context/SocketContext";
+import { useCallback } from "react";
 
 export default function DisputeDetailsPage() {
   const { id } = useParams();
@@ -58,44 +59,7 @@ export default function DisputeDetailsPage() {
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [processingResolution, setProcessingResolution] = useState(false);
 
-  useEffect(() => {
-    fetchDispute();
-  }, [id]);
-
-  // Real-time listener
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewMessage = (data: { disputeId: string, message: any }) => {
-        if (data.disputeId === id) {
-            setDispute((prev: any) => {
-                if (!prev) return prev;
-                
-                // Avoid duplicate
-                const isDuplicate = prev.messages.some((m: any) => 
-                    m.sentAt === data.message.sentAt && m.message === data.message.message
-                );
-                if (isDuplicate) return prev;
-
-                return {
-                    ...prev,
-                    messages: [...prev.messages, data.message]
-                };
-            });
-        }
-    };
-
-    socket.on("disputeMessage", handleNewMessage);
-    return () => {
-        socket.off("disputeMessage", handleNewMessage);
-    };
-  }, [socket, id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [dispute?.messages]);
-
-  const fetchDispute = async () => {
+  const fetchDispute = useCallback(async () => {
     try {
       const token = localStorage.getItem("adminToken");
       if (!token) {
@@ -116,7 +80,11 @@ export default function DisputeDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, router, toast]);
+
+  useEffect(() => {
+    fetchDispute();
+  }, [fetchDispute]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

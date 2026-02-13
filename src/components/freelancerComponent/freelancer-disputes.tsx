@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -87,7 +87,7 @@ export default function FreelancerDisputes() {
 
     const userId = (session?.user as any)?.id
 
-    const fetchDisputes = async () => {
+    const fetchDisputes = useCallback(async () => {
         if (!userId) return
 
         try {
@@ -101,11 +101,11 @@ export default function FreelancerDisputes() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [userId])
 
     useEffect(() => {
         if (userId) fetchDisputes()
-    }, [userId])
+    }, [userId, fetchDisputes])
 
     // Real-time listener
     useEffect(() => {

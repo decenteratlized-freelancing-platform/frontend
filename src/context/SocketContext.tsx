@@ -89,10 +89,7 @@ export const SocketContextProvider = ({ children }: { children: React.ReactNode 
                 socketInstance.close();
             };
         } else {
-            if (socket) {
-                socket.close();
-                setSocket(null);
-            }
+            setSocket(null);
         }
     }, [user, toast]);
 

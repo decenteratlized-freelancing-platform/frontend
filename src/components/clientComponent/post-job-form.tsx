@@ -155,6 +155,15 @@ export default function PostJobForm() {
       return
     }
 
+    if (!(session?.user as any)?.walletAddress) {
+        toast({
+            title: "Wallet Required",
+            description: "You must link a crypto wallet to your profile before you can post jobs. Please go to Settings to link your wallet.",
+            variant: "destructive"
+        });
+        return;
+    }
+
     // 1. Validation
     if (formData.title.trim().length < 10) {
       toast({ title: "Validation Error", description: "Job title must be at least 10 characters.", variant: "destructive" })
