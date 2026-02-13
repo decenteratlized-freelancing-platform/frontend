@@ -597,7 +597,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                             ) : (
                                 <div className="flex items-center gap-4 text-zinc-500 text-sm">
                                     <div className="flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5" />
+                                        <Calendar className="w-3.5 h-3.5 text-zinc-100" />
                                         {new Date(contract.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </div>
                                     <div className="w-1 h-1 rounded-full bg-zinc-800" />

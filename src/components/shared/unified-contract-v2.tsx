@@ -407,7 +407,16 @@ export default function UnifiedContractV2({ userRole }: { userRole: "client" | "
               contract={selectedContract}
               userRole={userRole}
               userId={currentUser?._id || ""}
-              onBack={() => setSelectedContract(null)}
+              onBack={() => {
+                setSelectedContract(null);
+                // Trigger a refresh when coming back
+                if (currentUser) {
+                    fetchData(userRole, currentUser.email).then(data => {
+                        setContracts(data.contracts);
+                        setHirableProposals(data.hirableProposals);
+                    });
+                }
+              }}
             />
           </motion.div>
         ) : (

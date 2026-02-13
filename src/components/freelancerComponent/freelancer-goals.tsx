@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useCurrency } from "@/context/CurrencyContext";
-import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy, Sparkles } from 'lucide-react'
+import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy, Sparkles, Loader2 } from 'lucide-react'
+import { useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Goal {
-  id: number
+  _id: string
   title: string
   description: string
   progress: number
@@ -26,44 +28,11 @@ interface Goal {
   category: string
 }
 
-const initialGoals: Goal[] = [
-  {
-    id: 1,
-    title: "Earn 10 ETH This Year",
-    description: "Reach annual income target through high-value blockchain projects",
-    progress: 75,
-    target: 10,
-    current: 7.5,
-    deadline: "2024-12-31",
-    status: "in-progress",
-    category: "Financial",
-  },
-  {
-    id: 2,
-    title: "Complete 25 Projects",
-    description: "Deliver high-quality results to build a verified reputation",
-    progress: 68,
-    target: 25,
-    current: 17,
-    deadline: "2024-12-31",
-    status: "in-progress",
-    category: "Professional",
-  },
-  {
-    id: 3,
-    title: "Master Smart Contracts",
-    description: "Learn advanced Solidity patterns and security audits",
-    progress: 40,
-    target: 100,
-    current: 40,
-    deadline: "2024-06-30",
-    status: "in-progress",
-    category: "Skill Development",
-  },
-]
-
 export default function FreelancerGoals() {
-  const [goals, setGoals] = useState<Goal[]>(initialGoals)
+  const { data: session } = useSession()
+  const { toast } = useToast()
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [loading, setLoading] = useState(true)
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [showEditGoal, setShowEditGoal] = useState(false)
@@ -74,61 +43,126 @@ export default function FreelancerGoals() {
     description: "",
     target: "",
     deadline: "",
-    category: "",
+    category: "Professional",
   })
   const { getConvertedAmount } = useCurrency();
 
-  const handleAddGoal = () => {
-    if (newGoal.title && newGoal.description && newGoal.target && newGoal.deadline && newGoal.category) {
-      const targetValue = Number.parseFloat(newGoal.target);
-      if (targetValue <= 0) {
-        // You might want to add a toast here if available, or just return
-        alert("Target value must be greater than 0"); 
-        return;
-      }
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/goals`
 
-      const goal: Goal = {
-        id: Date.now(),
-        title: newGoal.title,
-        description: newGoal.description,
-        progress: 0,
-        target: targetValue,
-        current: 0,
-        deadline: newGoal.deadline,
-        status: "in-progress",
-        category: newGoal.category,
+  const fetchGoals = useCallback(async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem("token")
+      const res = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setGoals(data)
       }
-      setGoals([...goals, goal])
-      setNewGoal({ title: "", description: "", target: "", deadline: "", category: "" })
-      setShowAddGoal(false)
+    } catch (error) {
+      console.error("Error fetching goals:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [apiUrl])
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchGoals()
+    }
+  }, [session, fetchGoals])
+
+  const handleAddGoal = async () => {
+    if (newGoal.title && newGoal.target && newGoal.deadline && newGoal.category) {
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            ...newGoal,
+            target: parseFloat(newGoal.target)
+          })
+        })
+
+        if (res.ok) {
+          toast({ title: "Success", description: "Goal added successfully" })
+          fetchGoals()
+          setNewGoal({ title: "", description: "", target: "", deadline: "", category: "Professional" })
+          setShowAddGoal(false)
+        }
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to add goal", variant: "destructive" })
+      }
     }
   }
 
-  const handleEditGoal = () => {
+  const handleEditGoal = async () => {
     if (editingGoal) {
-      setGoals(goals.map((goal) => (goal.id === editingGoal.id ? editingGoal : goal)))
-      setEditingGoal(null)
-      setShowEditGoal(false)
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch(`${apiUrl}/${editingGoal._id}`, {
+          method: "PUT",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(editingGoal)
+        })
+
+        if (res.ok) {
+          toast({ title: "Success", description: "Goal updated successfully" })
+          fetchGoals()
+          setShowEditGoal(false)
+        }
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to update goal", variant: "destructive" })
+      }
     }
   }
 
-  const handleUpdateProgress = (goalId: number, newProgress: number) => {
-    setGoals(
-      goals.map((goal) =>
-        goal.id === goalId
-          ? {
-            ...goal,
-            progress: newProgress,
-            current: parseFloat(((newProgress / 100) * goal.target).toFixed(4)),
-            status: newProgress === 100 ? "completed" : "in-progress",
-          }
-          : goal,
-      ),
-    )
+  const handleUpdateProgress = async (goalId: string, newProgress: number) => {
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${apiUrl}/${goalId}/progress`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ progress: newProgress })
+      })
+
+      if (res.ok) {
+        // Optimistic update locally for smoothness if needed, 
+        // but fetchGoals is safer for final Showtime
+        setGoals(prev => prev.map(g => g._id === goalId ? { ...g, progress: newProgress } : g))
+      }
+    } catch (error) {
+      console.error("Failed to update progress", error)
+    }
   }
 
-  const handleDeleteGoal = (goalId: number) => {
-    setGoals(goals.filter((goal) => goal.id !== goalId))
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!confirm("Are you sure you want to delete this goal?")) return
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch(`${apiUrl}/${goalId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (res.ok) {
+        setGoals(goals.filter((goal) => goal._id !== goalId))
+        toast({ title: "Deleted", description: "Goal removed" })
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete goal", variant: "destructive" })
+    }
   }
 
   const openEditDialog = (goal: Goal) => {
@@ -152,6 +186,14 @@ export default function FreelancerGoals() {
       default:
         return "bg-zinc-800 text-zinc-400 border-zinc-700"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center bg-zinc-950">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+      </div>
+    )
   }
 
   const completedGoals = goals.filter((g) => g.status === "completed").length
@@ -316,7 +358,7 @@ export default function FreelancerGoals() {
           ) : (
             goals.map((goal, index) => (
               <motion.div
-                key={goal.id}
+                key={goal._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -361,7 +403,7 @@ export default function FreelancerGoals() {
 
                     <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
                       <div className="flex items-center gap-2 text-zinc-500 text-xs">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <Calendar className="w-3.5 h-3.5 text-zinc-100" />
                         <span>Ends {new Date(goal.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       </div>
                       
@@ -385,7 +427,7 @@ export default function FreelancerGoals() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteGoal(goal.id)}
+                          onClick={() => handleDeleteGoal(goal._id)}
                           className="h-8 w-8 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -421,7 +463,7 @@ export default function FreelancerGoals() {
                   onChange={(e) => {
                     const newProgress = Number.parseInt(e.target.value)
                     setSelectedGoalForProgress({ ...selectedGoalForProgress, progress: newProgress })
-                    handleUpdateProgress(selectedGoalForProgress.id, newProgress)
+                    handleUpdateProgress(selectedGoalForProgress._id, newProgress)
                   }}
                   className="w-full h-1.5 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
@@ -516,7 +558,7 @@ export default function FreelancerGoals() {
                 <Input
                   id="edit-deadline"
                   type="date"
-                  value={editingGoal.deadline}
+                  value={editingGoal.deadline ? new Date(editingGoal.deadline).toISOString().split('T')[0] : ''}
                   onChange={(e) => setEditingGoal({ ...editingGoal, deadline: e.target.value })}
                   className="bg-zinc-900 border-zinc-800 text-white h-12"
                 />

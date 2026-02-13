@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MilestoneStepper } from "./milestone-stepper";
 import { UserAvatar } from "./user-avatar";
-import { ChevronLeft, FileText, Bot, AlertTriangle, ThumbsUp, Loader2, Wallet, Send, Star, XCircle, MessageSquare, CheckCircle, Download, Check, AlertCircle, Info, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, FileText, Bot, AlertTriangle, ThumbsUp, Loader2, Wallet, Send, Star, XCircle, MessageSquare, CheckCircle, Download, Check, AlertCircle, Info, Plus, Trash2, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { getStatusStyles } from "@/lib/contract-utils";
 import RaiseDisputeModal from "./raise-dispute-modal";

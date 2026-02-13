@@ -379,7 +379,7 @@ export default function ClientDashboard() {
                             {`${job.budget} ETH`}
                           </span>
                           <div className="flex items-center gap-2 mt-1">
-                            <Calendar className="w-3 h-3 text-zinc-400" />
+                            <Calendar className="w-3 h-3 text-zinc-100" />
                             <span className="text-xs text-zinc-400">
                               {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
                             </span>
