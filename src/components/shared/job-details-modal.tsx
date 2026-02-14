@@ -86,19 +86,6 @@ export function JobDetailsModal({ job, isOpen, onClose, onApply }: JobDetailsMod
                             <StatCard icon={Layers} label="Type" value={job.budgetType || "Fixed Price"} color="bg-orange-600" />
                         </div>
 
-                        {/* Description Section */}
-                        <div className="space-y-4">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
-                                <Briefcase className="w-3 h-3 text-indigo-500" />
-                                Project Overview
-                            </h3>
-                            <div className="prose prose-invert max-w-none">
-                                <p className="text-zinc-300 leading-relaxed text-base bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/50">
-                                    {job.description}
-                                </p>
-                            </div>
-                        </div>
-
                         {/* Budget Highlight */}
                         <div className="bg-emerald-600 rounded-3xl p-6 flex items-center justify-between shadow-xl shadow-emerald-900/10">
                             <div className="flex items-center gap-4">
@@ -110,10 +97,18 @@ export function JobDetailsModal({ job, isOpen, onClose, onApply }: JobDetailsMod
                                     <p className="text-2xl font-black text-white">{job.budget} ETH</p>
                                 </div>
                             </div>
-                            <div className="hidden sm:block">
-                                <Badge className="bg-white/20 text-white border-none font-bold backdrop-blur-md">
-                                    Guaranteed Payment
-                                </Badge>
+                        </div>
+
+                        {/* Description Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                                <Briefcase className="w-3 h-3 text-indigo-500" />
+                                Project Overview
+                            </h3>
+                            <div className="prose prose-invert max-w-none">
+                                <p className="text-zinc-300 leading-relaxed text-base bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/50">
+                                    {job.description}
+                                </p>
                             </div>
                         </div>
 

@@ -707,6 +707,7 @@ export default function DiscoverFreelancersPage() {
             fullName: f.fullName || "N/A",
             email: f.email || "N/A",
             role: f.role || "freelancer",
+            walletAddress: f.walletAddress,
             skills: typeof settings.skills === 'string' && settings.skills ? settings.skills.split(',').map((s: string = "") => s.trim()) : [],
             bio: settings.bio || "No bio provided.",
             status: settings.availableForJobs ? "Available" : "Busy",

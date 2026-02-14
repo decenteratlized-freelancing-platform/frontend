@@ -52,6 +52,7 @@ export default function FreelancerSettings() {
     portfolioWebsite: "",
     location: "",
     image: "",
+    availableForJobs: true,
     // New Fields
     portfolio: [] as any[],
     socialLinks: { github: "", linkedin: "", twitter: "", website: "" },
@@ -164,6 +165,7 @@ export default function FreelancerSettings() {
             portfolioWebsite: profile.portfolioWebsite || "",
             location: profile.location || "",
             image: profile.image || "",
+            availableForJobs: s.availableForJobs !== false,
             portfolio: profile.portfolio || [],
             socialLinks: profile.socialLinks || { github: "", linkedin: "", twitter: "", website: "" },
             verifiedSkills: profile.verifiedSkills || [],
@@ -474,6 +476,7 @@ export default function FreelancerSettings() {
         skills: selectedSkills.length > 0 ? selectedSkills.join(",") : settings.skills.join(","),
         notifications,
         privacy,
+        availableForJobs: settings.availableForJobs,
         preferences: {
             ...preferences,
         },
@@ -619,7 +622,21 @@ export default function FreelancerSettings() {
           <TabsContent value="profile">
             <Card className="bg-white/5 backdrop-blur-sm border border-white/10">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">Profile Information</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-2xl font-bold text-white">Profile Information</CardTitle>
+                  <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Status</span>
+                      <span className={`text-xs font-bold ${settings.availableForJobs ? "text-emerald-400" : "text-orange-400"}`}>
+                        {settings.availableForJobs ? "Available" : "Busy"}
+                      </span>
+                    </div>
+                    <Switch 
+                      checked={settings.availableForJobs} 
+                      onCheckedChange={(v) => setSettings(prev => ({ ...prev, availableForJobs: v }))} 
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
