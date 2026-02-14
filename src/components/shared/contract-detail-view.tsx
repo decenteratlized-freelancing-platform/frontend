@@ -12,6 +12,7 @@ import { getStatusStyles } from "@/lib/contract-utils";
 import RaiseDisputeModal from "./raise-dispute-modal";
 import { toast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
+import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
 import { GeminiAssistant } from "./gemini-assistant";
 import jsPDF from "jspdf";
@@ -54,6 +55,7 @@ interface ContractDetailViewProps {
 export function ContractDetailView({ contract: initialContract, userRole, userId, onBack, onDisputeCreated }: ContractDetailViewProps) {
     const [localContract, setLocalContract] = useState(initialContract);
     const currency = 'ETH';
+    const router = useRouter();
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -1091,7 +1093,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                         <Button
                             onClick={() => {
                                 if (againstUserId) {
-                                    window.location.href = `/chat?receiverId=${againstUserId}`;
+                                    router.push(`/${userRole}/messages?receiverId=${againstUserId}`);
                                 } else {
                                     toast({ title: "Error", description: "Could not identify the other party for chat.", variant: "destructive" });
                                 }

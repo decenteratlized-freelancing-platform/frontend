@@ -596,41 +596,41 @@ export default function ClientGoals() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
-                    <Card className="bg-zinc-900 border-zinc-800 rounded-[2.5rem] overflow-hidden hover:border-zinc-700 transition-all duration-300 shadow-xl group">
-                      <CardHeader className="p-8 pb-4">
-                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                          <div className="flex-1 space-y-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <Badge className={`${getStatusColor(goal.status)} px-3 py-1 font-bold text-[10px] uppercase tracking-widest border`}>
+                    <Card className="bg-zinc-900 border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-700 transition-all duration-300 shadow-xl group">
+                      <CardHeader className="p-6 pb-2">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge className={`${getStatusColor(goal.status)} px-2 py-0.5 font-bold text-[9px] uppercase tracking-widest border`}>
                                 {goal.status.replace("-", " ")}
                               </Badge>
-                              <Badge className={`${getPriorityColor(goal.priority)} px-3 py-1 font-bold text-[10px] uppercase tracking-widest border`}>
+                              <Badge className={`${getPriorityColor(goal.priority)} px-2 py-0.5 font-bold text-[9px] uppercase tracking-widest border`}>
                                 {goal.priority}
                               </Badge>
-                              <div className="h-4 w-px bg-zinc-800 mx-1" />
-                              <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">#{goal._id.slice(-6)}</span>
+                              <div className="h-3 w-px bg-zinc-800 mx-1" />
+                              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">#{goal._id.slice(-6)}</span>
                             </div>
                             
                             <div>
-                              <CardTitle className="text-2xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">{goal.title}</CardTitle>
-                              <CardDescription className="text-zinc-400 text-base leading-relaxed line-clamp-2">
+                              <CardTitle className="text-xl font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">{goal.title}</CardTitle>
+                              <CardDescription className="text-zinc-400 text-sm leading-relaxed line-clamp-2">
                                 {goal.description}
                               </CardDescription>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-6 text-xs font-bold uppercase tracking-widest">
-                              <span className="flex items-center gap-2 text-zinc-500">
-                                <Calendar className="w-4 h-4 text-zinc-100" />
+                            <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+                              <span className="flex items-center gap-1.5 text-zinc-500">
+                                <Calendar className="w-3.5 h-3.5 text-zinc-100" />
                                 <span className="text-zinc-400">Due:</span> {new Date(goal.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
-                              <span className="flex items-center gap-2 text-zinc-500">
-                                <Tag className="w-4 h-4 text-indigo-500" />
+                              <span className="flex items-center gap-1.5 text-zinc-500">
+                                <Tag className="w-3.5 h-3.5 text-indigo-500" />
                                 <span className="text-zinc-400">Category:</span> {goal.category}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <Dialog
                               open={isEditDialogOpen && editingGoal?._id === goal._id}
                               onOpenChange={(open) => {
@@ -643,9 +643,9 @@ export default function ClientGoals() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => setEditingGoal({ ...goal })}
-                                  className="w-12 h-12 border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-2xl transition-all"
+                                  className="w-10 h-10 border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-all"
                                 >
-                                  <Edit className="w-5 h-5 stroke-[2.5]" />
+                                  <Edit className="w-4 h-4 stroke-[2.5]" />
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl p-0 gap-0 overflow-hidden rounded-[2rem]">
@@ -723,26 +723,26 @@ export default function ClientGoals() {
                               variant="outline"
                               size="icon"
                               onClick={() => deleteGoal(goal._id)}
-                              className="w-12 h-12 border-zinc-800 bg-zinc-900/50 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-2xl transition-all"
+                              className="w-10 h-10 border-zinc-800 bg-zinc-900/50 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                             >
-                              <Trash2 className="w-5 h-5 stroke-[2.5]" />
+                              <Trash2 className="w-4 h-4 stroke-[2.5]" />
                             </Button>
                           </div>
                         </div>
                       </CardHeader>
 
-                      <CardContent className="p-8 space-y-8">
+                      <CardContent className="p-6 space-y-6">
                         {/* Progress Section */}
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Completion Velocity</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                              <span className="text-xl font-black text-white">{goal.progress}%</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Progress</span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                              <span className="text-lg font-black text-white">{goal.progress}%</span>
                             </div>
                           </div>
                           <div className="relative">
-                            <Progress value={goal.progress} className="h-3 bg-zinc-800 rounded-full overflow-hidden" />
+                            <Progress value={goal.progress} className="h-2 bg-zinc-800 rounded-full overflow-hidden" />
                             <div 
                               className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full opacity-50 blur-sm -z-10" 
                               style={{ width: `${goal.progress}%` }}
@@ -751,17 +751,17 @@ export default function ClientGoals() {
                         </div>
 
                         {/* Milestones */}
-                        <div className="space-y-4 pt-4">
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-2">
+                        <div className="space-y-3 pt-2">
+                          <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 flex items-center gap-2">
                             <ListTodo className="w-3 h-3" />
                             Tactical Steps ({goal.milestones.length})
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {goal.milestones.map((milestone) => (
                               <motion.div
                                 key={milestone._id || milestone.id}
-                                whileHover={{ scale: 1.02 }}
-                                className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
+                                whileHover={{ scale: 1.01 }}
+                                className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                                   milestone.completed 
                                     ? "bg-emerald-500/5 border-emerald-500/20" 
                                     : "bg-zinc-950/50 border-zinc-800 hover:border-zinc-700"
@@ -770,21 +770,21 @@ export default function ClientGoals() {
                               >
                                 <Checkbox
                                   checked={milestone.completed}
-                                  className={`w-6 h-6 rounded-lg border-zinc-700 transition-all ${
+                                  className={`w-5 h-5 rounded-md border-zinc-700 transition-all ${
                                     milestone.completed 
                                       ? "bg-emerald-500 border-emerald-500 text-white" 
                                       : "bg-zinc-900"
                                   }`}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-bold truncate ${milestone.completed ? "text-zinc-500 line-through" : "text-white"}`}>
+                                  <p className={`text-xs font-bold truncate ${milestone.completed ? "text-zinc-500 line-through" : "text-white"}`}>
                                     {milestone.title}
                                   </p>
-                                  <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-0.5">
-                                    Target: {new Date(milestone.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                  <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-0.5">
+                                    {new Date(milestone.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                   </p>
                                 </div>
-                                <ChevronRight className={`w-4 h-4 ${milestone.completed ? "text-emerald-500/50" : "text-zinc-800"}`} />
+                                <ChevronRight className={`w-3 h-3 ${milestone.completed ? "text-emerald-500/50" : "text-zinc-800"}`} />
                               </motion.div>
                             ))}
                           </div>

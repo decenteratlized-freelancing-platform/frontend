@@ -2,25 +2,13 @@
 import {
   Search,
   Filter,
-  Clock,
-  Wallet,
-  MapPin,
-  Heart,
-  Star,
-  Users,
-  Send,
   Briefcase,
-  CheckCircle,
-  Tag,
-  Loader2,
-  ChevronDown
+  Loader2
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -32,6 +20,8 @@ import { toast } from "@/hooks/use-toast";
 import { JobDetailsModal } from "../shared/job-details-modal";
 import { ProposalSubmitModal } from "../shared/proposal-submit-modal";
 import { useCurrency } from "@/context/CurrencyContext";
+import { JobCard } from "../shared/job-card";
+import { useSearchParams } from "next/navigation";
 
 const categories = [
     { value: "all", label: "All Categories" },
@@ -50,8 +40,10 @@ const experienceLevels = [
     { value: "expert", label: "Expert" },
 ];
 
-export default function BrowseJobs() {
+function BrowseJobsContent() {
   const { data: session } = useSession()
+  const searchParams = useSearchParams();
+  const applyId = searchParams.get("apply");
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -118,6 +110,16 @@ export default function BrowseJobs() {
   useEffect(() => {
     fetchJobs()
   }, [fetchJobs])
+
+  useEffect(() => {
+    if (applyId && jobs.length > 0) {
+      const jobToApply = jobs.find(j => j._id === applyId);
+      if (jobToApply) {
+        setSelectedJob(jobToApply);
+        setShowProposalDialog(true);
+      }
+    }
+  }, [applyId, jobs]);
 
   useEffect(() => {
     if (session?.user) {
@@ -223,7 +225,7 @@ export default function BrowseJobs() {
               placeholder="Search by role, tech stack, or keywords..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl pl-11 pr-4 py-4 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-700 transition-all text-sm h-14"
+              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3.5 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-700 transition-all text-sm h-14"
             />
           </div>
           <div className="flex gap-2">
@@ -312,139 +314,24 @@ export default function BrowseJobs() {
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence>
           {sortedJobs.length > 0 ? sortedJobs.map((job, index) => (
-            <motion.div
+            <JobCard
               key={job._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Card className="bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group overflow-hidden">
-                <CardContent className="p-8">
-                  <div className="flex flex-col lg:flex-row gap-8">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-none text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
-                            New Project
-                          </Badge>
-                          <span className="text-zinc-600 text-xs font-medium">#{job._id.slice(-6)}</span>
-                        </div>
-                        {session?.user?.role === "freelancer" && (
-                          <button
-                            onClick={() => toggleSaveJob(job._id)}
-                            className={`p-2 rounded-xl transition-colors ${
-                              savedJobs.includes(job._id) ? "bg-pink-500/10 text-pink-500" : "text-zinc-600 hover:text-zinc-400"
-                            }`}
-                          >
-                            <Heart className={`w-5 h-5 ${savedJobs.includes(job._id) ? "fill-current" : ""}`} />
-                          </button>
-                        )}
-                      </div>
-
-                      <h3 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors mb-3 leading-tight">
-                        {job.title}
-                      </h3>
-                      
-                      <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-2 max-w-3xl">
-                        {job.description}
-                      </p>
-
-                      <div className="flex flex-wrap gap-2 mb-8">
-                        {job.skills && job.skills.map((skill: string) => (
-                          <div key={skill} className="bg-zinc-950 text-zinc-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg border border-zinc-800">
-                            {skill}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-8 pt-6 border-t border-zinc-800/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-800 shadow-inner">
-                            <Tag className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <div>
-                            <span className="font-semibold text-white">
-                              {getConvertedAmount(job.budget)}
-                            </span>
-                            <p className="text-xs text-gray-400">Budget</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-800 shadow-inner">
-                            <Clock className="w-4 h-4 text-blue-400" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Posted On</p>
-                            <p className="text-white font-bold text-base">{new Date(job.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-800 shadow-inner">
-                            <Users className="w-4 h-4 text-emerald-400" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Applications</p>
-                            <p className="text-white font-bold text-base">{job.proposalsCount || 0}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="lg:w-64 flex flex-col justify-between pt-4 lg:pt-0">
-                      <div className="bg-zinc-950/50 rounded-2xl p-5 border border-zinc-800">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600 mb-4">Client Integrity</p>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-white font-bold text-sm border border-zinc-700">
-                            {job.client?.fullName?.[0] || 'C'}
-                          </div>
-                          <div>
-                            <p className="text-white font-bold text-sm truncate">{job.client?.fullName || 'Verified Client'}</p>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                              <span className="text-[10px] font-bold text-zinc-400">4.9/5.0</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 mt-6">
-                        <Button
-                          variant="ghost"
-                          className="w-full h-12 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl font-bold text-xs uppercase tracking-widest border border-transparent hover:border-zinc-700"
-                          onClick={() => {
-                            setSelectedJob(job);
-                            setIsDetailsModalOpen(true);
-                          }}
-                        >
-                          Details
-                        </Button>
-                        
-                        {submittedProposals.includes(job._id) ? (
-                          <Button disabled className="w-full h-12 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl font-bold text-xs uppercase tracking-widest">
-                            <CheckCircle className="w-4 h-4 mr-2" /> Applied
-                          </Button>
-                        ) : (
-                          <Button
-                            className="w-full h-12 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-white/5"
-                            onClick={() => {
-                              setSelectedJob(job);
-                              setShowProposalDialog(true);
-                            }}
-                          >
-                            Apply Now
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+              job={job}
+              variant="freelancer"
+              isSaved={savedJobs.includes(job._id)}
+              onSave={toggleSaveJob}
+              onViewDetails={(j) => {
+                setSelectedJob(j);
+                setIsDetailsModalOpen(true);
+              }}
+              onApply={(j) => {
+                setSelectedJob(j);
+                setShowProposalDialog(true);
+              }}
+              hasApplied={submittedProposals.includes(job._id)}
+            />
           )) : (
-            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+            <div className="text-center py-20 bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800">
                 <Search className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
                 <p className="text-zinc-500">No jobs match your search criteria.</p>
             </div>
@@ -464,7 +351,19 @@ export default function BrowseJobs() {
         job={selectedJob}
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
+        onApply={(j) => {
+          setSelectedJob(j);
+          setShowProposalDialog(true);
+        }}
       />
     </div>
   )
+}
+
+export default function BrowseJobs() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-zinc-950"><Loader2 className="w-10 h-10 animate-spin text-blue-500" /></div>}>
+            <BrowseJobsContent />
+        </Suspense>
+    )
 }

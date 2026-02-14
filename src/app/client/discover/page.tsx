@@ -145,9 +145,6 @@ const FreelancerCard = ({
             {/* Rate removed as per fixed-price model */}
           </div>
           <div className="flex items-center gap-3">
-            {!freelancer.walletAddress && (
-                <Badge variant="outline" className="text-[9px] border-red-500/50 text-red-400 bg-red-500/5 px-2 py-0">No Wallet</Badge>
-            )}
             <div className="flex items-center gap-1.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${freelancer.status === "Available" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-orange-500"}`} />
                 <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{freelancer.status}</span>

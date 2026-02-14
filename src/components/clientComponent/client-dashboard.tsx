@@ -13,9 +13,6 @@ import {
   Clock,
   Eye,
   TrendingUp,
-  CheckCircle,
-  Calendar,
-  MessageSquare,
   Loader2,
 } from "lucide-react"
 import Link from "next/link"
@@ -27,30 +24,7 @@ import { JobDetailsModal } from "@/components/shared/job-details-modal"
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner"
 import { useToast } from "@/hooks/use-toast"
 import { NotificationList } from "@/components/shared/NotificationList"
-
-const recentActivity = [
-  {
-    id: "1",
-    type: "completion",
-    title: "Project completed",
-    time: "2 hours ago",
-    description: "Mobile app design delivered by Sarah Wilson",
-  },
-  {
-    id: "2",
-    type: "message",
-    title: "New message",
-    time: "4 hours ago",
-    description: "John Doe sent project update",
-  },
-  {
-    id: "3",
-    type: "update",
-    title: "Milestone reached",
-    time: "1 day ago",
-    description: "E-commerce platform 75% complete",
-  },
-]
+import { JobCard } from "../shared/job-card"
 
 export default function ClientDashboard() {
   const { data: session } = useSession();
@@ -185,31 +159,7 @@ export default function ClientDashboard() {
   }, [session]);
 
   useEffect(() => {
-    const fetchJobsList = async () => {
-      if (session?.user?.email) {
-        try {
-          const token = await ensureToken();
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/my-jobs?email=${session.user.email}`,
-            {
-                headers: token ? { Authorization: `Bearer ${token}` } : {}
-            }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            setJobs(data);
-          }
-        } catch (error) {
-          console.error("Error fetching jobs list:", error);
-        } finally {
-          setJobsLoading(false);
-        }
-      }
-    };
-
-    if (session?.user?.email) {
-      fetchJobsList();
-    }
+    fetchJobsList();
   }, [session]);
 
   const stats = [
@@ -353,112 +303,30 @@ export default function ClientDashboard() {
               <CardTitle className="text-2xl font-bold text-white">Recent Projects</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {jobsLoading ? (
-                  <p className="text-zinc-400">Loading projects...</p>
+                  <p className="text-zinc-400 text-center py-10 flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading projects...
+                  </p>
                 ) : jobs.length === 0 ? (
                   <p className="text-zinc-400">No projects found. Post a job to get started!</p>
                 ) : (
                   jobs.map((job, index) => (
-                    <motion.div
+                    <JobCard
                       key={job._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                      className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="font-semibold text-white mb-1">{job.title}</h3>
-                          <p className="text-sm text-zinc-400">
-                            {job.proposalsCount} Proposals
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-white">
-                            {`${job.budget} ETH`}
-                          </span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Calendar className="w-3 h-3 text-zinc-100" />
-                            <span className="text-xs text-zinc-400">
-                              {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-400">Status</span>
-                          <span className="text-white font-semibold capitalize">{job.status.replace('_', ' ')}</span>
-                        </div>
-                        <div className="w-full bg-zinc-800 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              job.status === 'completed' ? 'bg-emerald-500' : 
-                              job.status === 'in_progress' ? 'bg-blue-500' : 
-                              'bg-zinc-600'
-                            }`}
-                            style={{ width: job.status === 'completed' ? '100%' : job.status === 'in_progress' ? '50%' : '10%' }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            job.status === "completed"
-                            ? "bg-green-500/20 text-green-300"
-                            : job.status === "in_progress"
-                              ? "bg-blue-500/20 text-blue-300"
-                              : job.status === "draft"
-                                ? "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"
-                                : "bg-yellow-500/20 text-yellow-300"
-                            }`}
-                        >
-                          {job.status === "draft" ? "DRAFT" : job.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {job.status === "draft" && (
-                            <Button
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white border-none"
-                              onClick={() => handlePublishJob(job._id)}
-                              disabled={publishingId === job._id}
-                            >
-                              {publishingId === job._id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                              ) : (
-                                <Sparkles className="w-3.5 h-3.5 mr-1" />
-                              )}
-                              Publish
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-white/20 text-white hover:bg-white/10 bg-transparent hover:text-white"
-                            onClick={() => {
-                              setSelectedJob(job)
-                              setIsDetailsModalOpen(true)
-                            }}
-                          >
-                            View Job
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-white/20 text-white hover:bg-white/10 bg-transparent hover:text-white"
-                            onClick={() => {
-                              setSelectedJobId(job._id)
-                              setIsReviewModalOpen(true)
-                            }}
-                          >
-                            View Proposals ({job.proposalsCount})
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
+                      job={job}
+                      variant="client"
+                      onViewDetails={(j) => {
+                        setSelectedJob(j)
+                        setIsDetailsModalOpen(true)
+                      }}
+                      onPublish={handlePublishJob}
+                      onViewProposals={(jobId) => {
+                        setSelectedJobId(jobId)
+                        setIsReviewModalOpen(true)
+                      }}
+                      isPublishing={publishingId === job._id}
+                    />
                   ))
                 )}
               </div>

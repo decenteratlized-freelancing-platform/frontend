@@ -33,6 +33,7 @@ interface JobDetailsModalProps {
     job: Job | null
     isOpen: boolean
     onClose: () => void
+    onApply?: (job: Job) => void
 }
 
 const StatCard = ({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) => (
@@ -47,7 +48,7 @@ const StatCard = ({ icon: Icon, label, value, color }: { icon: any, label: strin
     </div>
 );
 
-export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) {
+export function JobDetailsModal({ job, isOpen, onClose, onApply }: JobDetailsModalProps) {
     if (!job) return null;
 
     return (
@@ -141,9 +142,17 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                     >
                         Dismiss
                     </button>
-                    <button className="flex-1 bg-white hover:bg-zinc-200 text-black font-black py-4 rounded-2xl transition-all text-sm shadow-xl shadow-white/5">
-                        Apply Now
-                    </button>
+                    {onApply && (
+                        <button 
+                            onClick={() => {
+                                onApply(job);
+                                onClose();
+                            }}
+                            className="flex-1 bg-white hover:bg-zinc-200 text-black font-black py-4 rounded-2xl transition-all text-sm shadow-xl shadow-white/5"
+                        >
+                            Apply Now
+                        </button>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
