@@ -21,6 +21,7 @@ import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { ethers } from "ethers";
 import { toast } from "@/hooks/use-toast";
 import { GeminiAssistant } from "./gemini-assistant";
+import { HelpTooltip } from "./help-tooltip";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -607,6 +608,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                     <div className="w-1 h-1 rounded-full bg-zinc-800" />
                                     <div className="flex items-center gap-1.5 font-medium text-zinc-400">
                                         Escrow Protected
+                                        <HelpTooltip content="Funds are securely held in a smart contract and only released when you approve a milestone." />
                                     </div>
                                 </div>
                             )}
@@ -725,6 +727,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                         <div className="bg-zinc-950/20 rounded-2xl p-5 border border-zinc-800/50">
                             <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">
                                 <Briefcase className="w-3.5 h-3.5 text-blue-500" /> Network
+                                <HelpTooltip content="We are using the Sepolia test network. Transactions use 'test ETH' which has no real value, allowing us to safely test the escrow protocol." />
                             </div>
                             <p className="text-white font-bold text-2xl uppercase tracking-tight">Ethereum Sepolia</p>
                         </div>

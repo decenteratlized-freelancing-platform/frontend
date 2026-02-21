@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useCurrency } from "@/context/CurrencyContext"
+import { HelpTooltip } from "../shared/help-tooltip"
 
 // Common skills list for autocomplete
 const availableSkills = [
@@ -303,7 +304,10 @@ export default function PostJobForm() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <label className="text-sm font-medium text-gray-300">Fixed Price (ETH)</label>
+              <div className="flex items-center gap-1">
+                <label className="text-sm font-medium text-gray-300">Fixed Price (ETH)</label>
+                <HelpTooltip content="The amount you will pay for the project. Funds are locked in a secure Escrow smart contract and released only when milestones are completed. A small 'Gas' fee is required to process this on the blockchain." />
+              </div>
               <Input
                 placeholder="e.g. 2.5"
                 type="number"

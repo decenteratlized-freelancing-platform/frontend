@@ -8,6 +8,7 @@ import { useWalletConnection } from "@/hooks/useWalletConnection"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { HelpTooltip } from "./help-tooltip"
 
 export default function WalletManagement() {
     const { address, walletLinkedAt, isConnecting, connectWallet, disconnectWallet } = useWalletConnection()
@@ -133,7 +134,10 @@ export default function WalletManagement() {
 
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                                 <div>
-                                    <p className="text-xs text-gray-500 mb-1">Balance</p>
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <p className="text-xs text-gray-500">Balance</p>
+                                        <HelpTooltip content="Your available funds on the blockchain. 1 ETH = 10^18 Wei (the smallest unit)." />
+                                    </div>
                                     <p className="text-lg font-semibold text-white">
                                         {loadingBalance ? (
                                             <span className="text-gray-500">Loading...</span>
@@ -145,7 +149,10 @@ export default function WalletManagement() {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500 mb-1">Network</p>
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <p className="text-xs text-gray-500">Network</p>
+                                        <HelpTooltip content="Sepolia is a public test network where you can test blockchain features without using real money." />
+                                    </div>
                                     <p className="text-lg font-semibold text-white">Sepolia Testnet</p>
                                 </div>
                             </div>
