@@ -24,6 +24,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { CurrencyLogo } from "./currency-logo";
 
 interface ProposalSubmitModalProps {
   job: any;
@@ -153,9 +154,12 @@ export function ProposalSubmitModal({
             {/* Proposed Rate */}
             <div className="space-y-3">
               <Label htmlFor="rate" className="text-zinc-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <Target className="w-3.5 h-3.5" /> Your Proposed Rate (ETH)
+                <Target className="w-3.5 h-3.5" /> Your Proposed Rate ({job.paymentCurrency || "ETH"})
               </Label>
               <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                  <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={16} />
+                </div>
                 <Input
                   id="rate"
                   type="number"
@@ -164,13 +168,13 @@ export function ProposalSubmitModal({
                   placeholder="0.00"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-2xl h-14 pl-4 focus:ring-blue-500/20"
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-2xl h-14 pl-12 focus:ring-blue-500/20"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold text-xs uppercase tracking-widest pointer-events-none">
-                  ETH
+                  {job.paymentCurrency || "ETH"}
                 </div>
               </div>
-              <p className="text-[10px] text-zinc-500 px-1">Clients budget: {job.budget} ETH</p>
+              <p className="text-[10px] text-zinc-500 px-1">Clients budget: {job.budget} {job.paymentCurrency || "ETH"}</p>
             </div>
 
             {/* Delivery Time */}

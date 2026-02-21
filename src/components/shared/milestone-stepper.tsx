@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Circle, Dot, Clock, ShieldCheck, ArrowRight, Unlock, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CurrencyLogo } from "./currency-logo";
 
 const getStatusIcon = (status?: string) => {
     const s = (status ?? "").toString().toLowerCase();
@@ -89,9 +90,12 @@ export function MilestoneStepper({ milestones, currency, userRole, contractStatu
                                         <h4 className="text-lg font-bold text-white mt-1">{milestone.description}</h4>
                                     </div>
                                     <div className="flex flex-col items-end gap-2 ml-4">
-                                        <span className="text-xs font-bold text-zinc-400 whitespace-nowrap bg-white/5 px-2 py-1 rounded">
-                                            {milestone.amount} {currency || 'ETH'}
-                                        </span>
+                                        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded">
+                                            <CurrencyLogo currency={currency || "ETH"} size={12} />
+                                            <span className="text-xs font-bold text-zinc-400 whitespace-nowrap">
+                                                {milestone.amount} {currency || 'ETH'}
+                                            </span>
+                                        </div>
                                         {isCompleted && (
                                             <Button size="sm" disabled className="h-7 text-[10px] uppercase tracking-wider font-bold bg-zinc-800 text-emerald-500 opacity-100 rounded-lg">
                                                 Released

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -52,7 +52,7 @@ export default function AdminTickets() {
     const [reply, setReply] = useState("")
     const [stats, setStats] = useState({ total: 0, open: 0, inProgress: 0, resolved: 0 })
 
-    const fetchTickets = async (page = 1) => {
+    const fetchTickets = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -75,9 +75,9 @@ export default function AdminTickets() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [statusFilter])
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const token = localStorage.getItem("adminToken")
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/tickets/stats/overview`, {
@@ -90,12 +90,12 @@ export default function AdminTickets() {
         } catch (err) {
             console.error("Error:", err)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchTickets()
         fetchStats()
-    }, [statusFilter])
+    }, [fetchTickets, fetchStats])
 
     const handleReply = async () => {
         if (!selectedTicket || !reply.trim()) return

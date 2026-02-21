@@ -172,9 +172,9 @@ export default function FreelancerSettings() {
           });
 
           if (data.settings) {
-            setNotifications(data.settings.notifications || notifications);
-            setPrivacy(data.settings.privacy || privacy);
-            setPreferences(data.settings.preferences || preferences);
+            setNotifications(prev => data.settings.notifications || prev);
+            setPrivacy(prev => data.settings.privacy || prev);
+            setPreferences(prev => data.settings.preferences || prev);
           }
         }
       } catch (error) {

@@ -57,6 +57,8 @@ export default function ClientGoals() {
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newGoal, setNewGoal] = useState({
@@ -163,21 +165,26 @@ export default function ClientGoals() {
     }
   }
 
-  const deleteGoal = async (goalId: string) => {
-    if (!confirm("Are you sure you want to delete this goal?")) return
+  const deleteGoal = async () => {
+    if (!goalToDelete) return
+    setIsSubmitting(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`${apiUrl}/${goalId}`, {
+      const res = await fetch(`${apiUrl}/${goalToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (res.ok) {
         toast({ title: "Success", description: "Goal deleted" })
-        setGoals(goals.filter((goal) => goal._id !== goalId))
+        setGoals(goals.filter((goal) => goal._id !== goalToDelete))
+        setIsDeleteDialogOpen(false)
+        setGoalToDelete(null)
       }
     } catch (error) {
       toast({ title: "Error", description: "Failed to delete goal", variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -722,7 +729,10 @@ export default function ClientGoals() {
                             <Button
                               variant="outline"
                               size="icon"
-                              onClick={() => deleteGoal(goal._id)}
+                              onClick={() => {
+                                setGoalToDelete(goal._id)
+                                setIsDeleteDialogOpen(true)
+                              }}
                               className="w-10 h-10 border-zinc-800 bg-zinc-900/50 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                             >
                               <Trash2 className="w-4 h-4 stroke-[2.5]" />
@@ -797,6 +807,39 @@ export default function ClientGoals() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-md p-0 overflow-hidden rounded-[2rem]">
+          <div className="p-8 pb-6 border-b border-zinc-800 bg-rose-500/5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center border border-rose-500/20">
+                <Trash2 className="w-6 h-6 text-rose-500 stroke-[2.5]" />
+              </div>
+              <DialogTitle className="text-xl font-black text-white tracking-tight">Confirm Deletion</DialogTitle>
+            </div>
+            <DialogDescription className="text-zinc-500 font-medium mt-2">
+              Are you sure you want to permanently remove this strategic goal? This action cannot be reversed.
+            </DialogDescription>
+          </div>
+          <div className="p-8 flex gap-4 bg-zinc-900/20">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="flex-1 border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 py-6 rounded-2xl font-bold"
+            >
+              CANCEL
+            </Button>
+            <Button
+              onClick={deleteGoal}
+              disabled={isSubmitting}
+              className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black py-6 rounded-2xl shadow-xl shadow-rose-500/20 transition-all"
+            >
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "DELETE GOAL"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

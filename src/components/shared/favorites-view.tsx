@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
     const [isProposalModalOpen, setIsProposalModalOpen] = useState(false)
     const { getConvertedAmount } = useCurrency()
 
-    const fetchFavorites = async () => {
+    const fetchFavorites = useCallback(async () => {
         if (status === "loading") return;
         
         try {
@@ -72,11 +72,11 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
         } finally {
             setLoading(false)
         }
-    }
+    }, [session, status])
 
     useEffect(() => {
         fetchFavorites()
-    }, [session, status])
+    }, [fetchFavorites])
 
     const toggleFreelancerFavorite = async (freelancerId: string) => {
         try {

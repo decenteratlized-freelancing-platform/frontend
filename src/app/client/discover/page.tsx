@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast, toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CurrencyLogo } from "@/components/shared/currency-logo";
 
 // Define the Freelancer interface to match backend data
 interface Freelancer {
@@ -335,7 +336,15 @@ const FreelancerProfileModal = ({
                 {[
                   { label: "Rating", value: `${freelancer.averageRating || "N/A"}` },
                   { label: "Done", value: `${freelancer.projectsCompleted}` },
-                  { label: "Earned", value: getConvertedAmount(freelancer.totalEarned) },
+                  { 
+                    label: "Earned", 
+                    value: (
+                      <div className="flex items-center gap-1">
+                        <CurrencyLogo currency="ETH" size={12} />
+                        <span>{getConvertedAmount(freelancer.totalEarned)}</span>
+                      </div>
+                    )
+                  },
                   { 
                     label: "Wallet", 
                     value: freelancer.walletAddress 
@@ -346,7 +355,7 @@ const FreelancerProfileModal = ({
                 ].map((stat) => (
                   <div key={stat.label} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-4">
                     <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold mb-1">{stat.label}</p>
-                    <p className={`font-bold text-base truncate ${stat.isWarning ? 'text-red-400' : 'text-zinc-200'}`}>{stat.value}</p>
+                    <div className={`font-bold text-base truncate ${stat.isWarning ? 'text-red-400' : 'text-zinc-200'}`}>{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -600,7 +609,7 @@ const HireFreelancerModal = ({
                   <option value="" disabled>-- Select a published job --</option>
                   {jobs.map((job) => (
                     <option key={job._id} value={job._id}>
-                      {job.title} ({job.budget} ETH)
+                      {job.title} ({job.budget} {job.paymentCurrency || "ETH"})
                     </option>
                   ))}
                 </select>

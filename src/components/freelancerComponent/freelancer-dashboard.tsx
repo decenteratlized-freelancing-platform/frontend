@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useCurrency } from "@/context/CurrencyContext";
 import { useRouter } from "next/navigation";
 import {
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner";
 import { NotificationList } from "@/components/shared/NotificationList";
 import { GettingStarted } from "../shared/getting-started";
+import { CurrencyLogo } from "../shared/currency-logo";
 // removed server model import
 
 
@@ -77,7 +78,7 @@ const getStatusText = (status: string) => {
 }
 
 export default function FreelancerDashboard() {
-  const { getFormattedAmount } = useCurrency();
+  const { getFormattedAmount, getConvertedAmount } = useCurrency();
   const user = useCurrentUser();
   const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("Guest");
@@ -123,39 +124,37 @@ export default function FreelancerDashboard() {
 
 
 
-  useEffect(() => {
+  const fetchDashboardStats = useCallback(async () => {
 
-    const fetchDashboardStats = async () => {
+    const email = session?.user?.email || localStorage.getItem("email");
 
-      const email = session?.user?.email || localStorage.getItem("email");
+    if (email) {
 
-      if (email) {
+      try {
 
-        try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/freelancer/summary?email=${email}`);
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dashboard/freelancer/summary?email=${email}`);
+        if (res.ok) {
 
-          if (res.ok) {
+          const data = await res.json();
 
-            const data = await res.json();
-
-            setDashboardStats(data);
-
-          }
-
-        } catch (error) {
-
-          console.error("Error fetching dashboard stats:", error);
+          setDashboardStats(data);
 
         }
 
+      } catch (error) {
+
+        console.error("Error fetching dashboard stats:", error);
+
       }
 
-    };
+    }
 
+  }, [session?.user?.email]);
+
+  useEffect(() => {
     fetchDashboardStats();
-
-  }, [session]);
+  }, [fetchDashboardStats]);
 
 
 
@@ -197,45 +196,41 @@ export default function FreelancerDashboard() {
 
 
 
-  useEffect(() => {
+  const fetchProposals = useCallback(async () => {
 
-    const fetchProposals = async () => {
+    const email = session?.user?.email || localStorage.getItem("email");
 
-      const email = session?.user?.email || localStorage.getItem("email");
+    if (email) {
 
-      if (email) {
+      try {
 
-        try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/my-proposals?email=${email}`);
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/my-proposals?email=${email}`);
+        if (res.ok) {
 
-          if (res.ok) {
+          const data = await res.json();
 
-            const data = await res.json();
-
-            setProposals(data);
-
-          }
-
-        } catch (error) {
-
-          console.error("Error fetching proposals:", error);
-
-        } finally {
-
-          setLoadingProposals(false);
+          setProposals(data);
 
         }
 
+      } catch (error) {
+
+        console.error("Error fetching proposals:", error);
+
+      } finally {
+
+        setLoadingProposals(false);
+
       }
 
-    };
+    }
 
+  }, [session?.user?.email]);
 
-
+  useEffect(() => {
     fetchProposals();
-
-  }, [session]);
+  }, [fetchProposals]);
 
 
 
@@ -338,6 +333,8 @@ export default function FreelancerDashboard() {
     }
   ];
 
+  const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
+
 
 
   return (
@@ -381,7 +378,9 @@ export default function FreelancerDashboard() {
 
       </motion.div>
 
-      <GettingStarted steps={gettingStartedSteps} />
+      {!allStepsCompleted && (
+        <GettingStarted steps={gettingStartedSteps} />
+      )}
 
 
 
@@ -393,7 +392,7 @@ export default function FreelancerDashboard() {
 
           title: "Total Earnings",
 
-          value: getFormattedAmount(dashboardStats.totalEarnings),
+          value: getFormattedAmount(dashboardStats.totalEarnings, (dashboardStats as any).primaryCurrency || "ETH"),
 
           change: "+18%",
 
@@ -471,7 +470,10 @@ export default function FreelancerDashboard() {
 
                     <p className="text-sm font-medium text-gray-300">{stat.title}</p>
 
-                    <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {stat.title === "Total Earnings" && <CurrencyLogo currency={(dashboardStats as any).primaryCurrency || "ETH"} size={18} />}
+                      <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    </div>
 
                     {/* <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p> */}
 
@@ -603,11 +605,12 @@ export default function FreelancerDashboard() {
 
                                                     <p className="text-xs text-gray-400">Client Budget</p>
 
-                                                    <p className="text-sm font-medium text-white">
-
-                                                      {`${proposal.job?.budget} ETH`}
-
-                                                    </p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                      <CurrencyLogo currency={proposal.job?.paymentCurrency || "ETH"} size={12} />
+                                                      <p className="text-sm font-medium text-white">
+                                                        {getConvertedAmount(proposal.job?.budget || 0, proposal.job?.paymentCurrency || "ETH")}
+                                                      </p>
+                                                    </div>
 
                                                   </div>
 
@@ -615,11 +618,12 @@ export default function FreelancerDashboard() {
 
                                                     <p className="text-xs text-gray-400">Your Rate</p>
 
-                                                    <p className="text-sm font-medium text-green-400">
-
-                                                      {`${proposal.proposedRate} ETH`}
-
-                                                    </p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                      <CurrencyLogo currency={proposal.job?.paymentCurrency || "ETH"} size={12} />
+                                                      <p className="text-sm font-medium text-green-400">
+                                                        {getConvertedAmount(proposal.proposedRate || 0, proposal.job?.paymentCurrency || "ETH")}
+                                                      </p>
+                                                    </div>
 
                                                   </div>
 

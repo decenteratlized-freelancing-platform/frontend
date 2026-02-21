@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useSocket } from "@/context/SocketContext"
 import { UserAvatar } from "@/components/shared/user-avatar"
@@ -31,14 +31,25 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
     const [messages, setMessages] = useState<Message[]>([])
     const [newMessage, setNewMessage] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
-    // @ts-ignore
     const currentUserId = session?.user?.id || session?.user?._id
+
+    const fetchMessages = useCallback(async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${receiverId}?senderId=${currentUserId}`)
+            const data = await res.json()
+            if (!data.error) {
+                setMessages(data)
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error)
+        }
+    }, [receiverId, currentUserId])
 
     useEffect(() => {
         if (receiverId && currentUserId) {
             fetchMessages()
         }
-    }, [receiverId, currentUserId])
+    }, [receiverId, currentUserId, fetchMessages])
 
     useEffect(() => {
         if (!socket) return;
@@ -60,37 +71,45 @@ export default function ChatWindow({ receiverId, receiverName, receiverImage, on
         scrollRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    const fetchMessages = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${receiverId}?senderId=${currentUserId}`)
-            const data = await res.json()
-            if (!data.error) {
-                setMessages(data)
-            }
-        } catch (error) {
-            console.error("Error fetching messages:", error)
-        }
-    }
-
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!newMessage.trim()) return
+        if (!newMessage.trim() || !currentUserId) return
+
+        const messageText = newMessage
+        setNewMessage("")
+
+        // Optimistic Update
+        const tempId = Date.now().toString()
+        const optimisticMessage: Message = {
+            _id: tempId,
+            senderId: currentUserId,
+            receiverId: receiverId,
+            message: messageText,
+            createdAt: new Date().toISOString()
+        }
+
+        setMessages((prev) => [...prev, optimisticMessage])
 
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/send/${receiverId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: newMessage,
+                    message: messageText,
                     senderId: currentUserId,
                 }),
             })
             const data = await res.json()
             if (!data.error) {
-                setMessages([...messages, data])
-                setNewMessage("")
+                // Replace optimistic message with real one from server
+                setMessages((prev) => prev.map(msg => msg._id === tempId ? data : msg))
+            } else {
+                // Remove optimistic message on error
+                setMessages((prev) => prev.filter(msg => msg._id !== tempId))
+                console.error("Message send failed:", data.error)
             }
         } catch (error) {
+            setMessages((prev) => prev.filter(msg => msg._id !== tempId))
             console.error("Error sending message:", error)
         }
     }

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { getStatusStyles, getStatusIcon } from "@/lib/contract-utils";
 import { formatCurrency } from "@/lib/utils";
+import { CurrencyLogo } from "./currency-logo";
 
 interface ContractCardProps {
     contract: any;
@@ -13,7 +14,7 @@ interface ContractCardProps {
 }
 
 export function ContractCard({ contract, userRole, onClick }: ContractCardProps) {
-    const currency = 'ETH';
+    const currency = contract.paymentCurrency || 'ETH';
     const otherParty = userRole === "client" ? contract.freelancer : contract.client;
 
     return (
@@ -47,9 +48,12 @@ export function ContractCard({ contract, userRole, onClick }: ContractCardProps)
 
             <div className="mt-6 pt-4 border-t border-white/10">
                 <p className="text-xs text-neutral-400 uppercase font-semibold">Total Value</p>
-                <p className="text-2xl font-bold text-white mt-1">
-                    {formatCurrency(parseFloat(contract.totalAmount), currency)}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                    <CurrencyLogo currency={currency} size={18} />
+                    <p className="text-2xl font-bold text-white">
+                        {formatCurrency(parseFloat(contract.totalAmount), currency)}
+                    </p>
+                </div>
             </div>
         </motion.div>
     );

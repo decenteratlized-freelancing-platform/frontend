@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -52,7 +52,7 @@ export default function AdminAuditLogs() {
     // Use ref to track the latest request to avoid race conditions
     const lastRequestId = useRef(0)
 
-    const fetchLogs = async (page = 1) => {
+    const fetchLogs = useCallback(async (page = 1) => {
         const requestId = Date.now()
         lastRequestId.current = requestId
         setLoading(true)
@@ -91,9 +91,9 @@ export default function AdminAuditLogs() {
                 setLoading(false)
             }
         }
-    }
+    }, [actionFilter, targetFilter])
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const token = localStorage.getItem("adminToken")
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/audit-logs/stats`, {
@@ -106,9 +106,9 @@ export default function AdminAuditLogs() {
         } catch (err) {
             console.error("Error fetching stats:", err)
         }
-    }
+    }, [])
 
-    const fetchActions = async () => {
+    const fetchActions = useCallback(async () => {
         try {
             const token = localStorage.getItem("adminToken")
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/audit-logs/actions`, {
@@ -121,13 +121,13 @@ export default function AdminAuditLogs() {
         } catch (err) {
             console.error("Error fetching actions:", err)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchLogs(1) // Always reset to page 1 when filters change
         fetchStats()
         fetchActions()
-    }, [actionFilter, targetFilter])
+    }, [fetchLogs, fetchStats, fetchActions])
 
     return (
         <div className="max-w-7xl mx-auto px-8 py-8">

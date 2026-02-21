@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { FileSignature } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { CurrencyLogo } from "./currency-logo";
 
 export function HirableProposalCard({ proposal, onHire }: { proposal: any; onHire: () => void; }) {
-  const currency = 'ETH'; 
+  const currency = proposal.job?.paymentCurrency || 'ETH'; 
 
 
     return (
@@ -36,9 +37,12 @@ export function HirableProposalCard({ proposal, onHire }: { proposal: any; onHir
             <div className="mt-6 space-y-4">
                  <div>
                     <p className="text-xs text-neutral-400 uppercase font-semibold">Proposed Rate</p>
-                    <p className="text-2xl font-bold text-white mt-1">
-                        {formatCurrency(parseFloat(proposal.proposedRate), currency)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <CurrencyLogo currency={currency} size={18} />
+                        <p className="text-2xl font-bold text-white">
+                            {formatCurrency(parseFloat(proposal.proposedRate), currency)}
+                        </p>
+                    </div>
                 </div>
                 <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-5" onClick={onHire}>
                     <FileSignature className="w-4 h-4 mr-2" />

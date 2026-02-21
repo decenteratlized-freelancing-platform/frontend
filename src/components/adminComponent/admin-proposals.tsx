@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,7 +46,7 @@ export default function AdminProposals() {
     const [statusFilter, setStatusFilter] = useState("all")
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
 
-    const fetchProposals = async (page = 1) => {
+    const fetchProposals = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -69,11 +69,11 @@ export default function AdminProposals() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [statusFilter])
 
     useEffect(() => {
         fetchProposals()
-    }, [statusFilter])
+    }, [fetchProposals])
 
     const handleUpdateStatus = async (proposalId: string, newStatus: string) => {
         try {

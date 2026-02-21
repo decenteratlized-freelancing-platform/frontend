@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,7 +46,7 @@ export default function AdminUsers() {
     const [roleFilter, setRoleFilter] = useState("all")
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
 
-    const fetchUsers = async (page = 1) => {
+    const fetchUsers = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -70,11 +70,11 @@ export default function AdminUsers() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [roleFilter, search])
 
     useEffect(() => {
         fetchUsers()
-    }, [roleFilter])
+    }, [fetchUsers])
 
     const handleSearch = () => {
         setLoading(true)

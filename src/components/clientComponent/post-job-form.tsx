@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useCurrency } from "@/context/CurrencyContext"
 import { HelpTooltip } from "../shared/help-tooltip"
+import { CurrencyLogo } from "../shared/currency-logo"
 
 // Common skills list for autocomplete
 const availableSkills = [
@@ -334,7 +335,24 @@ export default function PostJobForm() {
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                    <SelectItem value="ETH">Ξ ETH</SelectItem>
+                    <SelectItem value="ETH">
+                      <div className="flex items-center gap-2">
+                        <CurrencyLogo currency="ETH" size={16} />
+                        <span>ETH (Ethereum)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="USDC">
+                      <div className="flex items-center gap-2">
+                        <CurrencyLogo currency="USDC" size={16} />
+                        <span>USDC (USD Coin)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="EURC">
+                      <div className="flex items-center gap-2">
+                        <CurrencyLogo currency="EURC" size={16} />
+                        <span>EURC (Euro Coin)</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
               </Select>
             </motion.div>

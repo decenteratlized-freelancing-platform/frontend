@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "../shared/currency-logo"
 import { Download, CreditCard, ArrowDownLeft, Calendar, Wallet } from "lucide-react"
 
 interface Transaction {
@@ -14,6 +15,7 @@ interface Transaction {
   id?: string
   description?: string
   amount: string
+  paymentCurrency?: string
   status: string
   createdAt: string
   mode: string
@@ -29,7 +31,6 @@ export default function FreelancerTransactions() {
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      // @ts-ignore - session.accessToken exists if configured in next-auth callbacks
       const token = session?.accessToken || session?.user?.token;
       
       try {
@@ -61,9 +62,9 @@ export default function FreelancerTransactions() {
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
 
   const stats = [
-    { title: "Total Earned", value: getFormattedAmount(totalEarned), change: "+0%", color: "from-green-500 to-emerald-500" },
-    { title: "This Month", value: getFormattedAmount(totalEarned), change: "+0%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getFormattedAmount(pendingAmount), change: "0%", color: "from-orange-500 to-yellow-500" },
+    { title: "Total Earned", value: getFormattedAmount(totalEarned, transactions[0]?.paymentCurrency || "ETH"), change: "+0%", color: "from-green-500 to-emerald-500" },
+    { title: "This Month", value: getFormattedAmount(totalEarned, transactions[0]?.paymentCurrency || "ETH"), change: "+0%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getFormattedAmount(pendingAmount, transactions[0]?.paymentCurrency || "ETH"), change: "0%", color: "from-orange-500 to-yellow-500" },
     { title: "Transactions", value: transactions.length.toString(), change: "+0%", color: "from-purple-500 to-pink-500" },
   ]
 
@@ -105,7 +106,10 @@ export default function FreelancerTransactions() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-300">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {index < 3 && <CurrencyLogo currency={transactions[0]?.paymentCurrency || "ETH"} size={18} />}
+                      <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    </div>
                     <p className="text-sm text-green-400 mt-1">{stat.change} from last month</p>
                   </div>
                   <div
@@ -171,7 +175,10 @@ export default function FreelancerTransactions() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-green-400">+{getFormattedAmount(parseFloat(transaction.amount))}</p>
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <CurrencyLogo currency={transaction.paymentCurrency || "ETH"} size={16} />
+                          <p className="text-xl font-bold text-green-400">+{getFormattedAmount(parseFloat(transaction.amount), transaction.paymentCurrency || "ETH")}</p>
+                        </div>
                         <Badge
                           variant={transaction.status === "Paid" ? "default" : "secondary"}
                           className={

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,17 +26,20 @@ import { useToast } from "@/hooks/use-toast"
 import { NotificationList } from "@/components/shared/NotificationList"
 import { JobCard } from "../shared/job-card"
 import { GettingStarted } from "../shared/getting-started"
+import { CurrencyLogo } from "../shared/currency-logo"
+import { useCurrency } from "@/context/CurrencyContext"
 
 export default function ClientDashboard() {
   const { data: session } = useSession();
   const user = useCurrentUser();
   const { toast } = useToast();
+  const { getFormattedAmount } = useCurrency();
   const [displayName, setDisplayName] = useState("Client");
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [fullProfile, setFullProfile] = useState<any>(null);
   
-  const ensureToken = async () => {
+  const ensureToken = useCallback(async () => {
     let token = localStorage.getItem("token");
     if (!token && session?.user?.email) {
         try {
@@ -53,7 +56,7 @@ export default function ClientDashboard() {
         } catch (e) { console.error("Auto-token failed", e); }
     }
     return token;
-  };
+  }, [session?.user?.email]);
 
   const [dashboardSummary, setDashboardSummary] = useState({
     activeJobsCount: 0,
@@ -102,7 +105,7 @@ export default function ClientDashboard() {
     fetchFullProfile();
   }, [session]);
 
-  const fetchJobsList = async () => {
+  const fetchJobsList = useCallback(async () => {
     if (session?.user?.email) {
       try {
         const token = await ensureToken();
@@ -122,7 +125,7 @@ export default function ClientDashboard() {
         setJobsLoading(false);
       }
     }
-  };
+  }, [session?.user?.email, ensureToken]);
 
   const handlePublishJob = async (jobId: string) => {
     try {
@@ -182,11 +185,11 @@ export default function ClientDashboard() {
     if (session?.user?.email) {
       fetchSummary();
     }
-  }, [session]);
+  }, [session, ensureToken]);
 
   useEffect(() => {
     fetchJobsList();
-  }, [session]);
+  }, [fetchJobsList]);
 
   const stats = [
     {
@@ -198,7 +201,7 @@ export default function ClientDashboard() {
     {
       title: "Total Spent",
       value: dashboardSummary.totalSpent,
-      displayValue: `${dashboardSummary.totalSpent} ETH`,
+      displayValue: getFormattedAmount(dashboardSummary.totalSpent, (dashboardSummary as any).primaryCurrency || "ETH"),
       icon: TrendingUp,
       color: "bg-emerald-600",
     },
@@ -216,6 +219,35 @@ export default function ClientDashboard() {
       suffix: "h",
     },
   ];
+
+  const gettingStartedSteps = [
+    {
+      title: "Complete Profile",
+      description: "Introduce yourself to attract the best talent.",
+      completed: !!(fullProfile?.professionalBio),
+      link: "/settings"
+    },
+    {
+      title: "Link Wallet",
+      description: "Connect MetaMask to post jobs with escrow.",
+      completed: !!(fullProfile?.walletAddress),
+      link: "/settings"
+    },
+    {
+      title: "Post First Job",
+      description: "Start your project and get proposals from experts.",
+      completed: jobs.length > 0,
+      link: "/client/post-job"
+    },
+    {
+      title: "Browse Talent",
+      description: "Explore top freelancers on the platform.",
+      completed: hasBrowsedTalent,
+      link: "/client/discover"
+    }
+  ];
+
+  const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -278,34 +310,9 @@ export default function ClientDashboard() {
         </Link>
       </motion.div>
 
-      <GettingStarted 
-        steps={[
-          {
-            title: "Complete Profile",
-            description: "Introduce yourself to attract the best talent.",
-            completed: !!(fullProfile?.professionalBio),
-            link: "/settings"
-          },
-          {
-            title: "Link Wallet",
-            description: "Connect MetaMask to post jobs with escrow.",
-            completed: !!(fullProfile?.walletAddress),
-            link: "/settings"
-          },
-          {
-            title: "Post First Job",
-            description: "Start your project and get proposals from experts.",
-            completed: jobs.length > 0,
-            link: "/client/post-job"
-          },
-          {
-            title: "Browse Talent",
-            description: "Explore top freelancers on the platform.",
-            completed: hasBrowsedTalent,
-            link: "/client/discover"
-          }
-        ]} 
-      />
+      {!allStepsCompleted && (
+        <GettingStarted steps={gettingStartedSteps} />
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -325,13 +332,16 @@ export default function ClientDashboard() {
                     {dashboardLoading ? (
                       <div className="h-6 bg-white/5 rounded w-2/3 mt-2 animate-pulse"></div>
                     ) : (
-                      <p className="text-2xl font-bold text-white mt-2">
-                        {stat.displayValue ? (
-                          <span>{stat.displayValue}</span>
-                        ) : (
-                          <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
-                        )}
-                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {stat.title === "Total Spent" && <CurrencyLogo currency={(dashboardSummary as any).primaryCurrency || "ETH"} size={18} />}
+                        <p className="text-2xl font-bold text-white">
+                          {stat.displayValue ? (
+                            <span>{stat.displayValue}</span>
+                          ) : (
+                            <AnimatedCounter end={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix || ""} />
+                          )}
+                        </p>
+                      </div>
                     )}
                   </div>
                   <div

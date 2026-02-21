@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,7 +46,7 @@ export default function AdminTransactions() {
     const [modeFilter, setModeFilter] = useState("all")
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
 
-    const fetchTransactions = async (page = 1) => {
+    const fetchTransactions = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -70,11 +70,11 @@ export default function AdminTransactions() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [statusFilter, modeFilter])
 
     useEffect(() => {
         fetchTransactions()
-    }, [statusFilter, modeFilter])
+    }, [fetchTransactions])
 
     return (
         <div className="max-w-7xl mx-auto px-8 py-8">

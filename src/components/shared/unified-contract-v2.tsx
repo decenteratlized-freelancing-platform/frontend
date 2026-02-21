@@ -128,7 +128,7 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
     if (Math.abs(totalAmount - negotiatedRate) > 0.000001) {
       toast({ 
         title: "Rate Mismatch", 
-        description: `Total milestones (${totalAmount} ETH) must match negotiated rate (${negotiatedRate} ETH).`, 
+        description: `Total milestones (${totalAmount} ${proposal.job?.paymentCurrency || "ETH"}) must match negotiated rate (${negotiatedRate} ${proposal.job?.paymentCurrency || "ETH"}).`, 
         variant: "destructive" 
       });
       return;
@@ -307,7 +307,7 @@ const CreateContractDialog = ({ isOpen, onOpenChange, proposal, onContractCreate
           
                                 <div className="space-y-1 pt-4 border-t border-zinc-800">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total Contract Value</p>
-                                    <span className="text-3xl font-black text-white">{totalAmount} ETH</span>
+                                    <span className="text-3xl font-black text-white">{totalAmount} {proposal.job?.paymentCurrency || "ETH"}</span>
                                 </div>
         </div>
         <DialogFooter className="gap-2">

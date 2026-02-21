@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     Dialog,
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "../shared/currency-logo";
 import { CheckCircle, XCircle, Clock, Mail, Briefcase, Loader2, Target } from "lucide-react"
 import { toast } from "sonner"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
@@ -43,18 +44,49 @@ interface ProposalReviewModalProps {
 }
 
 export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: ProposalReviewModalProps) {
+    const { getConvertedAmount } = useCurrency();
     const [proposals, setProposals] = useState<Proposal[]>([])
     const [loading, setLoading] = useState(false)
-    const [jobCurrency, setJobCurrency] = useState<'INR' | 'ETH'>('INR');
+    const [jobCurrency, setJobCurrency] = useState<string>('ETH');
     const currentUser = useCurrentUser();
     const { socket } = useSocket();
+
+    const fetchJobDetails = useCallback(async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/${jobId}`);
+            if (res.ok) {
+                const job = await res.json();
+                setJobCurrency(job.paymentCurrency);
+            }
+        } catch (error) {
+            console.error("Error fetching job details:", error);
+        }
+    }, [jobId]);
+
+    const fetchProposals = useCallback(async () => {
+        setLoading(true)
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/job/${jobId}`)
+            if (res.ok) {
+                const data = await res.json()
+                setProposals(data)
+            } else {
+                toast.error("Failed to fetch proposals")
+            }
+        } catch (error) {
+            console.error("Error fetching proposals:", error)
+            toast.error("Error fetching proposals")
+        } finally {
+            setLoading(false)
+        }
+    }, [jobId])
 
     useEffect(() => {
         if (isOpen && jobId) {
             fetchProposals()
             fetchJobDetails()
         }
-    }, [isOpen, jobId])
+    }, [isOpen, jobId, fetchProposals, fetchJobDetails])
 
     useEffect(() => {
         if (socket) {
@@ -72,36 +104,6 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
             };
         }
     }, [socket]);
-
-    const fetchJobDetails = async () => {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/jobs/${jobId}`);
-            if (res.ok) {
-                const job = await res.json();
-                setJobCurrency(job.paymentCurrency);
-            }
-        } catch (error) {
-            console.error("Error fetching job details:", error);
-        }
-    };
-
-    const fetchProposals = async () => {
-        setLoading(true)
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/job/${jobId}`)
-            if (res.ok) {
-                const data = await res.json()
-                setProposals(data)
-            } else {
-                toast.error("Failed to fetch proposals")
-            }
-        } catch (error) {
-            console.error("Error fetching proposals:", error)
-            toast.error("Error fetching proposals")
-        } finally {
-            setLoading(false)
-        }
-    }
 
     const handleStatusUpdate = async (proposalId: string, status: "accepted" | "rejected") => {
         try {
@@ -212,9 +214,9 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                                         <div className="flex gap-4 text-sm">
                                                             <div className="flex flex-col">
                                                                 <span className="text-xs text-zinc-500">Rate</span>
-                                                                <span className="font-medium text-white flex items-center gap-1">
-                                                                    {jobCurrency === 'INR' ? '₹' : <Target className="w-3 h-3" />}
-                                                                    {proposal.proposedRate}
+                                                                <span className="font-medium text-white flex items-center gap-1.5">
+                                                                    <CurrencyLogo currency={jobCurrency} size={14} />
+                                                                    {getConvertedAmount(proposal.proposedRate, jobCurrency)}
                                                                 </span>
                                                             </div>
                                                             <div className="flex flex-col">

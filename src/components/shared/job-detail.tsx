@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
     Briefcase, Calendar, Clock, MapPin, User,
@@ -73,7 +73,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
 
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-    const ensureToken = async () => {
+    const ensureToken = useCallback(async () => {
         let token = localStorage.getItem("token");
         if (!token && session?.user?.email) {
             try {
@@ -90,9 +90,9 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
             } catch (e) { console.error("Auto-token failed", e); }
         }
         return token;
-    };
+    }, [session?.user?.email, BACKEND_URL]);
 
-    const fetchFavoriteStatus = async () => {
+    const fetchFavoriteStatus = useCallback(async () => {
         const token = await ensureToken();
         if (!token) return;
         try {
@@ -104,7 +104,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
                 setIsFavorite(data.jobs?.some((j: any) => j._id === jobId));
             }
         } catch (e) {}
-    };
+    }, [jobId, ensureToken, BACKEND_URL]);
 
     const toggleFavorite = async () => {
         const token = await ensureToken();
@@ -156,7 +156,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
         }
         fetchData();
         fetchFavoriteStatus();
-    }, [jobId, userRole, BACKEND_URL]);
+    }, [jobId, userRole, BACKEND_URL, fetchFavoriteStatus]);
 
     const handleAcceptProposal = async (proposalId: string) => {
         try {

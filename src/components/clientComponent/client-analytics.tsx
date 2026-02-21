@@ -20,6 +20,7 @@ import {
   Tooltip,
 } from "recharts"
 import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "../shared/currency-logo";
 
 const monthlyData = [
   { name: "Jan", spending: 4000, projects: 12, freelancers: 8, completed: 10 },
@@ -128,7 +129,10 @@ export default function ClientAnalytics() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-300">{metric.title}</p>
-                    <p className="text-2xl font-bold text-white mt-2">{metric.value}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {metric.title === "Total Spending" && <CurrencyLogo currency="ETH" size={18} />}
+                      <p className="text-2xl font-bold text-white">{metric.value}</p>
+                    </div>
                     <p className="text-sm text-blue-400 mt-1">{metric.change} from last month</p>
                   </div>
                   <div

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -50,7 +50,7 @@ export default function AdminJobs() {
     const [statusFilter, setStatusFilter] = useState("all")
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
 
-    const fetchJobs = async (page = 1) => {
+    const fetchJobs = useCallback(async (page = 1) => {
         try {
             const token = localStorage.getItem("adminToken")
             const params = new URLSearchParams({
@@ -74,11 +74,11 @@ export default function AdminJobs() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [statusFilter, search])
 
     useEffect(() => {
         fetchJobs()
-    }, [statusFilter])
+    }, [fetchJobs])
 
     const handleSearch = () => {
         setLoading(true)

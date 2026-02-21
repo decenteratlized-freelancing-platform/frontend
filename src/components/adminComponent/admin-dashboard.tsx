@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { CurrencyLogo } from "../shared/currency-logo"
 import {
     Users,
     Briefcase,
@@ -372,7 +373,10 @@ export default function AdminDashboard() {
                                             <Badge className={STATUS_COLORS[contract.status.toLowerCase()] || "bg-gray-500/20 text-gray-400"}>
                                                 {contract.status}
                                             </Badge>
-                                            <p className="text-xs text-gray-400 mt-1">{contract.totalAmount} ETH</p>
+                                            <div className="flex items-center justify-end gap-1 mt-1">
+                                                <CurrencyLogo currency="ETH" size={10} />
+                                                <p className="text-xs text-gray-400">{contract.totalAmount} ETH</p>
+                                            </div>
                                         </div>
                                     </div>
                                 ))

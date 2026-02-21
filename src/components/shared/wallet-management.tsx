@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { HelpTooltip } from "./help-tooltip"
+import { CurrencyLogo } from "./currency-logo"
 
 export default function WalletManagement() {
     const { address, walletLinkedAt, isConnecting, connectWallet, disconnectWallet } = useWalletConnection()
@@ -132,28 +133,39 @@ export default function WalletManagement() {
                                 </Button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <p className="text-xs text-gray-500">Balance</p>
-                                        <HelpTooltip content="Your available funds on the blockchain. 1 ETH = 10^18 Wei (the smallest unit)." />
+                            <div className="space-y-4 pt-4 border-t border-white/10">
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <CurrencyLogo currency="ETH" size={14} />
+                                            <p className="text-[10px] text-gray-500 uppercase font-bold">ETH</p>
+                                        </div>
+                                        <p className="text-sm font-semibold text-white">
+                                            {loadingBalance ? "..." : balance !== null ? `${balance}` : "0.00"}
+                                        </p>
                                     </div>
-                                    <p className="text-lg font-semibold text-white">
-                                        {loadingBalance ? (
-                                            <span className="text-gray-500">Loading...</span>
-                                        ) : balance !== null ? (
-                                            `${balance} ETH`
-                                        ) : (
-                                            <span className="text-gray-500">—</span>
-                                        )}
-                                    </p>
+                                    <div>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <CurrencyLogo currency="USDC" size={14} />
+                                            <p className="text-[10px] text-gray-500 uppercase font-bold">USDC</p>
+                                        </div>
+                                        <p className="text-sm font-semibold text-white">0.00</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <CurrencyLogo currency="EURC" size={14} />
+                                            <p className="text-[10px] text-gray-500 uppercase font-bold">EURC</p>
+                                        </div>
+                                        <p className="text-sm font-semibold text-white">0.00</p>
+                                    </div>
                                 </div>
+                                
                                 <div>
                                     <div className="flex items-center gap-1 mb-1">
-                                        <p className="text-xs text-gray-500">Network</p>
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold">Network</p>
                                         <HelpTooltip content="Sepolia is a public test network where you can test blockchain features without using real money." />
                                     </div>
-                                    <p className="text-lg font-semibold text-white">Sepolia Testnet</p>
+                                    <p className="text-sm font-semibold text-white">Sepolia Testnet</p>
                                 </div>
                             </div>
 

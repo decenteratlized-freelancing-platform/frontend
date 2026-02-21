@@ -57,7 +57,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
     const [isFavorite, setIsFavorite] = useState(false);
     const [isTogglingFav, setIsTogglingFav] = useState(false);
 
-    const ensureToken = async () => {
+    const ensureToken = useCallback(async () => {
         let token = localStorage.getItem("token");
         if (!token && session?.user?.email) {
             try {
@@ -74,7 +74,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
             } catch (e) { console.error("Auto-token failed", e); }
         }
         return token;
-    };
+    }, [session?.user?.email]);
 
     const fetchProfile = useCallback(async () => {
         setLoading(true);
@@ -133,15 +133,13 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
         } finally {
             setLoading(false);
         }
-    }, [email, userType, session]);
+    }, [email, userType, ensureToken]);
 
     useEffect(() => {
         if (isOpen && email) {
             fetchProfile();
         }
     }, [isOpen, email, fetchProfile]); 
-
-    // ... toggleFavorite and render ...
 
     const toggleFavorite = async () => {
         if (!profile?.id) return;
@@ -183,7 +181,6 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                     <div className="flex flex-col md:flex-row h-full max-h-[80vh]">
                         {/* Sidebar / Header Section */}
                         <div className="bg-zinc-900/50 border-b md:border-b-0 md:border-r border-zinc-800 p-8 flex flex-col items-center text-center relative md:w-1/3 min-w-[250px]">
-                            {/* ... (Gradient and Fav Button) */}
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20" />
                             
                             {userType === "client" && profile.id && (

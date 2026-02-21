@@ -17,11 +17,30 @@ export default function ChatPage() {
 
   const userId = session?.user?.id || (typeof window !== "undefined" ? localStorage.getItem("userId") : null);
 
+  const fetchConversations = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data);
+        if (data.length > 0) {
+          setSelectedUserId(data[0].participant._id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (userId) {
       fetchConversations();
     }
-  }, [userId]);
+  }, [userId, fetchConversations]);
 
   useEffect(() => {
     if (!socket) return;
@@ -40,26 +59,7 @@ export default function ChatPage() {
     };
   }, [socket]);
 
-  const fetchConversations = async () => {
-    if (!userId) return;
-    try {
-      setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data);
-        if (data.length > 0) {
-          setSelectedUserId(data[0].participant._id);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMessages = async (receiverId: string) => {
+  const fetchMessages = useCallback(async (receiverId: string) => {
     if (!userId) return;
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${receiverId}?senderId=${userId}`);
@@ -73,7 +73,7 @@ export default function ChatPage() {
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
-  };
+  }, [userId]);
 
   const handleSelectUser = (receiverId: string) => {
     setSelectedUserId(receiverId);

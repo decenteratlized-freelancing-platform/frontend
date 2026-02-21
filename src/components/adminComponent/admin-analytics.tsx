@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -49,7 +49,7 @@ export default function AdminAnalytics() {
     const [platform, setPlatform] = useState<any>({ users: {}, jobs: {}, contracts: {}, transactions: {} })
     const [growth, setGrowth] = useState<any>({ userGrowth: [], jobGrowth: [], contractGrowth: [] })
 
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = useCallback(async () => {
         try {
             const token = localStorage.getItem("adminToken")
             const [revenueRes, platformRes, growthRes] = await Promise.all([
@@ -72,11 +72,11 @@ export default function AdminAnalytics() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [period])
 
     useEffect(() => {
         fetchAnalytics()
-    }, [period])
+    }, [fetchAnalytics])
 
     const formatGrowthData = (data: any[]) => {
         return data.map((item) => ({

@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "./currency-logo";
 
 interface Job {
   _id: string;
@@ -25,6 +26,7 @@ interface Job {
   description: string;
   budget: number | string;
   budgetType?: string;
+  paymentCurrency?: string;
   skills?: string[];
   category?: string;
   createdAt: string;
@@ -127,9 +129,12 @@ export function JobCard({
                     <Tag className="w-4 h-4 text-purple-400" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">
-                      {getConvertedAmount(job.budget)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={14} />
+                      <span className="font-semibold text-white">
+                        {getConvertedAmount(job.budget, job.paymentCurrency || "ETH")}
+                      </span>
+                    </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Budget</p>
                   </div>
                 </div>

@@ -3,8 +3,8 @@
 import { createContext, useContext } from "react";
 
 interface CurrencyContextType {
-  getFormattedAmount: (amount: number | string) => string;
-  getConvertedAmount: (amount: number | string) => string;
+  getFormattedAmount: (amount: number | string, currency?: string) => string;
+  getConvertedAmount: (amount: number | string, currency?: string) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);

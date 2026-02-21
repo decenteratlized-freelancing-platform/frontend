@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { useSocket } from "@/context/SocketContext"
@@ -83,11 +83,43 @@ export default function FreelancerMessages() {
     scrollToBottom()
   }, [messages])
 
+  const fetchConversations = useCallback(async () => {
+    if (!currentUserId) return
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${currentUserId}`)
+      const data = await res.json()
+
+      if (!data.error && Array.isArray(data)) {
+        setConversations(data)
+        if (data.length > 0 && !selectedConversation) {
+          setSelectedConversation(data[0])
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentUserId, selectedConversation])
+
   useEffect(() => {
     if (currentUserId) {
       fetchConversations()
     } else {
       setLoading(false)
+    }
+  }, [currentUserId, fetchConversations])
+
+  const fetchMessages = useCallback(async (otherUserId: string) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${otherUserId}?senderId=${currentUserId}`)
+      const data = await res.json()
+      if (!data.error && Array.isArray(data)) {
+        setMessages(data)
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error)
     }
   }, [currentUserId])
 
@@ -95,7 +127,7 @@ export default function FreelancerMessages() {
     if (selectedConversation?.participant?._id && currentUserId) {
       fetchMessages(selectedConversation.participant._id)
     }
-  }, [selectedConversation, currentUserId])
+  }, [selectedConversation, currentUserId, fetchMessages])
 
   useEffect(() => {
     if (socket && selectedConversation?.participant) {
@@ -114,39 +146,7 @@ export default function FreelancerMessages() {
         socket.off("newMessage", handleNewMessage)
       }
     }
-  }, [socket, selectedConversation])
-
-  const fetchConversations = async () => {
-    if (!currentUserId) return
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/conversations?userId=${currentUserId}`)
-      const data = await res.json()
-
-      if (!data.error && Array.isArray(data)) {
-        setConversations(data)
-        if (data.length > 0 && !selectedConversation) {
-          setSelectedConversation(data[0])
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching conversations:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMessages = async (otherUserId: string) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/messages/${otherUserId}?senderId=${currentUserId}`)
-      const data = await res.json()
-      if (!data.error && Array.isArray(data)) {
-        setMessages(data)
-      }
-    } catch (error) {
-      console.error("Error fetching messages:", error)
-    }
-  }
+  }, [socket, selectedConversation, fetchConversations])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

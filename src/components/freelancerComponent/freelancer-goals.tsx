@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "../shared/currency-logo";
 import { Target, Plus, Calendar, CheckCircle, Clock, AlertCircle, Edit, Trash2, TrendingUp, Trophy, Sparkles, Loader2 } from 'lucide-react'
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
@@ -36,6 +37,9 @@ export default function FreelancerGoals() {
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [showEditGoal, setShowEditGoal] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [showProgressDialog, setShowProgressDialog] = useState(false)
   const [selectedGoalForProgress, setSelectedGoalForProgress] = useState<Goal | null>(null)
   const [newGoal, setNewGoal] = useState({
@@ -147,21 +151,26 @@ export default function FreelancerGoals() {
     }
   }
 
-  const handleDeleteGoal = async (goalId: string) => {
-    if (!confirm("Are you sure you want to delete this goal?")) return
+  const handleDeleteGoal = async () => {
+    if (!goalToDelete) return
+    setIsDeleting(true)
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`${apiUrl}/${goalId}`, {
+      const res = await fetch(`${apiUrl}/${goalToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (res.ok) {
-        setGoals(goals.filter((goal) => goal._id !== goalId))
+        setGoals(goals.filter((goal) => goal._id !== goalToDelete))
         toast({ title: "Deleted", description: "Goal removed" })
+        setShowDeleteDialog(false)
+        setGoalToDelete(null)
       }
     } catch (error) {
       toast({ title: "Error", description: "Failed to delete goal", variant: "destructive" })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -396,8 +405,14 @@ export default function FreelancerGoals() {
                       </div>
                       <Progress value={goal.progress} className="h-1.5 bg-zinc-950" />
                       <div className="flex justify-between text-[11px] font-mono text-zinc-500 pt-1">
-                        <span>{goal.category === "Financial" ? getConvertedAmount(goal.current) : goal.current}</span>
-                        <span>{goal.category === "Financial" ? getConvertedAmount(goal.target) : goal.target}</span>
+                        <div className="flex items-center gap-1">
+                          {goal.category === "Financial" && <CurrencyLogo currency="ETH" size={10} />}
+                          <span>{goal.category === "Financial" ? getConvertedAmount(goal.current) : goal.current}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {goal.category === "Financial" && <CurrencyLogo currency="ETH" size={10} />}
+                          <span>{goal.category === "Financial" ? getConvertedAmount(goal.target) : goal.target}</span>
+                        </div>
                       </div>
                     </div>
 
@@ -427,7 +442,10 @@ export default function FreelancerGoals() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteGoal(goal._id)}
+                          onClick={() => {
+                            setGoalToDelete(goal._id)
+                            setShowDeleteDialog(true)
+                          }}
                           className="h-8 w-8 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -582,6 +600,39 @@ export default function FreelancerGoals() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              Delete Goal
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-zinc-400 text-sm">
+              Are you sure you want to delete this goal? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => setShowDeleteDialog(false)}
+              className="text-zinc-500 hover:text-white hover:bg-zinc-900"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteGoal}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-6"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Delete"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

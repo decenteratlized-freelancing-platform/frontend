@@ -10,6 +10,7 @@ import { ChevronLeft, FileText, Bot, AlertTriangle, ThumbsUp, Loader2, Wallet, S
 import { formatCurrency } from "@/lib/utils";
 import { getStatusStyles } from "@/lib/contract-utils";
 import RaiseDisputeModal from "./raise-dispute-modal";
+import { CurrencyLogo } from "./currency-logo";
 import { toast } from "@/hooks/use-toast";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useRouter } from "next/navigation";
@@ -54,7 +55,7 @@ interface ContractDetailViewProps {
 
 export function ContractDetailView({ contract: initialContract, userRole, userId, onBack, onDisputeCreated }: ContractDetailViewProps) {
     const [localContract, setLocalContract] = useState(initialContract);
-    const currency = 'ETH';
+    const currency = localContract.paymentCurrency || 'ETH';
     const router = useRouter();
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
@@ -618,13 +619,13 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         currentY += 8;
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.text(`Total Contract Value: ${localContract.totalAmount} ETH`, 20, currentY);
-        doc.text(`Currency: Ethereum (ETH) via Secure Escrow`, 20, currentY + 5);
+        doc.text(`Total Contract Value: ${localContract.totalAmount} ${currency}`, 20, currentY);
+        doc.text(`Currency: ${currency} via Secure Escrow`, 20, currentY + 5);
 
         const milestoneData = localContract.milestones.map((m: any, i: number) => [
             `M${i + 1}`,
             m.description,
-            `${m.amount} ETH`
+            `${m.amount} ${currency}`
         ]);
 
         autoTable(doc, {
@@ -742,7 +743,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
             `M${i + 1}`,
             m.description,
             "100%",
-            `${m.amount} ETH`
+            `${m.amount} ${currency}`
         ]);
 
         autoTable(doc, {
@@ -758,7 +759,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
         const finalY = (doc as any).lastAutoTable.finalY + 15;
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text(`Total Paid: ${localContract.totalAmount} ETH`, pageWidth - 20, finalY, { align: "right" });
+        doc.text(`Total Paid: ${localContract.totalAmount} ${currency}`, pageWidth - 20, finalY, { align: "right" });
 
         // --- Paid Stamp ---
         doc.setDrawColor(16, 185, 129);
@@ -874,7 +875,10 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                         <div className="text-right flex flex-col items-end gap-3">
                             <div>
                                 <p className="text-[10px] uppercase tracking-widest font-black text-zinc-500 mb-1">Total Contract Value</p>
-                                <p className="text-4xl font-black text-white">{formatCurrency(parseFloat(localContract.totalAmount), currency)}</p>
+                                <div className="flex items-center justify-end gap-2">
+                                    <CurrencyLogo currency={currency} size={24} />
+                                    <p className="text-4xl font-black text-white">{formatCurrency(parseFloat(localContract.totalAmount), currency)}</p>
+                                </div>
                             </div>
                             <div className="flex gap-2">
                                 <Button 
@@ -1462,7 +1466,7 @@ export function ContractDetailView({ contract: initialContract, userRole, userId
                                             />
                                             <Input 
                                                 type="number" 
-                                                placeholder="ETH" 
+                                                placeholder={currency} 
                                                 value={m.amount}
                                                 onChange={e => {
                                                     const next = [...editData.milestones];

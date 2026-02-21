@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FileText, Calendar, User,
@@ -22,6 +22,8 @@ import { ethers } from "ethers";
 import { toast } from "@/hooks/use-toast";
 import { GeminiAssistant } from "./gemini-assistant";
 import { HelpTooltip } from "./help-tooltip";
+import { useCurrency } from "@/context/CurrencyContext";
+import { CurrencyLogo } from "./currency-logo";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -57,6 +59,7 @@ interface Contract {
     status: string;
     freelancerAccepted: boolean;
     paymentType: string;
+    paymentCurrency?: string;
     totalAmount: number;
     createdAt: string;
     job: {
@@ -86,6 +89,7 @@ interface Contract {
 }
 
 export function ContractDetail({ contractId, userRole, userEmail }: ContractDetailProps) {
+    const { getFormattedAmount } = useCurrency();
     const [contract, setContract] = useState<Contract | null>(null);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -114,7 +118,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             // setLoading(true); // Don't show full loader on re-fetch
             const res = await fetch(`${BACKEND_URL}/api/contracts/${contractId}`);
@@ -126,11 +130,11 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
         } finally {
             setLoading(false);
         }
-    };
+    }, [contractId, BACKEND_URL]);
 
     useEffect(() => {
         fetchData();
-    }, [contractId, BACKEND_URL]);
+    }, [fetchData]);
 
     const handleSync = async () => {
         if (!contract) return;
@@ -397,7 +401,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to submit review");
+            if (!status) throw new Error("Failed to submit review");
             
             toast({ title: "Review Submitted", description: "Thank you for your feedback!" });
             await fetchData();
@@ -718,11 +722,10 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                             <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">
                                 <Target className="w-3.5 h-3.5 text-emerald-500" /> Contract Budget
                             </div>
-                            <p className="text-white font-bold text-2xl">
-                                {contract.paymentType === "crypto"
-                                    ? `${isEditing ? editTotal.toFixed(4) : contract.totalAmount} ETH`
-                                    : `${contract.totalAmount?.toLocaleString()} ETH`}
-                            </p>
+                            <div className="flex items-center gap-2 text-white font-bold text-2xl">
+                                <CurrencyLogo currency={contract.paymentCurrency || "ETH"} size={20} />
+                                <span>{getFormattedAmount(isEditing ? editTotal : (contract.totalAmount || 0), contract.paymentCurrency || "ETH")}</span>
+                            </div>
                         </div>
                         <div className="bg-zinc-950/20 rounded-2xl p-5 border border-zinc-800/50">
                             <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-2">
@@ -900,11 +903,12 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                         <div>
                                             <h4 className="text-zinc-100 font-semibold text-base mb-1">{milestone.description}</h4>
                                             <div className="flex items-center gap-3">
-                                                <p className="text-zinc-400 font-bold text-sm">
-                                                    {contract.paymentType === "crypto"
-                                                        ? `${milestone.amount} ETH`
-                                                        : `${parseFloat(milestone.amount).toLocaleString()} ETH`}
-                                                </p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <CurrencyLogo currency={contract.paymentCurrency || "ETH"} size={12} />
+                                                    <p className="text-zinc-400 font-bold text-sm">
+                                                        {getFormattedAmount(milestone.amount, contract.paymentCurrency || "ETH")}
+                                                    </p>
+                                                </div>
                                                 <div className="w-1 h-1 rounded-full bg-zinc-800" />
                                                 <span className={`text-[10px] font-bold uppercase tracking-widest ${getMilestoneStatusColor(milestone.status).split(' ')[1]}`}>
                                                     {milestone.status.replace("_", " ")}
