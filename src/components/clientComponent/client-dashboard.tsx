@@ -68,6 +68,12 @@ export default function ClientDashboard() {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [hasBrowsedTalent, setHasBrowsedTalent] = useState(false);
+
+  useEffect(() => {
+    const browsed = localStorage.getItem("hasBrowsedTalent") === "true";
+    setHasBrowsedTalent(browsed);
+  }, []);
 
   useEffect(() => {
     const nameFromSession = session?.user?.name;
@@ -295,7 +301,7 @@ export default function ClientDashboard() {
           {
             title: "Browse Talent",
             description: "Explore top freelancers on the platform.",
-            completed: false,
+            completed: hasBrowsedTalent,
             link: "/client/discover"
           }
         ]} 

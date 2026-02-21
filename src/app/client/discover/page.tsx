@@ -728,6 +728,11 @@ export default function DiscoverFreelancersPage() {
 
         setAllFreelancers(processedData);
         setFilteredFreelancers(processedData);
+        
+        // Mark as browsed for onboarding checklist
+        if (processedData.length > 0) {
+          localStorage.setItem("hasBrowsedTalent", "true");
+        }
       } catch (e: any) {
         setError(e.message || "Failed to fetch freelancers");
         console.error("Error fetching freelancers:", e);

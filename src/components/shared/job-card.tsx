@@ -202,7 +202,7 @@ export function JobCard({
               <div className="space-y-3 mt-6">
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                  className="w-full h-12 border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-zinc-600 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                   onClick={() => onViewDetails?.(job)}
                 >
                   View Details
@@ -238,13 +238,13 @@ export function JobCard({
                     {onViewProposals && (
                       <Button
                         variant="outline"
-                        className="w-full h-12 border-zinc-800 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-between px-4"
+                        className="w-full h-12 border-zinc-700 bg-zinc-800/50 text-zinc-100 hover:bg-zinc-800 hover:border-zinc-600 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-between px-4"
                         onClick={() => onViewProposals(job._id)}
                       >
                         <span>Proposals</span>
                         <div className="flex items-center gap-2">
                           <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{job.proposalsCount || 0}</span>
-                          <ChevronRight className="w-4 h-4 text-zinc-600" />
+                          <ChevronRight className="w-4 h-4 text-zinc-500" />
                         </div>
                       </Button>
                     )}
