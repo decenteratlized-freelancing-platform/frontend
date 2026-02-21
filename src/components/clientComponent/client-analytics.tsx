@@ -45,14 +45,14 @@ const performanceData = [
   { name: "Week 4", satisfaction: 4.7, delivery: 95, quality: 4.8 },
 ]
 
-const CustomTooltip = ({ active, payload, label, getConvertedAmount, fromCurrency }: any) => {
+const CustomTooltip = ({ active, payload, label, getFormattedAmount, fromCurrency }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
         <p className="text-white font-medium">{`${label}`}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {`${entry.dataKey}: ${entry.dataKey === 'spending' ? getConvertedAmount(entry.value, fromCurrency) : entry.value.toLocaleString('en-IN')}`}
+            {`${entry.dataKey}: ${entry.dataKey === 'spending' ? getFormattedAmount(entry.value, fromCurrency || 'ETH') : entry.value.toLocaleString('en-IN')}`}
           </p>
         ))}
       </div>
@@ -175,7 +175,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
+                    <Tooltip content={<CustomTooltip getFormattedAmount={getFormattedAmount} />} />
                     <Area
                       type="monotone"
                       dataKey="spending"
@@ -220,7 +220,7 @@ export default function ClientAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
+                    <Tooltip content={<CustomTooltip getFormattedAmount={getFormattedAmount} />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -251,7 +251,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
+                    <Tooltip content={<CustomTooltip getFormattedAmount={getFormattedAmount} />} />
                     <Bar dataKey="projects" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -281,7 +281,7 @@ export default function ClientAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="name" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
-                    <Tooltip content={<CustomTooltip getConvertedAmount={getConvertedAmount} />} />
+                    <Tooltip content={<CustomTooltip getFormattedAmount={getFormattedAmount} />} />
                     <Line
                       type="monotone"
                       dataKey="satisfaction"

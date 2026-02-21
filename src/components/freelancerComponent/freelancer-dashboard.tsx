@@ -337,18 +337,18 @@ export default function FreelancerDashboard() {
                           <p className="text-xs text-gray-400">Client Budget</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <CurrencyLogo currency={proposal.job?.paymentCurrency || "ETH"} size={12} />
-                            <p className="text-sm font-medium text-white">
-                              {getConvertedAmount(proposal.job?.budget || 0, proposal.job?.paymentCurrency || "ETH")}
-                            </p>
+                                                      <p className="text-sm font-medium text-white">
+                                                        {getFormattedAmount(proposal.job?.budget || 0, proposal.job?.paymentCurrency || "ETH")}
+                                                      </p>
                           </div>
                         </div>
                         <div>
                           <p className="text-xs text-gray-400">Your Rate</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <CurrencyLogo currency={proposal.job?.paymentCurrency || "ETH"} size={12} />
-                            <p className="text-sm font-medium text-green-400">
-                              {getConvertedAmount(proposal.proposedRate || 0, proposal.job?.paymentCurrency || "ETH")}
-                            </p>
+                                                      <p className="text-sm font-medium text-green-400">
+                                                        {getFormattedAmount(proposal.proposedRate || 0, proposal.job?.paymentCurrency || "ETH")}
+                                                      </p>
                           </div>
                         </div>
                         <div>

@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react"
 
 interface StatsWidgetProps {
   title: string
-  value: number
+  value: number | string
   change: string
   icon: LucideIcon
   color: string
@@ -33,7 +33,11 @@ export default function StatsWidget({
 
       <div className="flex-1 flex flex-col justify-center">
         <div className="text-2xl font-bold text-white mb-2">
-          <AnimatedCounter end={value} prefix={prefix} suffix={suffix} />
+          {typeof value === "number" ? (
+            <AnimatedCounter end={value} prefix={prefix} suffix={suffix} />
+          ) : (
+            <span>{value}</span>
+          )}
         </div>
         <p className="text-xs text-green-400 flex items-center">
           <TrendingUp className="w-3 h-3 mr-1" />

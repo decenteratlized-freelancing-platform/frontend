@@ -223,7 +223,7 @@ const FreelancerProfileModal = ({
   onClose: () => void;
   onHire: (freelancer: Freelancer) => void;
 }) => {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
@@ -341,7 +341,7 @@ const FreelancerProfileModal = ({
                     value: (
                       <div className="flex items-center gap-1">
                         <CurrencyLogo currency="ETH" size={12} />
-                        <span>{getConvertedAmount(freelancer.totalEarned)}</span>
+                        <span>{getFormattedAmount(freelancer.totalEarned, "ETH")}</span>
                       </div>
                     )
                   },

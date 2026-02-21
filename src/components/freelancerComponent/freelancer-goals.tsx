@@ -49,7 +49,7 @@ export default function FreelancerGoals() {
     deadline: "",
     category: "Professional",
   })
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
 
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/goals`
 
@@ -407,11 +407,11 @@ export default function FreelancerGoals() {
                       <div className="flex justify-between text-[11px] font-mono text-zinc-500 pt-1">
                         <div className="flex items-center gap-1">
                           {goal.category === "Financial" && <CurrencyLogo currency="ETH" size={10} />}
-                          <span>{goal.category === "Financial" ? getConvertedAmount(goal.current) : goal.current}</span>
+                          <span>{goal.category === "Financial" ? getFormattedAmount(goal.current, "ETH") : goal.current}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           {goal.category === "Financial" && <CurrencyLogo currency="ETH" size={10} />}
-                          <span>{goal.category === "Financial" ? getConvertedAmount(goal.target) : goal.target}</span>
+                          <span>{goal.category === "Financial" ? getFormattedAmount(goal.target, "ETH") : goal.target}</span>
                         </div>
                       </div>
                     </div>
@@ -490,11 +490,11 @@ export default function FreelancerGoals() {
               <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800 space-y-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-zinc-500 font-medium">Current Achievement</span>
-                  <span className="text-white font-bold">{selectedGoalForProgress.category === 'Financial' ? getConvertedAmount(selectedGoalForProgress.current) : selectedGoalForProgress.current}</span>
+                  <span className="text-white font-bold">{selectedGoalForProgress.category === 'Financial' ? getFormattedAmount(selectedGoalForProgress.current, 'ETH') : selectedGoalForProgress.current}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-zinc-500 font-medium">Target Milestone</span>
-                  <span className="text-zinc-400">{selectedGoalForProgress.category === 'Financial' ? getConvertedAmount(selectedGoalForProgress.target) : selectedGoalForProgress.target}</span>
+                  <span className="text-zinc-400">{selectedGoalForProgress.category === 'Financial' ? getFormattedAmount(selectedGoalForProgress.target, 'ETH') : selectedGoalForProgress.target}</span>
                 </div>
               </div>
 

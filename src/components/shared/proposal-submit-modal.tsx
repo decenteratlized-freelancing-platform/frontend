@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { CurrencyLogo } from "./currency-logo";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface ProposalSubmitModalProps {
   job: any;
@@ -43,6 +44,7 @@ export function ProposalSubmitModal({
   userEmail,
   walletAddress
 }: ProposalSubmitModalProps) {
+  const { getFormattedAmount } = useCurrency();
   const [text, setText] = useState("");
   const [budget, setBudget] = useState("");
   const [delivery, setDelivery] = useState("");
@@ -174,7 +176,13 @@ export function ProposalSubmitModal({
                   {job.paymentCurrency || "ETH"}
                 </div>
               </div>
-              <p className="text-[10px] text-zinc-500 px-1">Clients budget: {job.budget} {job.paymentCurrency || "ETH"}</p>
+              <div className="flex items-center gap-1.5 mt-1 px-1">
+                <p className="text-[10px] text-zinc-500">Clients budget:</p>
+                <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={10} />
+                <p className="text-[10px] text-zinc-500 font-medium">
+                  {getFormattedAmount(job.budget, job.paymentCurrency || "ETH")}
+                </p>
+              </div>
             </div>
 
             {/* Delivery Time */}

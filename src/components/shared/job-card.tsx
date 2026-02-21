@@ -64,7 +64,7 @@ export function JobCard({
   isPublishing = false,
   hasApplied = false
 }: JobCardProps) {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
 
   return (
     <motion.div
@@ -132,7 +132,7 @@ export function JobCard({
                     <div className="flex items-center gap-1.5">
                       <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={14} />
                       <span className="font-semibold text-white">
-                        {getConvertedAmount(job.budget, job.paymentCurrency || "ETH")}
+                        {getFormattedAmount(job.budget, job.paymentCurrency || "ETH")}
                       </span>
                     </div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Budget</p>

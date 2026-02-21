@@ -44,7 +44,7 @@ interface ProposalReviewModalProps {
 }
 
 export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: ProposalReviewModalProps) {
-    const { getConvertedAmount } = useCurrency();
+    const { getFormattedAmount } = useCurrency();
     const [proposals, setProposals] = useState<Proposal[]>([])
     const [loading, setLoading] = useState(false)
     const [jobCurrency, setJobCurrency] = useState<string>('ETH');
@@ -216,7 +216,7 @@ export function ProposalReviewModal({ jobId, isOpen, onClose, onMessage }: Propo
                                                                 <span className="text-xs text-zinc-500">Rate</span>
                                                                 <span className="font-medium text-white flex items-center gap-1.5">
                                                                     <CurrencyLogo currency={jobCurrency} size={14} />
-                                                                    {getConvertedAmount(proposal.proposedRate, jobCurrency)}
+                                                                    {getFormattedAmount(proposal.proposedRate, jobCurrency)}
                                                                 </span>
                                                             </div>
                                                             <div className="flex flex-col">

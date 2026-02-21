@@ -55,15 +55,15 @@ const transactions = [
 ]
 
 export default function ClientTransactions() {
-  const { getConvertedAmount } = useCurrency();
+  const { getFormattedAmount } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
   const stats = [
     { title: "Transactions", value: "156", change: "+15%", color: "from-green-500 to-emerald-500" },
-    { title: "Total Spent", value: getConvertedAmount(1.96), change: "+12%", color: "from-red-500 to-pink-500" },
-    { title: "This Month", value: getConvertedAmount(0.25), change: "+8%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getConvertedAmount(0.14), change: "-5%", color: "from-orange-500 to-yellow-500" },
+    { title: "Total Spent", value: getFormattedAmount(1.96, "ETH"), change: "+12%", color: "from-red-500 to-pink-500" },
+    { title: "This Month", value: getFormattedAmount(0.25, "ETH"), change: "+8%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getFormattedAmount(0.14, "ETH"), change: "-5%", color: "from-orange-500 to-yellow-500" },
   ]
 
   return (
@@ -213,7 +213,7 @@ export default function ClientTransactions() {
                     </div>
                     <div className="text-right">
                   <div className={`font-bold ${transaction.amount > 0 ? "text-green-400" : "text-white"}`}>
-                    {transaction.amount > 0 ? "+" : ""}{getConvertedAmount(Math.abs(transaction.amount))}
+                    {transaction.amount > 0 ? "+" : ""}{getFormattedAmount(Math.abs(transaction.amount / 80 / 1000), "ETH")}
                   </div>
                       <Badge
                         variant={transaction.status === "completed" ? "default" : "secondary"}

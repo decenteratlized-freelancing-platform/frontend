@@ -10,6 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Briefcase, Clock, BarChart, Layers, Tag, Calendar, User, Zap } from "lucide-react"
+import { useCurrency } from "@/context/CurrencyContext"
+import { CurrencyLogo } from "./currency-logo"
 
 interface Job {
     _id: string;
@@ -49,6 +51,7 @@ const StatCard = ({ icon: Icon, label, value, color, className = "" }: { icon: a
 );
 
 export function JobDetailsModal({ job, isOpen, onClose, onApply }: JobDetailsModalProps) {
+    const { getFormattedAmount } = useCurrency();
     if (!job) return null;
 
     return (
@@ -88,7 +91,12 @@ export function JobDetailsModal({ job, isOpen, onClose, onApply }: JobDetailsMod
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-0.5">Project Budget</p>
-                                    <p className="text-2xl font-black text-white">{job.budget} ETH</p>
+                                    <div className="flex items-center gap-2">
+                                        <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={20} className="text-white" />
+                                        <p className="text-2xl font-black text-white">
+                                            {getFormattedAmount(job.budget, job.paymentCurrency || "ETH")}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

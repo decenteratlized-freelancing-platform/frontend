@@ -357,7 +357,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
             startY: 90,
             head: [['Milestone #', 'Description', 'Amount']],
             body: [
-                [index + 1, milestone.description, `${milestone.amount} ETH`]
+                [index + 1, milestone.description, `${milestone.amount} ${contract.paymentCurrency || "ETH"}`]
             ],
             theme: 'grid',
             headStyles: { fillColor: [59, 130, 246] } // Blue color
@@ -366,7 +366,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
         // Total
         const finalY = (doc as any).lastAutoTable.finalY + 10;
         doc.setFontSize(14);
-        doc.text(`Total Amount: ${milestone.amount} ETH`, 190, finalY, { align: "right" });
+        doc.text(`Total Amount: ${milestone.amount} ${contract.paymentCurrency || "ETH"}`, 190, finalY, { align: "right" });
 
         // Footer
         doc.setFontSize(8);
@@ -850,7 +850,7 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                                                 />
                                             </div>
                                             <div className="lg:col-span-4">
-                                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2 block">Release Amount (ETH)</label>
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2 block">Release Amount ({contract.paymentCurrency || "ETH"})</label>
                                                 <div className="flex gap-2">
                                                     <Input 
                                                         type="number"
