@@ -72,13 +72,15 @@ export default function ClientDashboard() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [hasBrowsedTalent, setHasBrowsedTalent] = useState(false);
-  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(false);
+  // Default to true (hidden) to prevent "Flash of Dismissed Content"
+  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(true);
 
   useEffect(() => {
     const browsed = localStorage.getItem("hasBrowsedTalent") === "true";
     setHasBrowsedTalent(browsed);
     
     const dismissed = localStorage.getItem("gettingStartedDismissed_client") === "true";
+    // Only show if NOT dismissed
     setIsGettingStartedDismissed(dismissed);
   }, []);
 
