@@ -156,10 +156,6 @@ export default function FreelancerDashboard() {
     fetchProposals();
   }, [fetchProposals]);
 
-  if (status === "loading") {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-white">Loading...</p></div>;
-  }
-
   const gettingStartedSteps = [
     {
       title: "Complete Profile",
@@ -189,10 +185,24 @@ export default function FreelancerDashboard() {
 
   const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
 
+  // Automatically dismiss if all steps are completed
+  useEffect(() => {
+    if (allStepsCompleted && !loadingProposals && fullProfile) {
+      localStorage.setItem("gettingStartedDismissed_freelancer", "true");
+      setIsGettingStartedDismissed(true);
+    }
+  }, [allStepsCompleted, loadingProposals, fullProfile]);
+
   const handleDismissGettingStarted = () => {
     localStorage.setItem("gettingStartedDismissed_freelancer", "true");
     setIsGettingStartedDismissed(true);
   };
+
+  const showGettingStarted = !isGettingStartedDismissed && !allStepsCompleted && !loadingProposals && !!fullProfile;
+
+  if (status === "loading") {
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-white">Loading...</p></div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -216,7 +226,7 @@ export default function FreelancerDashboard() {
         <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
       </motion.div>
 
-      {!allStepsCompleted && !isGettingStartedDismissed && (
+      {showGettingStarted && (
         <GettingStarted steps={gettingStartedSteps} onDismiss={handleDismissGettingStarted} />
       )}
 

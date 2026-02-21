@@ -19,8 +19,8 @@ export function CurrencyLogo({ currency = "ETH", className = "", size = 16 }: Cu
   }
 
   if (currency === "EURC") {
-    // Making it slightly larger (+10%) to visually match USDC
-    const adjustedSize = size * 1.1;
+    // Making it significantly larger (+30%) to visually match USDC
+    const adjustedSize = size * 1.3;
     return (
       <div className={`relative flex items-center justify-center ${className}`} style={{ width: adjustedSize, height: adjustedSize }}>
         <Image src="/eurc.png" alt="EURC" width={adjustedSize} height={adjustedSize} className="object-contain" unoptimized />

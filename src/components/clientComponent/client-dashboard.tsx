@@ -255,10 +255,20 @@ export default function ClientDashboard() {
 
   const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
 
+  // Automatically dismiss if all steps are completed
+  useEffect(() => {
+    if (allStepsCompleted && !jobsLoading && fullProfile) {
+      localStorage.setItem("gettingStartedDismissed_client", "true");
+      setIsGettingStartedDismissed(true);
+    }
+  }, [allStepsCompleted, jobsLoading, fullProfile]);
+
   const handleDismissGettingStarted = () => {
     localStorage.setItem("gettingStartedDismissed_client", "true");
     setIsGettingStartedDismissed(true);
   };
+
+  const showGettingStarted = !isGettingStartedDismissed && !allStepsCompleted && !jobsLoading && !!fullProfile;
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -321,7 +331,7 @@ export default function ClientDashboard() {
         </Link>
       </motion.div>
 
-      {!allStepsCompleted && !isGettingStartedDismissed && (
+      {showGettingStarted && (
         <GettingStarted steps={gettingStartedSteps} onDismiss={handleDismissGettingStarted} />
       )}
 
