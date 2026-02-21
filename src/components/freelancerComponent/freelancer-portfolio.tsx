@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,9 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Plus, ExternalLink, Github, Eye, Heart, TrendingUp, Upload } from "lucide-react"
+import { toast } from "sonner"
 
 interface PortfolioItem {
-  id: number
+  id?: string | number
   title: string
   description: string
   image: string
@@ -27,61 +29,6 @@ interface PortfolioItem {
   featured: boolean
 }
 
-const initialPortfolioItems: PortfolioItem[] = [
-  {
-    id: 1,
-    title: "E-commerce Platform",
-    description: "Modern React-based e-commerce platform with advanced features",
-    image: "/placeholder.svg?height=200&width=300&text=E-commerce",
-    technologies: ["React", "Node.js", "MongoDB", "Stripe"],
-    category: "Web Development",
-    views: 1250,
-    likes: 89,
-    liveUrl: "https://example.com",
-    githubUrl: "https://github.com/example",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Mobile Banking App",
-    description: "Secure and user-friendly mobile banking application",
-    image: "/placeholder.svg?height=200&width=300&text=Banking+App",
-    technologies: ["React Native", "Firebase", "TypeScript"],
-    category: "Mobile Development",
-    views: 980,
-    likes: 67,
-    liveUrl: "https://example.com",
-    githubUrl: "https://github.com/example",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Task Management Dashboard",
-    description: "Comprehensive project management tool with team collaboration",
-    image: "/placeholder.svg?height=200&width=300&text=Dashboard",
-    technologies: ["Vue.js", "Python", "PostgreSQL"],
-    category: "Web Development",
-    views: 756,
-    likes: 45,
-    liveUrl: "https://example.com",
-    githubUrl: "https://github.com/example",
-    featured: true,
-  },
-  {
-    id: 4,
-    title: "AI Content Generator",
-    description: "Machine learning powered content generation platform",
-    image: "/placeholder.svg?height=200&width=300&text=AI+Content",
-    technologies: ["Python", "TensorFlow", "FastAPI", "React"],
-    category: "AI/ML",
-    views: 1100,
-    likes: 92,
-    liveUrl: "https://example.com",
-    githubUrl: "https://github.com/example",
-    featured: false,
-  },
-]
-
 const stats = [
   { title: "Total Projects", value: "24", icon: TrendingUp, color: "from-blue-500 to-cyan-500" },
   { title: "Total Views", value: "12.5K", icon: Eye, color: "from-green-500 to-emerald-500" },
@@ -90,7 +37,9 @@ const stats = [
 ]
 
 export default function FreelancerPortfolio() {
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(initialPortfolioItems)
+  const { data: session } = useSession()
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showAddProject, setShowAddProject] = useState(false)
   const [newProject, setNewProject] = useState({
@@ -105,14 +54,42 @@ export default function FreelancerPortfolio() {
 
   const categories = ["all", "Web Development", "Mobile Development", "AI/ML", "Design"]
 
-  const handleAddProject = () => {
-    if (newProject.title && newProject.description && newProject.category) {
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      if (!session?.user?.email) return
+      try {
+        const res = await fetch(`/api/settings?email=${session.user.email}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.profile?.portfolio) {
+            // Map backend portfolio to frontend PortfolioItem structure
+            const mappedPortfolio = data.profile.portfolio.map((item: any) => ({
+              ...item,
+              id: item._id,
+              technologies: item.technologies || [],
+              views: item.views || 0,
+              likes: item.likes || 0,
+              featured: item.featured || false
+            }))
+            setPortfolioItems(mappedPortfolio)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch portfolio:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPortfolio()
+  }, [session])
+
+  const handleAddProject = async () => {
+    if (newProject.title && newProject.description && newProject.category && session?.user?.email) {
       const project: PortfolioItem = {
-        id: Date.now(),
         title: newProject.title,
         description: newProject.description,
         image: newProject.image || "/placeholder.svg?height=200&width=300&text=New+Project",
-        technologies: newProject.technologies.split(",").map((tech) => tech.trim()),
+        technologies: newProject.technologies.split(",").map((tech) => tech.trim()).filter(t => t),
         category: newProject.category,
         views: 0,
         likes: 0,
@@ -120,22 +97,46 @@ export default function FreelancerPortfolio() {
         githubUrl: newProject.githubUrl,
         featured: false,
       }
-      setPortfolioItems([project, ...portfolioItems])
-      setNewProject({
-        title: "",
-        description: "",
-        category: "",
-        technologies: "",
-        liveUrl: "",
-        githubUrl: "",
-        image: "",
-      })
-      setShowAddProject(false)
+
+      const updatedPortfolio = [project, ...portfolioItems]
+
+      try {
+        const res = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: session.user.email,
+            portfolio: updatedPortfolio
+          })
+        })
+
+        if (res.ok) {
+          toast.success("Project added successfully")
+          setPortfolioItems(updatedPortfolio)
+          setNewProject({
+            title: "",
+            description: "",
+            category: "",
+            technologies: "",
+            liveUrl: "",
+            githubUrl: "",
+            image: "",
+          })
+          setShowAddProject(false)
+        } else {
+          toast.error("Failed to save project")
+        }
+      } catch (err) {
+        console.error("Save project error:", err)
+        toast.error("Something went wrong")
+      }
     }
   }
 
   const filteredItems =
     selectedCategory === "all" ? portfolioItems : portfolioItems.filter((item) => item.category === selectedCategory)
+
+  if (loading) return <div className="p-8 text-center text-white">Loading portfolio...</div>
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">

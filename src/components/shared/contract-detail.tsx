@@ -235,8 +235,12 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
             const tx = await escrow.releaseMilestone(contract.onchainId, index);
             toast({ title: "Transaction Sent", description: "Releasing milestone..." });
-            await tx.wait();
+            const receipt = await tx.wait();
             
+            if (receipt.status === 0) {
+                throw new Error("Transaction reverted on-chain. Funds were not released. Please check your balance and try again.");
+            }
+
             toast({ title: "Released", description: "Funds released to freelancer!" });
             await handleSync();
 

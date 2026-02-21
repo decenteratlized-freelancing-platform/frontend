@@ -114,6 +114,7 @@ type UserLean = {
   professionalBio?: string;
   fullName: string;
   email: string;
+  walletAddress?: string;
   image?: string | null;
   settings?: any;
   role: string;
@@ -130,7 +131,7 @@ export async function GET(req: Request) {
     }
 
     const user = (await User.findOne({ email })
-      .select("fullName email image settings role")
+      .select("fullName email image settings role walletAddress")
       .lean()) as UserLean | null;
 
     if (!user) {
@@ -145,6 +146,7 @@ export async function GET(req: Request) {
         fullName: user.fullName,
         email: user.email,
         image: user.image,
+        walletAddress: user.walletAddress,
         phone: user.settings?.phone || "",
         location: user.settings?.location || "",
         portfolioWebsite: user.settings?.portfolioWebsite || "",

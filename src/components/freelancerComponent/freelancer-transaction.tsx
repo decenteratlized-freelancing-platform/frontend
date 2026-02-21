@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,48 +9,65 @@ import { Badge } from "@/components/ui/badge"
 import { useCurrency } from "@/context/CurrencyContext";
 import { Download, CreditCard, ArrowDownLeft, Calendar, Wallet } from "lucide-react"
 
-const transactions = [
-  {
-    id: "TXN-F001",
-    type: "payment",
-    description: "Payment from TechCorp Inc. - E-commerce Development",
-    amount: 2500,
-    status: "completed",
-    date: "2024-01-15",
-    method: "Bank Transfer",
-    client: "TechCorp Inc.",
-  },
-  {
-    id: "TXN-F002",
-    type: "payment",
-    description: "Payment from StartupXYZ - Mobile App Design",
-    amount: 1800,
-    status: "completed",
-    date: "2024-01-12",
-    method: "PayPal",
-    client: "StartupXYZ",
-  },
-  {
-    id: "TXN-F003",
-    type: "payment",
-    description: "Payment from ContentCo - Blog Writing",
-    amount: 600,
-    status: "pending",
-    date: "2024-01-10",
-    method: "Crypto",
-    client: "ContentCo",
-  },
-]
+interface Transaction {
+  _id: string
+  id?: string
+  description?: string
+  amount: string
+  status: string
+  createdAt: string
+  mode: string
+  client: { fullName: string }
+  job: { title: string }
+}
 
 export default function FreelancerTransactions() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const { data: session } = useSession()
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
   const { getFormattedAmount } = useCurrency();
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      // @ts-ignore - session.accessToken exists if configured in next-auth callbacks
+      const token = session?.accessToken || session?.user?.token;
+      
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/user/transactions`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setTransactions(data)
+        }
+      } catch (err) {
+        console.error("Failed to fetch transactions:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (session) fetchTransactions()
+  }, [session])
+
+  const totalEarned = transactions
+    .filter(t => t.status === "Paid")
+    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+
+  const pendingAmount = transactions
+    .filter(t => t.status === "Pending")
+    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+
   const stats = [
-    { title: "Total Earned", value: getFormattedAmount(18750), change: "+15%", color: "from-green-500 to-emerald-500" },
-    { title: "This Month", value: getFormattedAmount(4900), change: "+22%", color: "from-blue-500 to-cyan-500" },
-    { title: "Pending", value: getFormattedAmount(600), change: "-10%", color: "from-orange-500 to-yellow-500" },
-    { title: "Transactions", value: "89", change: "+18%", color: "from-purple-500 to-pink-500" },
+    { title: "Total Earned", value: getFormattedAmount(totalEarned), change: "+0%", color: "from-green-500 to-emerald-500" },
+    { title: "This Month", value: getFormattedAmount(totalEarned), change: "+0%", color: "from-blue-500 to-cyan-500" },
+    { title: "Pending", value: getFormattedAmount(pendingAmount), change: "0%", color: "from-orange-500 to-yellow-500" },
+    { title: "Transactions", value: transactions.length.toString(), change: "+0%", color: "from-purple-500 to-pink-500" },
   ]
+
+  if (loading) return <div className="p-8 text-center text-white">Loading transactions...</div>
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
@@ -120,50 +138,55 @@ export default function FreelancerTransactions() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {transactions.map((transaction, index) => (
-                <motion.div
-                  key={transaction.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                  whileHover={{ scale: 1.01 }}
-                  className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                        <ArrowDownLeft className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-white group-hover:text-green-300 transition-colors">
-                          {transaction.description}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-zinc-100" />
-                            {transaction.date}
-                          </span>
-                          <span>ID: {transaction.id}</span>
-                          <span>{transaction.method}</span>
+              {transactions.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">No transactions found.</div>
+              ) : (
+                transactions.map((transaction, index) => (
+                  <motion.div
+                    key={transaction._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                    whileHover={{ scale: 1.01 }}
+                    className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                          <ArrowDownLeft className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white group-hover:text-green-300 transition-colors">
+                            {transaction.job?.title || "Payment Received"}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-zinc-100" />
+                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            </span>
+                            <span>ID: {transaction._id.substring(0, 8)}</span>
+                            <span>{transaction.mode}</span>
+                            <span>Client: {transaction.client?.fullName}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-green-400">+{getFormattedAmount(parseFloat(transaction.amount))}</p>
+                        <Badge
+                          variant={transaction.status === "Paid" ? "default" : "secondary"}
+                          className={
+                            transaction.status === "Paid"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          }
+                        >
+                          {transaction.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-green-400">+{getFormattedAmount(transaction.amount)}</p>
-                      <Badge
-                        variant={transaction.status === "completed" ? "default" : "secondary"}
-                        className={
-                          transaction.status === "completed"
-                            ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                            : "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                        }
-                      >
-                        {transaction.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

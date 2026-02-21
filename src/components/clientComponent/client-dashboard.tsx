@@ -25,6 +25,7 @@ import AnnouncementBanner from "@/components/shared/AnnouncementBanner"
 import { useToast } from "@/hooks/use-toast"
 import { NotificationList } from "@/components/shared/NotificationList"
 import { JobCard } from "../shared/job-card"
+import { GettingStarted } from "../shared/getting-started"
 
 export default function ClientDashboard() {
   const { data: session } = useSession();
@@ -33,6 +34,7 @@ export default function ClientDashboard() {
   const [displayName, setDisplayName] = useState("Client");
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
+  const [fullProfile, setFullProfile] = useState<any>(null);
   
   const ensureToken = async () => {
     let token = localStorage.getItem("token");
@@ -75,6 +77,24 @@ export default function ClientDashboard() {
 
     setDisplayName(nameFromSession ?? nameFromHook ?? nameFromLocal ?? "Client");
   }, [session, user]);
+
+  useEffect(() => {
+    const fetchFullProfile = async () => {
+      const email = session?.user?.email;
+      if (email) {
+        try {
+          const res = await fetch(`/api/settings?email=${email}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFullProfile(data.profile);
+          }
+        } catch (err) {
+          console.error("Fetch profile failed:", err);
+        }
+      }
+    };
+    fetchFullProfile();
+  }, [session]);
 
   const fetchJobsList = async () => {
     if (session?.user?.email) {
@@ -251,6 +271,35 @@ export default function ClientDashboard() {
           </motion.div>
         </Link>
       </motion.div>
+
+      <GettingStarted 
+        steps={[
+          {
+            title: "Complete Profile",
+            description: "Introduce yourself to attract the best talent.",
+            completed: !!(fullProfile?.professionalBio),
+            link: "/settings"
+          },
+          {
+            title: "Link Wallet",
+            description: "Connect MetaMask to post jobs with escrow.",
+            completed: !!(fullProfile?.walletAddress),
+            link: "/settings"
+          },
+          {
+            title: "Post First Job",
+            description: "Start your project and get proposals from experts.",
+            completed: jobs.length > 0,
+            link: "/client/post-job"
+          },
+          {
+            title: "Browse Talent",
+            description: "Explore top freelancers on the platform.",
+            completed: false,
+            link: "/client/discover"
+          }
+        ]} 
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

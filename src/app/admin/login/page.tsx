@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Lock, Mail, AlertCircle, Zap } from "lucide-react"
+import { Shield, Lock, Mail, AlertCircle, ArrowRight, Loader2 } from "lucide-react"
 
 export default function AdminLoginPage() {
     const router = useRouter()
@@ -34,133 +34,137 @@ export default function AdminLoginPage() {
             const data = await res.json()
 
             if (!res.ok) {
-                setError(data.error || "Login failed")
+                setError(data.error || "Access Denied: Invalid Credentials")
                 setIsLoading(false)
                 return
             }
 
-            // Store admin token in localStorage
             localStorage.setItem("adminToken", data.token)
             localStorage.setItem("adminEmail", data.admin.email)
-
-            // Redirect to admin dashboard
             router.push("/admin/dashboard")
         } catch (err) {
-            setError("Failed to connect to server")
+            setError("Security Handshake Failed: Server unreachable")
             setIsLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-zinc-900 flex items-center justify-center p-4">
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
-            </div>
-
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Structural Decoration */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-indigo-600/50" />
+            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10" />
+            
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="w-full max-w-md relative z-10"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="w-full max-w-[440px] relative z-10"
             >
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-                    <CardHeader className="space-y-4 text-center pb-6">
-                        <div className="flex justify-center">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 0.5, delay: 0.2 }}
-                                className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg"
-                            >
-                                <Shield className="w-8 h-8 text-white" />
-                            </motion.div>
+                <div className="flex justify-center mb-8">
+                    <motion.div
+                        initial={{ y: -20 }}
+                        animate={{ y: 0 }}
+                        className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 px-5 py-2.5 rounded-full"
+                    >
+                        <Image
+                            src="/logo-w-removebg-preview.png"
+                            alt="SmartHire"
+                            width={24}
+                            height={24}
+                            className="grayscale brightness-200"
+                        />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Security Gateway</span>
+                    </motion.div>
+                </div>
+
+                <Card className="bg-zinc-900 border-zinc-800 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] rounded-[2.5rem] overflow-hidden">
+                    <CardHeader className="space-y-1 pt-10 px-10 pb-2">
+                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-900/20">
+                            <Shield className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <CardTitle className="text-2xl font-bold text-white">Admin Panel</CardTitle>
-                            <p className="text-gray-400 mt-2">Sign in to access the admin dashboard</p>
-                        </div>
+                        <CardTitle className="text-3xl font-black text-white tracking-tight">Admin Portal</CardTitle>
+                        <p className="text-zinc-500 text-sm font-medium">Elevated privileges required for access</p>
                     </CardHeader>
 
-                    <CardContent>
-                        <form onSubmit={handleLogin} className="space-y-5">
+                    <CardContent className="p-10 pt-6">
+                        <form onSubmit={handleLogin} className="space-y-6">
                             {error && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="flex items-center gap-3 p-4 bg-red-500/5 border border-red-500/20 rounded-2xl"
                                 >
-                                    <AlertCircle className="w-4 h-4 text-red-400" />
-                                    <span className="text-sm text-red-400">{error}</span>
+                                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                    <span className="text-xs font-bold text-red-500 uppercase tracking-wide leading-tight">{error}</span>
                                 </motion.div>
                             )}
 
-                            <div className="space-y-2">
-                                <Label htmlFor="email" className="text-gray-300">Email</Label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="admin@smarthire.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
-                                        required
-                                    />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Work Email</Label>
+                                    <div className="relative group">
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-indigo-500 transition-colors" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="admin@smarthire.app"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="h-14 pl-12 bg-zinc-950 border-zinc-800 text-white rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-zinc-700"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="password" className="text-gray-300">Password</Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
-                                        required
-                                    />
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Security Key</Label>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-indigo-500 transition-colors" />
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="h-14 pl-12 bg-zinc-950 border-zinc-800 text-white rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-zinc-700"
+                                            required
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+                                className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-900/20 transition-all active:scale-[0.98] group disabled:opacity-50 disabled:active:scale-100"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Signing in...</span>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span className="uppercase tracking-[0.2em] text-xs">Authenticating...</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-2">
-                                        <Shield className="w-4 h-4" />
-                                        <span>Sign in to Admin</span>
+                                    <div className="flex items-center justify-center gap-2 w-full">
+                                        <span className="uppercase tracking-[0.2em] text-xs">Initiate Secure Login</span>
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 )}
                             </Button>
                         </form>
 
-                        <div className="mt-6 pt-6 border-t border-white/10 text-center">
-                            <div className="flex items-center justify-center gap-2 text-gray-500">
-                                <Image
-                                    src="/logo-w-removebg-preview.png"
-                                    alt="SmartHire Logo"
-                                    width={30}
-                                    height={30}
-                                    className="object-contain opacity-50"
-                                />
-                                <span className="text-sm">SmartHire Admin Portal</span>
+                        <div className="mt-10 flex items-center justify-between border-t border-zinc-800 pt-8">
+                            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">© 2026 SmartHire Inc.</span>
+                            <div className="flex gap-4">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Systems Active</span>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
+                
+                <p className="text-center mt-8 text-zinc-600 text-xs font-medium">
+                    Authorized personnel only. All access attempts are logged and monitored.
+                </p>
             </motion.div>
         </div>
     )

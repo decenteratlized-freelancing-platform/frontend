@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import AnnouncementBanner from "@/components/shared/AnnouncementBanner";
 import { NotificationList } from "@/components/shared/NotificationList";
+import { GettingStarted } from "../shared/getting-started";
 // removed server model import
 
 
@@ -81,6 +82,7 @@ export default function FreelancerDashboard() {
   const { data: session, status } = useSession();
   const [displayName, setDisplayName] = useState("Guest");
   const [profileData, setProfileData] = useState({ fullname: "", email: "", role: "" });
+  const [fullProfile, setFullProfile] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [proposals, setProposals] = useState<any[]>([]);
@@ -98,6 +100,26 @@ export default function FreelancerDashboard() {
   const handleGoalsRedirect = () => { router.push('/freelancer/goals') }
 
   const handleMessagesRedirect = () => { router.push('/freelancer/messages') }
+
+
+
+  useEffect(() => {
+    const fetchFullProfile = async () => {
+      const email = session?.user?.email || localStorage.getItem("email");
+      if (email) {
+        try {
+          const res = await fetch(`/api/settings?email=${email}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFullProfile(data.profile);
+          }
+        } catch (err) {
+          console.error("Fetch profile failed:", err);
+        }
+      }
+    };
+    fetchFullProfile();
+  }, [session]);
 
 
 
@@ -289,6 +311,33 @@ export default function FreelancerDashboard() {
 
   const activeProjectsCount = proposals.filter(p => p.status === 'accepted').length;
 
+  const gettingStartedSteps = [
+    {
+      title: "Complete Profile",
+      description: "Add your bio, skills and professional title.",
+      completed: !!(fullProfile?.professionalBio && fullProfile?.skills?.length > 0),
+      link: "/freelancer/settings"
+    },
+    {
+      title: "Build Portfolio",
+      description: "Showcase your best work to attract clients.",
+      completed: !!(fullProfile?.portfolio?.length > 0),
+      link: "/freelancer/portfolio"
+    },
+    {
+      title: "Link Wallet",
+      description: "Connect your MetaMask to receive crypto payments.",
+      completed: !!(fullProfile?.walletAddress),
+      link: "/freelancer/settings"
+    },
+    {
+      title: "Find First Job",
+      description: "Browse open roles and submit your first proposal.",
+      completed: proposals.length > 0,
+      link: "/freelancer/browse-jobs"
+    }
+  ];
+
 
 
   return (
@@ -331,6 +380,8 @@ export default function FreelancerDashboard() {
         <p className="text-xl text-gray-300">Here&apos;s your freelance activity overview</p>
 
       </motion.div>
+
+      <GettingStarted steps={gettingStartedSteps} />
 
 
 
