@@ -16,13 +16,21 @@ export default function WalletManagement() {
     const { toast } = useToast()
     const [copied, setCopied] = useState(false)
     const [balance, setBalance] = useState<string | null>(null)
+    const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+    const [eurcBalance, setEurcBalance] = useState<string | null>(null)
     const [loadingBalance, setLoadingBalance] = useState(false)
 
-    // Fetch wallet balance when connected
+    // Token Addresses on Sepolia
+    const USDC_ADDRESS = "0x1c7D4B196Cb0232b3044B3377f186c96735A64Ca"
+    const EURC_ADDRESS = "0x08210F9120F89E8D6D74276718715626e38b449e"
+
+    // Fetch wallet balances when connected
     useEffect(() => {
-        const fetchBalance = async () => {
+        const fetchBalances = async () => {
             if (!address) {
                 setBalance(null)
+                setUsdcBalance(null)
+                setEurcBalance(null)
                 return
             }
 
@@ -30,24 +38,44 @@ export default function WalletManagement() {
             try {
                 const provider = (window as any).ethereum
                 if (provider) {
+                    // Fetch ETH Balance
                     const balanceHex = await provider.request({
                         method: 'eth_getBalance',
                         params: [address, 'latest']
                     })
-                    // Convert from wei to ETH
                     const balanceWei = parseInt(balanceHex, 16)
                     const balanceEth = balanceWei / 1e18
                     setBalance(balanceEth.toFixed(4))
+
+                    // ERC20 Balance Helper (balanceOf method selector: 0x70a08231)
+                    const fetchTokenBalance = async (tokenAddress: string, decimals: number) => {
+                        try {
+                            const data = '0x70a08231' + address.substring(2).padStart(64, '0')
+                            const result = await provider.request({
+                                method: 'eth_call',
+                                params: [{ to: tokenAddress, data }, 'latest']
+                            })
+                            if (result === '0x') return "0.00"
+                            const val = BigInt(result)
+                            return (Number(val) / Math.pow(10, decimals)).toFixed(2)
+                        } catch (e) {
+                            return "0.00"
+                        }
+                    }
+
+                    const usdc = await fetchTokenBalance(USDC_ADDRESS, 6)
+                    const eurc = await fetchTokenBalance(EURC_ADDRESS, 6)
+                    setUsdcBalance(usdc)
+                    setEurcBalance(eurc)
                 }
             } catch (error) {
-                console.error("Failed to fetch balance:", error)
-                setBalance(null)
+                console.error("Failed to fetch balances:", error)
             } finally {
                 setLoadingBalance(false)
             }
         }
 
-        fetchBalance()
+        fetchBalances()
     }, [address])
 
     const handleCopyAddress = async () => {
@@ -149,14 +177,18 @@ export default function WalletManagement() {
                                             <CurrencyLogo currency="USDC" size={14} />
                                             <p className="text-[10px] text-gray-500 uppercase font-bold">USDC</p>
                                         </div>
-                                        <p className="text-sm font-semibold text-white">0.00</p>
+                                        <p className="text-sm font-semibold text-white">
+                                            {loadingBalance ? "..." : usdcBalance !== null ? `${usdcBalance}` : "0.00"}
+                                        </p>
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-1 mb-1">
                                             <CurrencyLogo currency="EURC" size={14} />
                                             <p className="text-[10px] text-gray-500 uppercase font-bold">EURC</p>
                                         </div>
-                                        <p className="text-sm font-semibold text-white">0.00</p>
+                                        <p className="text-sm font-semibold text-white">
+                                            {loadingBalance ? "..." : eurcBalance !== null ? `${eurcBalance}` : "0.00"}
+                                        </p>
                                     </div>
                                 </div>
                                 

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { CheckCircle2, Circle, ArrowRight } from "lucide-react"
+import { CheckCircle2, Circle, ArrowRight, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -16,20 +16,31 @@ interface Step {
 interface GettingStartedProps {
   steps: Step[]
   title?: string
+  onDismiss?: () => void
 }
 
-export function GettingStarted({ steps, title = "Getting Started" }: GettingStartedProps) {
+export function GettingStarted({ steps, title = "Getting Started", onDismiss }: GettingStartedProps) {
   const completedCount = steps.filter(s => s.completed).length
   const progress = (completedCount / steps.length) * 100
 
   return (
-    <Card className="bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden mb-8">
+    <Card className="bg-white/5 backdrop-blur-sm border border-white/10 overflow-hidden mb-8 relative">
+      {onDismiss && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onDismiss}
+          className="absolute top-2 right-2 text-zinc-500 hover:text-white hover:bg-white/10 z-10 h-8 w-8"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      )}
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
             {title}
           </CardTitle>
-          <span className="text-sm text-zinc-400 font-medium">
+          <span className="text-sm text-zinc-400 font-medium mr-8">
             {completedCount}/{steps.length} Steps
           </span>
         </div>

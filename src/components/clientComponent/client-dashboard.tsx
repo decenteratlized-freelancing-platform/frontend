@@ -72,10 +72,14 @@ export default function ClientDashboard() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [hasBrowsedTalent, setHasBrowsedTalent] = useState(false);
+  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(false);
 
   useEffect(() => {
     const browsed = localStorage.getItem("hasBrowsedTalent") === "true";
     setHasBrowsedTalent(browsed);
+    
+    const dismissed = localStorage.getItem("gettingStartedDismissed_client") === "true";
+    setIsGettingStartedDismissed(dismissed);
   }, []);
 
   useEffect(() => {
@@ -249,6 +253,11 @@ export default function ClientDashboard() {
 
   const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
 
+  const handleDismissGettingStarted = () => {
+    localStorage.setItem("gettingStartedDismissed_client", "true");
+    setIsGettingStartedDismissed(true);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-8">
       <AnnouncementBanner role="client" />
@@ -310,8 +319,8 @@ export default function ClientDashboard() {
         </Link>
       </motion.div>
 
-      {!allStepsCompleted && (
-        <GettingStarted steps={gettingStartedSteps} />
+      {!allStepsCompleted && !isGettingStartedDismissed && (
+        <GettingStarted steps={gettingStartedSteps} onDismiss={handleDismissGettingStarted} />
       )}
 
       {/* Stats Cards */}

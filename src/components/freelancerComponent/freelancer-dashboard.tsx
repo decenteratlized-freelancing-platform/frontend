@@ -95,6 +95,12 @@ export default function FreelancerDashboard() {
     completedJobsCount: 0,
     rating: 0,
   });
+  const [isGettingStartedDismissed, setIsGettingStartedDismissed] = useState(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem("gettingStartedDismissed_freelancer") === "true";
+    setIsGettingStartedDismissed(dismissed);
+  }, []);
 
   const handleJobsRedirect = () => { router.push('/freelancer/browse-jobs') }
 
@@ -335,7 +341,10 @@ export default function FreelancerDashboard() {
 
   const allStepsCompleted = gettingStartedSteps.every(step => step.completed);
 
-
+  const handleDismissGettingStarted = () => {
+    localStorage.setItem("gettingStartedDismissed_freelancer", "true");
+    setIsGettingStartedDismissed(true);
+  };
 
   return (
 
@@ -378,8 +387,8 @@ export default function FreelancerDashboard() {
 
       </motion.div>
 
-      {!allStepsCompleted && (
-        <GettingStarted steps={gettingStartedSteps} />
+      {!allStepsCompleted && !isGettingStartedDismissed && (
+        <GettingStarted steps={gettingStartedSteps} onDismiss={handleDismissGettingStarted} />
       )}
 
 

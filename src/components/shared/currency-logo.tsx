@@ -1,7 +1,7 @@
 "use client"
 
-import Image from "next/image"
 import { CoinsIcon } from "lucide-react"
+import Image from "next/image"
 
 interface CurrencyLogoProps {
   currency?: string
@@ -12,16 +12,18 @@ interface CurrencyLogoProps {
 export function CurrencyLogo({ currency = "ETH", className = "", size = 16 }: CurrencyLogoProps) {
   if (currency === "USDC") {
     return (
-      <div className={`relative flex items-center justify-center overflow-hidden rounded-full bg-white/10 ${className}`} style={{ width: size, height: size }}>
+      <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
         <Image src="/usdc.png" alt="USDC" width={size} height={size} className="object-contain" unoptimized />
       </div>
     )
   }
 
   if (currency === "EURC") {
+    // Making it slightly larger (+10%) to visually match USDC
+    const adjustedSize = size * 1.1;
     return (
-      <div className={`relative flex items-center justify-center overflow-hidden rounded-full bg-white/10 ${className}`} style={{ width: size, height: size }}>
-        <Image src="/eurc.png" alt="EURC" width={size} height={size} className="object-contain" unoptimized />
+      <div className={`relative flex items-center justify-center ${className}`} style={{ width: adjustedSize, height: adjustedSize }}>
+        <Image src="/eurc.png" alt="EURC" width={adjustedSize} height={adjustedSize} className="object-contain" unoptimized />
       </div>
     )
   }
