@@ -7,8 +7,17 @@ import { SocketContextProvider } from '../context/SocketContext';
 import { LoaderProvider } from '../context/LoaderContext';
 import { CurrencyProvider } from '../context/CurrencyProvider';
 import { Inter } from 'next/font/google';
+import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'SmartHire',
+  description: 'Decentralized recruitment system',
+  icons: {
+    icon: 'logo-w-removebg-preview.png',
+  },
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
