@@ -184,129 +184,121 @@ export function FavoritesView({ userRole }: FavoritesViewProps) {
 
             <Tabs defaultValue={userRole === "client" ? "freelancers" : "jobs"} className="space-y-6">
                 <TabsList className="bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
-                    {userRole === "client" && (
-                        <TabsTrigger value="freelancers" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white rounded-lg transition-all">
-                            Freelancers ({filteredFreelancers.length})
-                        </TabsTrigger>
-                    )}
-                    {userRole === "freelancer" && (
-                        <TabsTrigger value="jobs" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white rounded-lg transition-all">
-                            Jobs ({filteredJobs.length})
-                        </TabsTrigger>
-                    )}
+                    <TabsTrigger value="freelancers" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white rounded-lg transition-all">
+                        Freelancers ({filteredFreelancers.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="jobs" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white rounded-lg transition-all">
+                        Jobs ({filteredJobs.length})
+                    </TabsTrigger>
                 </TabsList>
 
-                {userRole === "client" && (
-                    <TabsContent value="freelancers" className="mt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <AnimatePresence mode="popLayout">
-                                {filteredFreelancers.map((freelancer) => (
-                                    <motion.div
-                                        key={freelancer._id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                    >
-                                        <Card className="bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden relative rounded-3xl">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => toggleFreelancerFavorite(freelancer._id)}
-                                                className="absolute top-4 right-4 z-10 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10 rounded-full"
-                                            >
-                                                <Heart className="w-5 h-5 fill-current" />
-                                            </Button>
-                                            <CardContent className="p-6">
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <UserAvatar 
-                                                        user={{ 
-                                                            name: freelancer.fullName, 
-                                                            image: freelancer.image 
-                                                        }} 
-                                                        className="w-16 h-16 border-2 border-zinc-800" 
-                                                    />
-                                                    <div>
-                                                        <h3 className="font-bold text-white group-hover:text-pink-400 transition-colors">{freelancer.fullName}</h3>
-                                                        <div className="flex items-center gap-2 text-xs text-zinc-400">
-                                                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                                            <span>{freelancer.settings?.rating || 0} ({freelancer.settings?.reviewsCount || 0} reviews)</span>
-                                                        </div>
+                <TabsContent value="freelancers" className="mt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <AnimatePresence mode="popLayout">
+                            {filteredFreelancers.map((freelancer) => (
+                                <motion.div
+                                    key={freelancer._id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                >
+                                    <Card className="bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden relative rounded-3xl">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => toggleFreelancerFavorite(freelancer._id)}
+                                            className="absolute top-4 right-4 z-10 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10 rounded-full"
+                                        >
+                                            <Heart className="w-5 h-5 fill-current" />
+                                        </Button>
+                                        <CardContent className="p-6">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <UserAvatar 
+                                                    user={{ 
+                                                        name: freelancer.fullName, 
+                                                        image: freelancer.image 
+                                                    }} 
+                                                    className="w-16 h-16 border-2 border-zinc-800" 
+                                                />
+                                                <div>
+                                                    <h3 className="font-bold text-white group-hover:text-pink-400 transition-colors">{freelancer.fullName}</h3>
+                                                    <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                                        <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                                        <span>{freelancer.settings?.rating || 0} ({freelancer.settings?.reviewsCount || 0} reviews)</span>
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="flex flex-wrap gap-1.5 mb-4 h-7 overflow-hidden">
-                                                    {(() => {
-                                                        const skills = freelancer.settings?.skills;
-                                                        const skillsArray = Array.isArray(skills) 
-                                                            ? skills 
-                                                            : (typeof skills === "string" ? skills.split(",") : []);
-                                                        
-                                                        return skillsArray.slice(0, 3).map((skill: string) => (
-                                                            skill.trim() && (
-                                                                <Badge key={skill} variant="secondary" className="bg-zinc-950 text-zinc-400 text-[10px] uppercase border-zinc-800">
-                                                                    {skill.trim()}
-                                                                </Badge>
-                                                            )
-                                                        ));
-                                                    })()}
-                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-wrap gap-1.5 mb-4 h-7 overflow-hidden">
+                                                {(() => {
+                                                    const skills = freelancer.settings?.skills;
+                                                    const skillsArray = Array.isArray(skills) 
+                                                        ? skills 
+                                                        : (typeof skills === "string" ? skills.split(",") : []);
+                                                    
+                                                    return skillsArray.slice(0, 3).map((skill: string) => (
+                                                        skill.trim() && (
+                                                            <Badge key={skill} variant="secondary" className="bg-zinc-950 text-zinc-400 text-[10px] uppercase border-zinc-800">
+                                                                {skill.trim()}
+                                                            </Badge>
+                                                        )
+                                                    ));
+                                                })()}
+                                            </div>
 
-                                                <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
-                                                    <div className="text-sm font-bold text-white">
-                                                    </div>
-                                                    <Link href={`/${userRole}/messages?receiverId=${freelancer._id}`}>
-                                                        <Button variant="outline" size="sm" className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-xl">
-                                                            Contact
-                                                        </Button>
-                                                    </Link>
+                                            <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+                                                <div className="text-sm font-bold text-white">
                                                 </div>
-                                            </CardContent>
-                                        </Card>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
+                                                <Link href={`/chat?receiverId=${freelancer._id}`}>
+                                                    <Button variant="outline" size="sm" className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-xl">
+                                                        Contact
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                    {filteredFreelancers.length === 0 && (
+                        <div className="text-center py-20 bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800">
+                            <Heart className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                            <p className="text-zinc-500">No favorite freelancers found.</p>
                         </div>
-                        {filteredFreelancers.length === 0 && (
-                            <div className="text-center py-20 bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800">
-                                <Heart className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                                <p className="text-zinc-500">No favorite freelancers found.</p>
-                            </div>
-                        )}
-                    </TabsContent>
-                )}
+                    )}
+                </TabsContent>
 
-                {userRole === "freelancer" && (
-                    <TabsContent value="jobs" className="mt-0">
-                        <div className="grid grid-cols-1 gap-6">
-                            <AnimatePresence mode="popLayout">
-                                {filteredJobs.map((job) => (
-                                    <JobCard
-                                        key={job._id}
-                                        job={job}
-                                        variant="freelancer"
-                                        isSaved={true}
-                                        onSave={() => toggleJobFavorite(job._id)}
-                                        onViewDetails={(j) => {
-                                            setSelectedJob(j);
-                                            setIsDetailsModalOpen(true);
-                                        }}
-                                        onApply={(j) => {
-                                            setSelectedJob(j);
-                                            setIsProposalModalOpen(true);
-                                        }}
-                                    />
-                                ))}
-                            </AnimatePresence>
+                <TabsContent value="jobs" className="mt-0">
+                    <div className="grid grid-cols-1 gap-6">
+                        <AnimatePresence mode="popLayout">
+                            {filteredJobs.map((job) => (
+                                <JobCard
+                                    key={job._id}
+                                    job={job}
+                                    variant="freelancer"
+                                    isSaved={true}
+                                    onSave={() => toggleJobFavorite(job._id)}
+                                    onViewDetails={(j) => {
+                                        setSelectedJob(j);
+                                        setIsDetailsModalOpen(true);
+                                    }}
+                                    onApply={(j) => {
+                                        setSelectedJob(j);
+                                        setIsProposalModalOpen(true);
+                                    }}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                    {filteredJobs.length === 0 && (
+                        <div className="text-center py-20 bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800">
+                            <Briefcase className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                            <p className="text-zinc-500">No favorite jobs found.</p>
                         </div>
-                        {filteredJobs.length === 0 && (
-                            <div className="text-center py-20 bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800">
-                                <Briefcase className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                                <p className="text-zinc-500">No favorite jobs found.</p>
-                            </div>
-                        )}
-                    </TabsContent>
-                )}
+                    )}
+                </TabsContent>
             </Tabs>
         </div>
     )

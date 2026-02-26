@@ -238,6 +238,8 @@ export default function AdminDashboard() {
                                                 border: "1px solid rgba(255,255,255,0.1)",
                                                 borderRadius: "8px",
                                             }}
+                                            itemStyle={{ color: "#fff" }}
+                                            labelStyle={{ color: "#fff" }}
                                         />
                                         <Line
                                             type="monotone"
@@ -269,13 +271,13 @@ export default function AdminDashboard() {
                         <CardContent>
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
+                                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                         <Pie
                                             data={jobsByStatus}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
-                                            outerRadius={100}
+                                            outerRadius={80}
                                             fill="#8884d8"
                                             paddingAngle={2}
                                             dataKey="value"
@@ -291,6 +293,8 @@ export default function AdminDashboard() {
                                                 border: "1px solid rgba(255,255,255,0.1)",
                                                 borderRadius: "8px",
                                             }}
+                                            itemStyle={{ color: "#fff" }}
+                                            labelStyle={{ color: "#fff" }}
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>

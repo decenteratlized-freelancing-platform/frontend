@@ -168,7 +168,11 @@ export default function AdminAnalytics() {
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                                         <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} />
                                         <YAxis stroke="#9ca3af" fontSize={12} />
-                                        <Tooltip contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
+                                            itemStyle={{ color: "#fff" }}
+                                            labelStyle={{ color: "#fff" }}
+                                        />
                                         <Area type="monotone" dataKey="revenue" stroke="#22c55e" fill="url(#colorRevenue)" strokeWidth={2} />
                                         <defs>
                                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -195,13 +199,13 @@ export default function AdminAnalytics() {
                         <CardContent>
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
+                                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                         <Pie
                                             data={revenue.revenueByMode.map((item: any) => ({ name: item._id || "Unknown", value: item.total }))}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
-                                            outerRadius={100}
+                                            outerRadius={80}
                                             paddingAngle={2}
                                             dataKey="value"
                                             label={({ name, value }) => `${name}: ${Number(value).toFixed(4)} ETH`}
@@ -210,7 +214,11 @@ export default function AdminAnalytics() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
+                                            itemStyle={{ color: "#fff" }}
+                                            labelStyle={{ color: "#fff" }}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -235,7 +243,11 @@ export default function AdminAnalytics() {
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                                     <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} />
                                     <YAxis stroke="#9ca3af" fontSize={12} />
-                                    <Tooltip contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }} />
+                                    <Tooltip 
+                                        contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
+                                        itemStyle={{ color: "#fff" }}
+                                        labelStyle={{ color: "#fff" }}
+                                    />
                                     <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
