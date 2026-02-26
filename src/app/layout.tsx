@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: 'SmartHire',
   description: 'Decentralized recruitment system',
   icons: {
-    icon: 'logo-w-removebg-preview.png',
+    icon: '/logo-w-removebg-preview.png',
   },
 };
 
