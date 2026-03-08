@@ -29,6 +29,7 @@ interface UserProfile {
     skills: string[];
     portfolioWebsite?: string;
     role: string;
+    languages: string[];
     privacy: {
         showEmail: boolean;
         showPhone: boolean;
@@ -102,6 +103,7 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                     skills: skillsArray,
                     portfolioWebsite: userData.portfolioWebsite || settingsData.portfolioWebsite || "",
                     role: userType || data.role || "User",
+                    languages: userData.languages || settingsData.languages || ["English"],
                     privacy: {
                         showEmail: settingsData.privacy?.showEmail ?? false,
                         showPhone: settingsData.privacy?.showPhone ?? false,
@@ -299,6 +301,23 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                                                 </Badge>
                                             )
                                         })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Languages Section */}
+                            {(profile.languages?.length || 0) > 0 && (
+                                <div className="space-y-3">
+                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">
+                                        Languages <div className="h-px flex-1 bg-zinc-800" />
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {profile.languages.map((lang, idx) => (
+                                            <div key={idx} className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                                <Globe className="w-3 h-3 text-zinc-500" />
+                                                {lang}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

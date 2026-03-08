@@ -128,6 +128,16 @@ const FreelancerCard = ({
         ))}
       </div>
 
+      <div className="flex items-center gap-2 mb-6">
+        <Globe className="w-3.5 h-3.5 text-zinc-500" />
+        <div className="flex flex-wrap gap-1.5">
+            {(freelancer.languages?.length > 0 ? freelancer.languages : ["English"]).slice(0, 2).map((lang) => (
+                <span key={lang} className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">{lang}</span>
+            ))}
+            {freelancer.languages?.length > 2 && <span className="text-[10px] font-bold text-zinc-600">+{freelancer.languages.length - 2}</span>}
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-4 py-4 border-y border-zinc-800/50 mb-6 bg-zinc-950/20 rounded-xl px-4">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1 flex items-center gap-1.5">
