@@ -3,7 +3,8 @@ import {
   Search,
   Filter,
   Briefcase,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -40,6 +41,13 @@ const experienceLevels = [
     { value: "expert", label: "Expert" },
 ];
 
+const currencies = [
+    { value: "all", label: "All Currencies" },
+    { value: "ETH", label: "Ethereum (ETH)" },
+    { value: "USDC", label: "USD Coin (USDC)" },
+    { value: "EURC", label: "Euro Coin (EURC)" },
+];
+
 function BrowseJobsContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams();
@@ -50,6 +58,7 @@ function BrowseJobsContent() {
   const [savedJobs, setSavedJobs] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedExperience, setSelectedExperience] = useState("all")
+  const [selectedCurrency, setSelectedCurrency] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [selectedJob, setSelectedJob] = useState<any>(null)
   const [showProposalDialog, setShowProposalDialog] = useState(false)
@@ -161,6 +170,9 @@ function BrowseJobsContent() {
   }
 
   const filteredJobs = jobs.filter((job) => {
+    // Only show "open" jobs
+    if (job.status !== "open") return false;
+
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,8 +180,9 @@ function BrowseJobsContent() {
 
     const matchesCategory = selectedCategory === "all" || job.category === selectedCategory
     const matchesExperience = selectedExperience === "all" || job.experienceLevel === selectedExperience
+    const matchesCurrency = selectedCurrency === "all" || job.paymentCurrency === selectedCurrency
 
-    return matchesSearch && matchesCategory && matchesExperience
+    return matchesSearch && matchesCategory && matchesExperience && matchesCurrency
   })
 
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -251,7 +264,7 @@ function BrowseJobsContent() {
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                 >
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -277,6 +290,18 @@ function BrowseJobsContent() {
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Currency</label>
+                            <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    {currencies.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Sort By</label>
                             <Select value={sortBy} onValueChange={setSortBy}>
                                 <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white rounded-xl">
@@ -297,6 +322,7 @@ function BrowseJobsContent() {
                                     setSearchTerm("");
                                     setSelectedCategory("all");
                                     setSelectedExperience("all");
+                                    setSelectedCurrency("all");
                                     setSortBy("newest");
                                 }}
                                 className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10 h-10 rounded-xl text-xs uppercase font-bold tracking-widest transition-all"

@@ -17,7 +17,10 @@ import {
   Linkedin,
   Twitter,
   Globe,
-  Wallet
+  Wallet,
+  MapPin,
+  Trophy,
+  BarChart3
 } from "lucide-react"
 import Link from "next/link";
 import Image from "next/image";
@@ -125,17 +128,29 @@ const FreelancerCard = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 py-4 border-y border-zinc-800/50 mb-6 bg-zinc-950/20 rounded-xl px-4">
+      <div className="grid grid-cols-3 gap-4 py-4 border-y border-zinc-800/50 mb-6 bg-zinc-950/20 rounded-xl px-4">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">Projects</p>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1 flex items-center gap-1.5">
+            <Trophy className="w-3 h-3 text-emerald-500" /> Done
+          </p>
           <div className="flex items-center space-x-1.5">
             <span className="text-sm font-semibold text-zinc-200">{freelancer.projectsCompleted}</span>
           </div>
         </div>
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1 flex items-center justify-center gap-1.5">
+            <BarChart3 className="w-3 h-3 text-blue-500" /> Earned
+          </p>
+          <div className="flex items-center justify-center space-x-1">
+            <CurrencyLogo currency="ETH" size={12} />
+            <span className="text-sm font-semibold text-zinc-200 truncate">{getConvertedAmount(freelancer.totalEarned, "ETH")}</span>
+          </div>
+        </div>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">Rating</p>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1 flex items-center justify-end gap-1.5">
+            Rate <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+          </p>
           <div className="flex items-center justify-end space-x-1">
-            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
             <span className="text-sm font-semibold text-zinc-200">{freelancer.averageRating || "N/A"}</span>
           </div>
         </div>

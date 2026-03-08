@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Settings, User, Bell, Shield, CreditCard, Globe, Camera, Save, Upload, Trash2, Phone, MapPin, Link as LinkIcon, X, LogOut, AlertTriangle, Lock, Key, Mail } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import WalletManagement from "@/components/shared/wallet-management"
@@ -34,6 +34,12 @@ const LeafletMap = dynamic(() => import("@/components/shared/LeafletMap"), {
 })
 
 export default function ClientSettings() {
+  const { data: session, update } = useSession()
+  const { toast } = useToast()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "profile")
+
   const [profile, setProfile] = useState({
     fullName: "",
     phone: "",
@@ -97,9 +103,12 @@ export default function ClientSettings() {
     "Content Writing", "Copywriting", "SEO", "Digital Marketing", "Social Media"
   ]
 
-  const { data: session, update } = useSession()
-  const { toast } = useToast()
-  const router = useRouter()
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (tab && ["profile", "security", "billing", "account"].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const fetchFullProfile = async () => {
@@ -453,7 +462,7 @@ export default function ClientSettings() {
 
       {/* Settings Tabs */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
             <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-zinc-950 text-white hover:bg-white/10"><Shield className="w-4 h-4 mr-2" />Security</TabsTrigger>
@@ -482,13 +491,17 @@ export default function ClientSettings() {
                       <label htmlFor="client-image-upload" className="flex-1">
                         <Button
                           variant="outline"
-                          className="w-full bg-white border-white/10 text-black hover:bg-gray-200 cursor-pointer hover:text-black"
+                          className="w-full bg-white border-white/10 text-zinc-950 hover:bg-zinc-200 cursor-pointer font-bold h-12 rounded-xl transition-all"
                           disabled={uploadingImage}
                           asChild
                         >
                           <span>
-                            <Upload className="w-4 h-4 mr-2" />
-                            {uploadingImage ? "Uploading..." : "Upload"}
+                            {uploadingImage ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="w-4 h-4 mr-2" />
+                            )}
+                            {uploadingImage ? "Uploading..." : "Upload New Photo"}
                           </span>
                         </Button>
                         <input
@@ -501,11 +514,10 @@ export default function ClientSettings() {
                       </label>
                       <Button
                         variant="outline"
-                        className="bg-white border-white/10 text-black hover:bg-gray-200 hover:text-black"
+                        className="bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 h-12 w-12 rounded-xl transition-all"
                         onClick={handleRemoveImage}
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>

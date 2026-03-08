@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import WalletManagement from "@/components/shared/wallet-management"
@@ -128,7 +128,7 @@ export default function FreelancerSettings() {
   ]
 
   const popularLanguages = [
-    "English", "Spanish", "French", "German", "Mandarin", "Hindi", "Arabic", 
+    "English", "Spanish", "French", "German", "Mandarin", "Hindi", "Gujarati", "Arabic", 
     "Bengali", "Portuguese", "Russian", "Japanese", "Korean", "Italian",
     "Turkish", "Vietnamese", "Telugu", "Marathi", "Tamil", "Urdu", 
     "Greek", "Dutch", "Polish", "Thai", "Swedish", "Indonesian"

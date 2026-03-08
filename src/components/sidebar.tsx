@@ -308,14 +308,14 @@ export default function Sidebar({ userType, currentPath, isCollapsed, onToggle }
                   <span>View Profile</span>
                 </DropdownMenuItem>
 
-                <Link href="/notifications" className="block">
+                <Link href={`/${userType}/dashboard`} className="block">
                   <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <Bell className="mr-2 h-4 w-4" />
                     <span>Notifications</span>
                   </DropdownMenuItem>
                 </Link>
 
-                <Link href="/security" className="block">
+                <Link href={`/${userType}/settings?tab=security`} className="block">
                   <DropdownMenuItem className="cursor-pointer text-white/90 hover:bg-white/10 hover:text-white focus:text-white">
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Password & Security</span>

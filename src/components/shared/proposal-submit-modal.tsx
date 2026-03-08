@@ -12,20 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Send, 
   Clock, 
-  Target, 
+  Coins, 
   FileText, 
+  Loader2, 
   Sparkles, 
-  Loader2,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { CurrencyLogo } from "./currency-logo";
-import { useCurrency } from "@/context/CurrencyContext";
 
 interface ProposalSubmitModalProps {
   job: any;
@@ -42,73 +42,125 @@ export function ProposalSubmitModal({
   onClose,
   onSuccess,
   userEmail,
-  walletAddress
+  walletAddress,
 }: ProposalSubmitModalProps) {
-  const { getFormattedAmount } = useCurrency();
+  const [rate, setRate] = useState("");
   const [text, setText] = useState("");
-  const [budget, setBudget] = useState("");
   const [delivery, setDelivery] = useState("");
   const [isSubmitting, setIsProcessing] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const { toast } = useToast();
+
+  const generateAICoverLetter = async () => {
+    if (!userEmail) return;
+    setIsGeneratingAI(true);
+    try {
+      // Fetch freelancer context
+      const profRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/settings?email=${userEmail}`);
+      const profData = await profRes.json();
+      const freelancer = profData.profile || {};
+
+      const prompt = `Generate a professional, persuasive cover letter for a freelancer applying to a job.
+      
+      Freelancer Details:
+      Name: ${freelancer.fullName}
+      Skills: ${freelancer.skills?.join(", ")}
+      Bio: ${freelancer.professionalBio}
+      
+      Job Details:
+      Title: ${job.title}
+      Description: ${job.description}
+      Category: ${job.category}
+      
+      Client Details:
+      Name: ${job.client?.fullName || "the client"}
+      
+      Rules:
+      1. Be concise (max 250 words).
+      2. Highlight relevant skills from the freelancer's profile that match the job.
+      3. Address the specific requirements mentioned in the job description.
+      4. Maintain a confident yet professional tone.
+      5. Do not use placeholders like [Date] or [Company Name] unless known.
+      6. Focus on how the freelancer can provide value.`;
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/ai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            message: prompt,
+            context: { type: "proposal_generation", jobTitle: job.title }
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setText(data.text);
+        toast({ title: "AI Generated", description: "Your cover letter has been crafted by SmartHire AI." });
+      } else {
+        throw new Error("Failed to generate AI response");
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "AI Error", description: "Failed to generate cover letter. Please try writing manually.", variant: "destructive" });
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const handleSubmit = async () => {
-    if (!userEmail) {
-      toast({ title: "Error", description: "You must be logged in to submit a proposal", variant: "destructive" });
-      return;
-    }
-
-    if (!walletAddress) {
+    if (!rate || !text || !delivery) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to apply for projects.",
+        title: "Missing Information",
+        description: "Please fill in all fields before submitting.",
         variant: "destructive",
       });
       return;
     }
 
-    // 1. Validation
-    if (!text || text.trim().length < 50) {
-      toast({ title: "Validation Error", description: "Your cover letter should be at least 50 characters to stand out.", variant: "destructive" });
-      return;
-    }
-
-    const proposedBudget = parseFloat(budget);
-    if (isNaN(proposedBudget) || proposedBudget <= 0) {
-      toast({ title: "Validation Error", description: "Please provide a valid proposed rate greater than 0.", variant: "destructive" });
-      return;
-    }
-
-    if (!delivery || delivery.trim().length < 3) {
-      toast({ title: "Validation Error", description: "Please provide a realistic delivery estimate.", variant: "destructive" });
-      return;
+    if (!walletAddress) {
+        toast({
+            title: "Wallet Required",
+            description: "You must link a crypto wallet to your profile before applying. Please go to Settings to link your wallet.",
+            variant: "destructive"
+        });
+        return;
     }
 
     setIsProcessing(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/proposals/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId: job._id,
-          email: userEmail,
-          coverLetter: text,
-          proposedRate: proposedBudget,
+          freelancerEmail: userEmail,
+          proposedRate: parseFloat(rate),
           deliveryTime: delivery,
+          coverLetter: text,
         }),
       });
 
       if (res.ok) {
-        toast({ title: "Success", description: "Your proposal has been submitted!" });
+        toast({
+          title: "Proposal Sent!",
+          description: "Your application has been delivered to the client.",
+        });
         onSuccess(job._id);
         onClose();
+        // Reset form
+        setRate("");
         setText("");
-        setBudget("");
         setDelivery("");
       } else {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to submit proposal");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to submit proposal");
       }
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to send proposal. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -118,70 +170,54 @@ export function ProposalSubmitModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl shadow-2xl overflow-hidden p-0">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500" />
-        
-        <DialogHeader className="px-8 pt-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-blue-400" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Proposal Submission</span>
-          </div>
-          <DialogTitle className="text-2xl font-bold text-white leading-tight">
-            Apply for: {job.title}
-          </DialogTitle>
-          <DialogDescription className="text-zinc-400 mt-2">
-            Showcase your expertise and tell the client why you&apos;re the best fit for this project.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl p-0 overflow-hidden rounded-[2rem]">
+        <div className="bg-blue-600/10 px-8 py-6 border-b border-white/5">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                <Send className="w-5 h-5 text-white" />
+              </div>
+              Submit Proposal
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 mt-1">
+              Applying for: <span className="text-blue-400 font-semibold">{job.title}</span>
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="px-8 py-6 space-y-8">
-          {/* Cover Letter */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="coverLetter" className="text-zinc-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5" /> Cover Letter
-              </Label>
-              <span className="text-[10px] text-zinc-600 font-medium">{text.length} / 2000 characters</span>
+        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          {/* Budget Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-zinc-900/50 p-4 rounded-2xl border border-white/5">
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Client Budget</p>
+              <div className="flex items-center gap-2">
+                <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={16} />
+                <span className="text-lg font-bold text-white">{job.budget} {job.paymentCurrency || "ETH"}</span>
+              </div>
             </div>
-            <Textarea
-              id="coverLetter"
-              placeholder="Describe your approach, relevant experience, and how you can help..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="min-h-[160px] bg-zinc-900 border-zinc-800 text-zinc-100 rounded-2xl p-4 focus:ring-blue-500/20 resize-none transition-all placeholder:text-zinc-600"
-            />
+            {!walletAddress && (
+                <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                    <p className="text-[10px] font-bold text-red-400 uppercase leading-tight">No Wallet Linked. Update your settings.</p>
+                </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Proposed Rate */}
+            {/* Rate Input */}
             <div className="space-y-3">
               <Label htmlFor="rate" className="text-zinc-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <Target className="w-3.5 h-3.5" /> Your Proposed Rate ({job.paymentCurrency || "ETH"})
+                <Coins className="w-3.5 h-3.5" /> Proposed Rate ({job.paymentCurrency || "ETH"})
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                  <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={16} />
-                </div>
                 <Input
                   id="rate"
                   type="number"
-                  step="0.001"
-                  min="0"
                   placeholder="0.00"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-2xl h-14 pl-12 focus:ring-blue-500/20"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 text-white pl-4 h-12 rounded-xl focus:ring-blue-500/50 transition-all"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold text-xs uppercase tracking-widest pointer-events-none">
-                  {job.paymentCurrency || "ETH"}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 mt-1 px-1">
-                <p className="text-[10px] text-zinc-500">Clients budget:</p>
-                <CurrencyLogo currency={job.paymentCurrency || "ETH"} size={10} />
-                <p className="text-[10px] text-zinc-500 font-medium">
-                  {getFormattedAmount(job.budget, job.paymentCurrency || "ETH")}
-                </p>
               </div>
             </div>
 
@@ -192,40 +228,57 @@ export function ProposalSubmitModal({
               </Label>
               <Input
                 id="delivery"
-                placeholder="e.g., 10 days, 2 weeks..."
+                placeholder="e.g. 5 days, 2 weeks"
                 value={delivery}
                 onChange={(e) => setDelivery(e.target.value)}
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-2xl h-14 focus:ring-blue-500/20"
+                className="bg-zinc-900 border-zinc-800 text-white h-12 rounded-xl focus:ring-blue-500/50 transition-all"
               />
-              <p className="text-[10px] text-zinc-500 px-1">Include time for review and revisions</p>
             </div>
           </div>
 
-          {!walletAddress && (
-            <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-orange-400 mt-0.5" />
-              <div>
-                <h4 className="text-orange-200 font-bold text-xs uppercase tracking-widest mb-1">Wallet Connection Required</h4>
-                <p className="text-orange-200/60 text-[11px] leading-relaxed">
-                  SmartHire is a Web3 platform. You must connect your wallet to submit proposals and receive payments.
-                </p>
+          {/* Cover Letter */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="coverLetter" className="text-zinc-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5" /> Cover Letter
+              </Label>
+              <div className="flex items-center gap-4">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateAICoverLetter}
+                    disabled={isGeneratingAI}
+                    className="h-7 bg-blue-600/10 border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] font-bold uppercase rounded-lg transition-all"
+                >
+                    {isGeneratingAI ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <Sparkles className="w-3 h-3 mr-1.5" />}
+                    Generate with AI
+                </Button>
+                <span className="text-[10px] text-zinc-600 font-medium">{text.length} / 2000 characters</span>
               </div>
             </div>
-          )}
+            <Textarea
+              id="coverLetter"
+              placeholder="Explain why you're the best fit for this project..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="bg-zinc-900 border-zinc-800 text-white min-h-[200px] rounded-2xl focus:ring-blue-500/50 transition-all leading-relaxed p-4"
+              maxLength={2000}
+            />
+          </div>
         </div>
 
-        <DialogFooter className="px-8 py-6 bg-zinc-900/30 border-t border-zinc-800/50 gap-3">
-          <Button 
-            variant="ghost" 
-            onClick={onClose} 
-            className="text-zinc-500 hover:text-white hover:bg-zinc-900 rounded-xl px-6 h-12"
+        <DialogFooter className="p-8 bg-zinc-900/30 border-t border-white/5 gap-3">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="text-zinc-500 hover:text-white hover:bg-zinc-900 rounded-xl px-6"
           >
-            Discard
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !text || !budget || !delivery}
-            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-8 rounded-xl h-12 transition-all shadow-xl shadow-white/5"
+            disabled={isSubmitting || !walletAddress}
+            className="bg-white hover:bg-zinc-200 text-zinc-950 font-black uppercase tracking-widest px-8 h-12 rounded-xl transition-all shadow-xl shadow-white/5 active:scale-[0.98]"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />

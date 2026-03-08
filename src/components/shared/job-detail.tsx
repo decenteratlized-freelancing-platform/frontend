@@ -234,7 +234,7 @@ export function JobDetail({ jobId, userRole, userEmail }: JobDetailProps) {
                                     {job.status}
                                 </Badge>
                                 <span className="text-zinc-600 text-xs">/</span>
-                                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">#{job._id.slice(-6)}</span>
+                                <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">REF: {job._id.slice(-6).toUpperCase()}</span>
                             </div>
                             <CardTitle className="text-3xl font-bold text-white">{job.title}</CardTitle>
                             <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-gray-400 pt-2">

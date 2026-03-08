@@ -88,7 +88,7 @@ export function JobCard({
                     <Badge className="bg-blue-500/10 text-blue-400 border-none text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
                       {job.category || "New Project"}
                     </Badge>
-                    <span className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">#{job._id.slice(-6)}</span>
+                    <span className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">REF: {job._id.slice(-6).toUpperCase()}</span>
                   </div>
                   {variant === "freelancer" && onSave && (
                     <button
