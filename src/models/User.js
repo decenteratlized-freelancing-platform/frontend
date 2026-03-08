@@ -56,6 +56,7 @@ const SettingsSchema = new mongoose.Schema({
   titleLocked: { type: Boolean, default: false },
   hourlyRate: { type: Number, default: 0 },
   availableForJobs: { type: Boolean, default: true },
+  languages: { type: [String], default: ["English"] },
 
   // Backend Fields Added to Frontend
   rating: { type: Number, default: 0 },

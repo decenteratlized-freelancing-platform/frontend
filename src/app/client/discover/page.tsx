@@ -346,16 +346,13 @@ const FreelancerProfileModal = ({
                     )
                   },
                   { 
-                    label: "Wallet", 
-                    value: freelancer.walletAddress 
-                        ? `${freelancer.walletAddress.slice(0, 6)}...${freelancer.walletAddress.slice(-4)}` 
-                        : "Not Linked",
-                    isWarning: !freelancer.walletAddress
+                    label: "Location", 
+                    value: freelancer.location || "Remote",
                   },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-zinc-950/40 border border-zinc-800/50 rounded-2xl p-4">
                     <p className="text-zinc-500 text-[9px] uppercase tracking-widest font-bold mb-1">{stat.label}</p>
-                    <div className={`font-bold text-base truncate ${stat.isWarning ? 'text-red-400' : 'text-zinc-200'}`}>{stat.value}</div>
+                    <div className={`font-bold text-base truncate text-zinc-200`}>{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -373,6 +370,18 @@ const FreelancerProfileModal = ({
                   {freelancer.skills.map((skill) => (
                     <div key={skill} className="bg-zinc-800 text-zinc-300 text-xs font-bold px-4 py-2 rounded-xl border border-zinc-700/50">
                       {skill}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Communication</h4>
+                <div className="flex flex-wrap gap-2">
+                  {(freelancer.languages?.length > 0 ? freelancer.languages : ["English"]).map((lang) => (
+                    <div key={lang} className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
+                      <Globe className="w-3 h-3 text-zinc-500" />
+                      {lang}
                     </div>
                   ))}
                 </div>

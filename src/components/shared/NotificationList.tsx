@@ -117,7 +117,7 @@ export function NotificationList() {
         )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-[400px] px-6 py-2">
+        <ScrollArea className="h-[350px] px-6 py-2">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-12 text-zinc-500">
               <Bell className="h-10 w-10 mb-3 opacity-20" />
