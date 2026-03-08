@@ -29,13 +29,6 @@ interface PortfolioItem {
   featured: boolean
 }
 
-const stats = [
-  { title: "Total Projects", value: "24", icon: Briefcase, color: "text-blue-400", bgColor: "bg-blue-400/10" },
-  { title: "Total Views", value: "12.5K", icon: Eye, color: "text-emerald-400", bgColor: "bg-emerald-400/10" },
-  { title: "Total Likes", value: "892", icon: Heart, color: "text-rose-400", bgColor: "bg-rose-400/10" },
-  { title: "Featured", value: "8", icon: TrendingUp, color: "text-amber-400", bgColor: "bg-amber-400/10" },
-]
-
 export default function FreelancerPortfolio() {
   const { data: session } = useSession()
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
@@ -52,7 +45,38 @@ export default function FreelancerPortfolio() {
     image: "",
   })
 
-  const categories = ["all", "Web Development", "Mobile Development", "AI/ML", "Design"]
+  const categories = ["all", "Web Development", "Mobile Development", "AI/ML", "Design", "Data Science"]
+
+  const computedStats = [
+    { 
+      title: "Total Projects", 
+      value: portfolioItems.length.toString(), 
+      icon: Briefcase, 
+      color: "text-blue-400", 
+      bgColor: "bg-blue-400/10" 
+    },
+    { 
+      title: "Total Views", 
+      value: portfolioItems.reduce((acc, item) => acc + (item.views || 0), 0).toLocaleString(), 
+      icon: Eye, 
+      color: "text-emerald-400", 
+      bgColor: "bg-emerald-400/10" 
+    },
+    { 
+      title: "Total Likes", 
+      value: portfolioItems.reduce((acc, item) => acc + (item.likes || 0), 0).toLocaleString(), 
+      icon: Heart, 
+      color: "text-rose-400", 
+      bgColor: "bg-rose-400/10" 
+    },
+    { 
+      title: "Featured", 
+      value: portfolioItems.filter(item => item.featured).length.toString(), 
+      icon: TrendingUp, 
+      color: "text-amber-400", 
+      bgColor: "bg-amber-400/10" 
+    },
+  ]
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -305,7 +329,7 @@ export default function FreelancerPortfolio() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {stats.map((stat, index) => (
+        {computedStats.map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
@@ -340,10 +364,10 @@ export default function FreelancerPortfolio() {
           <Button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`rounded-full px-6 py-2 h-auto text-sm font-semibold transition-all ${
+            className={`rounded-full px-6 py-2 h-auto text-sm font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 ${
               selectedCategory === category
-                ? "bg-white text-zinc-950 hover:bg-zinc-200 shadow-lg"
-                : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                ? "bg-white text-zinc-950 hover:bg-zinc-100 shadow-[0_0_20px_rgba(255,255,255,0.1)] ring-2 ring-white/20"
+                : "bg-zinc-900/50 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 hover:bg-zinc-800/80 shadow-sm"
             }`}
           >
             {category === "all" ? "All Projects" : category}

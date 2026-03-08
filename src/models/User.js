@@ -30,7 +30,14 @@ const SettingsSchema = new mongoose.Schema({
   portfolio: [{
     title: String,
     description: String,
-    url: String, // Image or PDF URL
+    image: String,
+    technologies: [String],
+    category: String,
+    views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+    liveUrl: String,
+    githubUrl: String,
+    featured: { type: Boolean, default: false },
     uploadedAt: { type: Date, default: Date.now }
   }],
   socialLinks: {
