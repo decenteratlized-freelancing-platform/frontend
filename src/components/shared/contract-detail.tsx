@@ -26,6 +26,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { CurrencyLogo } from "./currency-logo";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { ProfileDialog } from "./profile-dialog";
 
 const ESCROW_ADDRESS = "0x41fE53C6963a87006Fb59177CE1136b86a9B7297"; // SmartHireEscrowV2
 const ESCROW_ABI = [
@@ -96,6 +97,10 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
     const [error, setError] = useState<string | null>(null);
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     
+    // Profile Dialog State
+    const [selectedProfileEmail, setSelectedProfileEmail] = useState<string | null>(null);
+    const [selectedProfileRole, setSelectedProfileRole] = useState<string | null>(null);
+
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<{ 
@@ -120,7 +125,6 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
 
     const fetchData = useCallback(async () => {
         try {
-            // setLoading(true); // Don't show full loader on re-fetch
             const res = await fetch(`${BACKEND_URL}/api/contracts/${contractId}`);
             if (!res.ok) throw new Error("Contract not found");
             const data = await res.json();
@@ -749,20 +753,29 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                     {/* Parties Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Client */}
-                        <div className="bg-zinc-950/40 rounded-2xl p-6 border border-zinc-800/50 relative overflow-hidden group">
-                            <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-4">Originator (Client)</p>
+                        <div 
+                            className={`bg-zinc-950/40 rounded-2xl p-6 border border-zinc-800/50 relative overflow-hidden group/party cursor-pointer hover:bg-zinc-900 transition-colors`}
+                            onClick={() => {
+                                setSelectedProfileEmail(contract.client.email);
+                                setSelectedProfileRole("client");
+                            }}
+                        >
+                            <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-4 flex justify-between items-center">
+                                <span>Originator (Client)</span>
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover/party:opacity-100 transition-opacity" />
+                            </p>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700">
+                                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700 group-hover/party:border-zinc-500">
                                         {contract.client?.fullName?.[0]}
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold text-base leading-none mb-1.5">{contract.client?.fullName}</h4>
+                                        <h4 className="text-white font-bold text-base leading-none mb-1.5 group-hover/party:text-blue-400 transition-colors">{contract.client?.fullName}</h4>
                                         <p className="text-zinc-500 text-xs">{contract.client?.email}</p>
                                     </div>
                                 </div>
                                 {contract.client?.walletAddress && (
-                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 flex items-center gap-2 hover:bg-zinc-800 transition-colors cursor-pointer group/wallet">
+                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 flex items-center gap-2 hover:bg-zinc-800 transition-colors cursor-pointer group/wallet" onClick={(e) => e.stopPropagation()}>
                                         <Wallet className="w-3.5 h-3.5 text-zinc-500 group-hover/wallet:text-blue-400 transition-colors" />
                                         <span className="text-[10px] font-mono text-zinc-400">{contract.client.walletAddress.slice(0, 6)}...{contract.client.walletAddress.slice(-4)}</span>
                                     </div>
@@ -771,20 +784,29 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                         </div>
 
                         {/* Freelancer */}
-                        <div className="bg-zinc-950/40 rounded-2xl p-6 border border-zinc-800/50 relative overflow-hidden group">
-                            <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-4">Contractor (Freelancer)</p>
+                        <div 
+                            className="bg-zinc-950/40 rounded-2xl p-6 border border-zinc-800/50 relative overflow-hidden group/party cursor-pointer hover:bg-zinc-900 transition-colors"
+                            onClick={() => {
+                                setSelectedProfileEmail(contract.freelancer.email);
+                                setSelectedProfileRole("freelancer");
+                            }}
+                        >
+                            <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-4 flex justify-between items-center">
+                                <span>Contractor (Freelancer)</span>
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover/party:opacity-100 transition-opacity" />
+                            </p>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700">
+                                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700 group-hover/party:border-zinc-500">
                                         {contract.freelancer?.fullName?.[0]}
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold text-base leading-none mb-1.5">{contract.freelancer?.fullName}</h4>
+                                        <h4 className="text-white font-bold text-base leading-none mb-1.5 group-hover/party:text-purple-400 transition-colors">{contract.freelancer?.fullName}</h4>
                                         <p className="text-zinc-500 text-xs">{contract.freelancer?.email}</p>
                                     </div>
                                 </div>
                                 {contract.freelancer?.walletAddress && (
-                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 flex items-center gap-2 hover:bg-zinc-800 transition-colors cursor-pointer group/wallet">
+                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 flex items-center gap-2 hover:bg-zinc-800 transition-colors cursor-pointer group/wallet" onClick={(e) => e.stopPropagation()}>
                                         <Wallet className="w-3.5 h-3.5 text-zinc-500 group-hover/wallet:text-purple-400 transition-colors" />
                                         <span className="text-[10px] font-mono text-zinc-400">{contract.freelancer.walletAddress.slice(0, 6)}...{contract.freelancer.walletAddress.slice(-4)}</span>
                                     </div>
@@ -1060,11 +1082,6 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                         </Button>
                     </Link>
                 </div>
-                
-                {/* <div className="flex items-center gap-2 text-zinc-600 text-[10px] font-bold uppercase tracking-[0.2em]">
-                    SmartHire Escrow Protocol V2.0
-                    <ExternalLink className="w-3 h-3" />
-                </div> */}
             </div>
 
             {/* Gemini Assistant */}
@@ -1083,6 +1100,14 @@ export function ContractDetail({ contractId, userRole, userEmail }: ContractDeta
                     />
                 )}
             </AnimatePresence>
+
+            {/* Profile Dialog */}
+            <ProfileDialog 
+                isOpen={!!selectedProfileEmail}
+                onClose={() => setSelectedProfileEmail(null)}
+                email={selectedProfileEmail || ""}
+                userType={selectedProfileRole || ""}
+            />
         </motion.div>
     );
 }

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, MapPin, Globe, Loader2, User, Heart, Star, Briefcase, Github, Linkedin, Twitter } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Loader2, User, Heart, Star, Briefcase, Github, Linkedin, Twitter, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -106,7 +106,6 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                         showEmail: settingsData.privacy?.showEmail ?? false,
                         showPhone: settingsData.privacy?.showPhone ?? false,
                     },
-                    // New Fields
                     portfolio: userData.portfolio || settingsData.portfolio || [],
                     socialLinks: userData.socialLinks || settingsData.socialLinks || {},
                     verifiedSkills: userData.verifiedSkills || settingsData.verifiedSkills || []
@@ -114,7 +113,6 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                 
                 setProfile(profileData);
 
-                // Check favorite status if ID available
                 if (profileId) {
                     const token = await ensureToken(); 
                     if (token) {
@@ -169,6 +167,8 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
 
     if (!isOpen) return null;
 
+    const isClient = profile?.role === "client";
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-2xl p-0 overflow-hidden shadow-2xl">
@@ -208,21 +208,35 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
 
                             {/* Contact Grid - Sidebar */}
                             <div className="w-full space-y-3 text-left">
-                                {profile.email && profile.privacy?.showEmail && (
+                                {profile.email && (profile.privacy?.showEmail || profile.email === session?.user?.email) && (
                                     <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
-                                        <Mail className="w-4 h-4" /> {profile.email}
+                                        <Mail className="w-4 h-4 text-zinc-500" /> {profile.email}
                                     </div>
                                 )}
-                                {profile.phone && profile.privacy?.showPhone && (
+                                {profile.phone && (profile.privacy?.showPhone || profile.email === session?.user?.email) && (
                                     <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
-                                        <Phone className="w-4 h-4" /> {profile.phone}
+                                        <Phone className="w-4 h-4 text-zinc-500" /> {profile.phone}
                                     </div>
                                 )}
                                 {profile.location && (
                                     <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
-                                        <MapPin className="w-4 h-4" /> {profile.location}
+                                        <MapPin className="w-4 h-4 text-zinc-500" /> {profile.location}
                                     </div>
                                 )}
+                                {profile.portfolioWebsite && (
+                                    <div className="flex items-center gap-3 text-xs text-zinc-400 truncate">
+                                        <Globe className="w-4 h-4 text-zinc-500" /> 
+                                        <a 
+                                            href={profile.portfolioWebsite.startsWith("http") ? profile.portfolioWebsite : `https://${profile.portfolioWebsite}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="hover:text-blue-400 transition-colors underline decoration-zinc-700 underline-offset-2"
+                                        >
+                                            {isClient ? "Company Website" : "Portfolio Website"}
+                                        </a>
+                                    </div>
+                                )}
+                                
                                 {/* Social Links */}
                                 {profile.socialLinks && (
                                     <div className="flex gap-2 justify-center mt-4 pt-4 border-t border-zinc-800">
@@ -241,15 +255,36 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                             {/* Bio Section */}
                             {profile.professionalBio && (
                                 <div className="space-y-3">
-                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">About <div className="h-px flex-1 bg-zinc-800" /></h3>
+                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">
+                                        {isClient ? "About Company" : "About"} <div className="h-px flex-1 bg-zinc-800" />
+                                    </h3>
                                     <p className="text-zinc-300 text-sm leading-relaxed">{profile.professionalBio}</p>
                                 </div>
                             )}
 
-                            {/* Skills Section */}
+                            {/* Company Website Link for Clients if not in sidebar or emphasizing it */}
+                            {isClient && profile.portfolioWebsite && (
+                                <div className="space-y-3">
+                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">Company Presence <div className="h-px flex-1 bg-zinc-800" /></h3>
+                                    <a 
+                                        href={profile.portfolioWebsite.startsWith("http") ? profile.portfolioWebsite : `https://${profile.portfolioWebsite}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl text-sm text-zinc-200 hover:bg-zinc-800 hover:border-zinc-700 transition-all group"
+                                    >
+                                        <Globe className="w-4 h-4 text-blue-500" />
+                                        <span>Visit Official Website</span>
+                                        <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 ml-auto" />
+                                    </a>
+                                </div>
+                            )}
+
+                            {/* Skills Section - For Clients this might be their industries/interests */}
                             {(profile.skills?.length || 0) > 0 && (
                                 <div className="space-y-3">
-                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">Skills <div className="h-px flex-1 bg-zinc-800" /></h3>
+                                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">
+                                        {isClient ? "Industries & Interests" : "Skills"} <div className="h-px flex-1 bg-zinc-800" />
+                                    </h3>
                                     <div className="flex flex-wrap gap-2">
                                         {profile.skills?.map((skill, index) => {
                                             const isVerified = profile.verifiedSkills?.some(v => v.skill === skill);
@@ -268,8 +303,8 @@ export function ProfileDialog({ isOpen, onClose, email, userType }: ProfileDialo
                                 </div>
                             )}
 
-                            {/* Portfolio Section */}
-                            {(profile.portfolio?.length || 0) > 0 && (
+                            {/* Portfolio Section - Only show if not client or if client has portfolio items */}
+                            {(!isClient || (profile.portfolio?.length || 0) > 0) && (profile.portfolio?.length || 0) > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">Portfolio <div className="h-px flex-1 bg-zinc-800" /></h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
